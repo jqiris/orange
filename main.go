@@ -1,10 +1,13 @@
 package main
 
 import (
+	"flag"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jqiris/kungfu/v2/config"
 	"github.com/jqiris/kungfu/v2/discover"
@@ -15,6 +18,12 @@ import (
 )
 
 func main() {
+	//设置时间随机种子
+	rand.Seed(time.Now().UnixNano())
+	//配置解析
+	cfg := flag.String("conf", "config.json", "locate the config file")
+	flag.Parse()
+
 	if err := config.InitConf("config.json"); err != nil {
 		logger.Fatal(err)
 	}
