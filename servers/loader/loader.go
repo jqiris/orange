@@ -16,12 +16,12 @@ type LoaderServer struct {
 }
 
 func (s *LoaderServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("world server handleSelfEvent:%+v", req)
+	logger.Infof("load server handleSelfEvent:%+v", req)
 	return nil
 }
 
 func (s *LoaderServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("world server HandleBroadcastEvent:%+v", req)
+	logger.Infof("load server HandleBroadcastEvent:%+v", req)
 	return nil
 }
 
