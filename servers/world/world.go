@@ -29,13 +29,14 @@ func WorldServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	logger.Infof("world server creat:%+v", s)
 	//http handler
 	app := gin.Default()
-	Router(app)
 	//server entity
 	server := &WorldServer{
 		ServerHttp: base.NewServerHttp(s, app),
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
+	//router
+	server.Router(app)
 	return server, nil
 }
 
@@ -44,9 +45,9 @@ func init() {
 }
 
 //router
-func Router(app *gin.Engine) {
+func (s *WorldServer) Router(app *gin.Engine) {
 	app.GET("/login", func(c *gin.Context) {
-		msg := Login(c)
+		msg := s.Login(c)
 		c.JSON(http.StatusOK, msg)
 	})
 }

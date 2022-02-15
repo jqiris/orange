@@ -7,10 +7,11 @@ import (
 	"github.com/jqiris/orange/model"
 )
 
-func Login(c *gin.Context) model.Msg {
+func (s *WorldServer) Login(c *gin.Context) model.Msg {
 	serverList := discover.GetServerList()
 	msg := model.Msg{
 		Data: map[string]interface{}{
+			"server":     s.Server,
 			"serverList": serverList,
 		},
 	}
