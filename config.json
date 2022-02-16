@@ -59,5 +59,15 @@
             "worker_pool_size": 10,
             "token_key": "kungfu token"
         }
+    },
+    "logger": {
+        "out_type": "out_all",
+        "log_level": "debug",
+        "log_dir": "./logs",
+        "log_name": "orange",
+        "log_dump": true,
+        "log_runtime": true,
+        "std_color": true,
+        "zip_day": 7
     }
 }
