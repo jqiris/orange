@@ -34,18 +34,26 @@
             "world_1001": {
                 "server_id": "world_1001",
                 "server_type": "world",
-                "server_name": "kungfu world",
+                "server_name": "world",
                 "server_ip": "127.0.0.1",
                 "client_port": 8188,
                 "is_launch": true
             },
-            "world_1002": {
-                "server_id": "world_1002",
-                "server_type": "world",
-                "server_name": "kungfu world",
+            "gate_2001": {
+                "server_id": "gate_2001",
+                "server_type": "gate",
+                "server_name": "gate",
                 "server_ip": "127.0.0.1",
-                "client_port": 8189,
-                "is_launch": false
+                "client_port": 8288,
+                "is_launch": true
+            },
+            "hall_3001": {
+                "server_id": "hall_3001",
+                "server_type": "hall",
+                "server_name": "hall",
+                "server_ip": "127.0.0.1",
+                "client_port": 8388,
+                "is_launch": true
             }
         },
         "connector": {
@@ -53,7 +61,7 @@
             "use_websocket": false,
             "websocket_path": "/",
             "use_serializer": "proto",
-            "proto_path": "./examples/nano_demo/protos.json",
+            "proto_path": "protos/protos.json",
             "heartbeat_interval": 10,
             "max_conn": 3000,
             "worker_pool_size": 10,

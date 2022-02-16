@@ -14,6 +14,8 @@ import (
 	"github.com/jqiris/kungfu/v2/launch"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/stores"
+	_ "github.com/jqiris/orange/servers/gate"
+	_ "github.com/jqiris/orange/servers/hall"
 	_ "github.com/jqiris/orange/servers/world"
 	"github.com/spf13/viper"
 )

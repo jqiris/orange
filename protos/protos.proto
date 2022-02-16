@@ -1,0 +1,43 @@
+syntax = "proto3";
+package protos;
+option go_package = "../protos";
+enum MsgId{
+    MsgChan = 0; //通道消息
+    MsgLogin = 1; //登录
+    MsgLogout = 2; //登出
+}
+
+//request
+message MsgRequest{
+   MsgId msg_id = 1;
+   oneof any{
+       LoginRequest login_request = 2;
+       LogoutRequest logout_request =3;
+   } 
+}
+
+message LoginRequest {
+    int64 uid = 1; //用户ID
+    string nickname = 2;//用户昵称
+    string token = 3;//token key
+}
+
+message LogoutRequest {
+    int64 uid = 1; //用户id
+}
+
+//response
+message MsgResponse {
+    int32 code = 1;
+    string msg = 2;
+    oneof any{
+        LoginResponse login_response = 3;
+        LogoutResponse logout_response =4;
+    }
+}
+
+message LoginResponse{
+}
+message LogoutResponse{
+
+}

@@ -1,0 +1,8 @@
+{
+    "client": {
+        "GateServer.ChanReq": "MsgRequest"
+    },
+    "server": {
+        "GateServer.ChanReq": "MsgResponse"
+    }
+}

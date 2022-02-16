@@ -1,4 +1,4 @@
-package loader
+package gate
 
 import (
 	"github.com/jqiris/kungfu/v2/base"
@@ -11,22 +11,22 @@ import (
 )
 
 //前端负载器
-type LoaderServer struct {
+type GateServer struct {
 	*base.ServerConnector
 }
 
-func (s *LoaderServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("load server handleSelfEvent:%+v", req)
+func (g *GateServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
+	logger.Infof("gate server handleSelfEvent:%+v", req)
 	return nil
 }
 
-func (s *LoaderServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("load server HandleBroadcastEvent:%+v", req)
+func (g *GateServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
+	logger.Infof("gate server HandleBroadcastEvent:%+v", req)
 	return nil
 }
 
-func LoaderServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
-	server := &LoaderServer{
+func GateServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+	server := &GateServer{
 		ServerConnector: base.NewServerConnector(s),
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
@@ -43,5 +43,5 @@ func LoaderServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator("loader", LoaderServerCreator)
+	launch.RegisterCreator("gate", GateServerCreator)
 }
