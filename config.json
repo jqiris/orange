@@ -58,7 +58,7 @@
         },
         "connector": {
             "use_type": "nano",
-            "use_websocket": false,
+            "use_websocket": true,
             "websocket_path": "/",
             "use_serializer": "proto",
             "proto_path": "protos/protos.json",
