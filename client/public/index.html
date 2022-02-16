@@ -14,21 +14,32 @@
     <meta name="keywords" content="pinus" />
     <link type="text/css" rel="stylesheet" href="css/base.css" />
     <script src="js/lib/build/build.js" type="text/javascript"></script>
+    <script src="pomelo/pomelo.js" type="text/javascript"></script>
     <script type="text/javascript">
         require('boot');
     </script>
     <script type="text/javascript">
-        var pinus = window.pinus;
+        var pomelo = window.pomelo;
         var host = "127.0.0.1";
         var port = "8288";
 
         function show() {
-            pinus.init({
+            pomelo.init({
                 host: host,
                 port: port,
-                log: true
+                log: true,
+                useProtobuf: true,
+                protoPath: "../../protos/protos.proto",
+                protoPackage: "protos"
             }, function() {
-                pinus.request("GateServer.ChanReq", "hello pinus", function(data) {
+                pinus.request("GateServer.ChanReq", {
+                    msgId: 1,
+                    loginRequest: {
+                        uid: 1001,
+                        nickname: "jason",
+                        token: "welcome"
+                    }
+                }, function(data) {
                     alert(data.msg);
                 });
             });
