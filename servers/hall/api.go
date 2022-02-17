@@ -11,7 +11,7 @@ import (
 )
 
 func (h *HallServer) ChanResp(req *protos.MsgRequest) *protos.MsgResponse {
-	logger.Infof("gate chanResp received: %v", req)
+	logger.Infof("hall chanResp received: %v", req)
 	msg := &protos.MsgResponse{Code: common.StatusOk}
 	switch req.MsgId {
 	case protos.MsgId_MsgLogin:

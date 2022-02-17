@@ -14,6 +14,8 @@
     <meta name="keywords" content="pinus" />
     <link type="text/css" rel="stylesheet" href="css/base.css" />
     <script src="js/lib/build/build.js" type="text/javascript"></script>
+    <script src="pomelo/protobuf.js" type="text/javascript"></script>
+    <script src="pomelo/protocol.js" type="text/javascript"></script>
     <script src="pomelo/pomelo.js" type="text/javascript"></script>
     <script type="text/javascript">
         require('boot');
@@ -29,10 +31,10 @@
                 port: port,
                 log: true,
                 useProtobuf: true,
-                protoPath: "../../protos/protos.proto",
+                protoPath: "pomelo/protos.proto",
                 protoPackage: "protos"
             }, function() {
-                pinus.request("GateServer.ChanReq", {
+                pomelo.request("GateServer.ChanReq", {
                     msgId: 1,
                     loginRequest: {
                         uid: 1001,
@@ -40,6 +42,7 @@
                         token: "welcome"
                     }
                 }, function(data) {
+                    console.log(data)
                     alert(data.msg);
                 });
             });
