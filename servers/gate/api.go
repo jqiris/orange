@@ -29,9 +29,9 @@ func (g *GateServer) AfterInit() {
 			resp := &protos.MsgResponse{Code: common.StatusOk}
 			reqForward := rpc.NewReqBuilder(hall).SetReq(req).SetResp(resp).SetMsgId(int32(protos.MsgId_MsgChan)).Build()
 			if err := g.Rpc.Request(reqForward); err != nil {
-				logger.Infof("gate offline err:%v", err)
+				logger.Infof("gate offline uid:%v,err:%v", uid, err)
 			} else {
-				logger.Infof("gate offline resp:%+v", resp)
+				logger.Infof("gate offline uid:%v,resp:%+v", uid, resp)
 			}
 		}
 	})
