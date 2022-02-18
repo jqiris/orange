@@ -33,11 +33,13 @@ message MsgResponse {
     oneof any{
         LoginResponse login_response = 3;
         LogoutResponse logout_response =4;
+        OfflineResponse offline_response =5;
     }
 }
 
 message LoginResponse{
 }
 message LogoutResponse{
-
+}
+message OfflineResponse{
 }

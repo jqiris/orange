@@ -5,14 +5,16 @@ enum MsgId{
     MsgChan = 0; //通道消息
     MsgLogin = 1; //登录
     MsgLogout = 2; //登出
+    MsgOffline = 3; //断线
 }
 
 //request
 message MsgRequest{
    MsgId msg_id = 1;
    oneof any{
-       LoginRequest login_request = 2;
-       LogoutRequest logout_request =3;
+       LoginRequest login_request = 2; //登陆
+       LogoutRequest logout_request =3; //登出
+       OfflineRequest offline_request = 4; //断线
    } 
 }
 
@@ -23,6 +25,10 @@ message LoginRequest {
 }
 
 message LogoutRequest {
+    int64 uid = 1; //用户id
+}
+
+message OfflineRequest{
     int64 uid = 1; //用户id
 }
 
