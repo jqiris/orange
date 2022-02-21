@@ -3,3 +3,9 @@
 orange.exe
 logs/
 client/node_modules/
+deploy/nats/streaming1/data/
+deploy/nats/streaming1/log/
+deploy/nats/streaming2/data/
+deploy/nats/streaming2/log/
+deploy/nats/streaming3/log/
+deploy/nats/streaming3/data/

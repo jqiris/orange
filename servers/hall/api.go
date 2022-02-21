@@ -33,6 +33,8 @@ func (h *HallServer) Login(req *protos.LoginRequest) *protos.MsgResponse {
 		msg.Msg = "token不正确"
 		return msg
 	}
+	//查询用户数据库信息
+
 	return msg
 }
 
