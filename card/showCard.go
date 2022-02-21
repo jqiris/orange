@@ -3,7 +3,7 @@ package card
 import (
 	"fmt"
 
-	"github.com/jqiris/orange/common"
+	"github.com/jqiris/orange/constant"
 )
 
 // ShowCard 明牌
@@ -69,10 +69,10 @@ func (s *ShowCard) ModifyQiangKong() {
 
 // IsPong 明牌是否是pong
 func (s *ShowCard) IsPong() bool {
-	return s.opCode == common.OperationCodePONG
+	return s.opCode == constant.OperationCodePONG
 }
 
 // IsPongTile 明牌是否是pong了这个牌
 func (s *ShowCard) IsPongTile(tile int) bool {
-	return s.opCode == common.OperationCodePONG && s.tiles[0] == tile
+	return s.opCode == constant.OperationCodePONG && s.tiles[0] == tile
 }

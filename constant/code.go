@@ -1,4 +1,4 @@
-package common
+package constant
 
 const (
 	StatusOk    = 0 //成功

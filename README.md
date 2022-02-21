@@ -9,7 +9,9 @@ cd deploy/nats && docker-compose up -d
 3-部署redis
 docker run -d -p 6379:6379 --name redis redis
 4-部署mysql
-docker或者自己安装-暂时不需要
+docker或者本地安装
+docker安装- docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql
+本地安装-请百度
 
 ## 启动服务端服务器
 说明-configs配置文件里frames.servers里面配置服务器,is_lauch表明是需要在当前节点启动的服务

@@ -23,6 +23,7 @@
         },
         "stores": {
             "use_type": "redis",
+            "prefix": "orange",
             "dial_timeout": 5,
             "endpoints": [
                 "127.0.0.1:6379"

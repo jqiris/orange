@@ -14,6 +14,7 @@ import (
 	"github.com/jqiris/kungfu/v2/launch"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/stores"
+	"github.com/jqiris/orange/database"
 	_ "github.com/jqiris/orange/servers/gate"
 	_ "github.com/jqiris/orange/servers/hall"
 	_ "github.com/jqiris/orange/servers/world"
@@ -43,6 +44,9 @@ func main() {
 
 	//init stores
 	stores.InitStoreKeeper(config.GetStoresConf())
+
+	//init database
+	database.InitDatabase(viper.GetStringMap("database"))
 	//launch servers
 	launch.Startup()
 	sg := make(chan os.Signal, 1)
