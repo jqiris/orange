@@ -8,6 +8,7 @@ import (
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/tcpface"
 	"github.com/jqiris/kungfu/v2/treaty"
+	"github.com/jqiris/orange/constant"
 )
 
 //前端负载器
@@ -43,5 +44,5 @@ func GateServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator("gate", GateServerCreator)
+	launch.RegisterCreator(constant.GateServer, GateServerCreator)
 }

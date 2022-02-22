@@ -9,6 +9,7 @@ import (
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
+	"github.com/jqiris/orange/constant"
 )
 
 type WorldServer struct {
@@ -41,7 +42,7 @@ func WorldServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator("world", WorldServerCreator)
+	launch.RegisterCreator(constant.WorldServer, WorldServerCreator)
 }
 
 //router

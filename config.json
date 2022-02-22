@@ -55,6 +55,15 @@
                 "server_ip": "127.0.0.1",
                 "client_port": 8388,
                 "is_launch": true
+            },
+            "db_4001": {
+                "server_id": "db_4001",
+                "server_type": "db",
+                "server_name": "db",
+                "server_ip": "127.0.0.1",
+                "client_port": 8488,
+                "is_launch": true,
+                "serial": true
             }
         },
         "connector": {

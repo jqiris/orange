@@ -1,4 +1,4 @@
-package hall
+package db
 
 import (
 	"github.com/jqiris/kungfu/v2/base"
@@ -7,39 +7,40 @@ import (
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
-	"github.com/jqiris/orange/protos"
 )
 
-type HallServer struct {
+//异步数据库操作服务
+type DbServer struct {
 	*base.ServerBase
 	handler *rpc.Handler
 }
 
-func (h *HallServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	resp, err := h.handler.DealMsg(rpc.CodeTypeProto, h.Rpc, req)
+func (d *DbServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
+	resp, err := d.handler.DealMsg(rpc.CodeTypeProto, d.Rpc, req)
 	if err != nil {
 		logger.Error(err)
 		return nil
 	}
 	return resp
 }
-func (h *HallServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
+
+func (d *DbServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
 	return nil
 }
 
-func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
-	server := &HallServer{
+func DbServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+	server := &DbServer{
 		ServerBase: base.NewServerBase(s),
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
 	//handle instance
 	handler := rpc.NewHandler()
-	handler.Register(int32(protos.MsgId_MsgChan), server.ChanResp)
+	handler.Register(constant.DbMsgIdUpdateMember, server.UpdateMember)
 	server.handler = handler
 	return server, nil
 }
 
 func init() {
-	launch.RegisterCreator(constant.HallServer, HallServerCreator)
+	launch.RegisterCreator(constant.DbServer, DbServerCreator)
 }

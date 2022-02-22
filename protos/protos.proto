@@ -43,7 +43,15 @@ message MsgResponse {
 }
 
 message LoginResponse{
+    int64 uid = 1; // 用户id
+    string nickname = 2; //昵称
+    string avatar = 3; //头像
+    int32 gender = 4;//性别
+    int64 reg_time = 5; //注册时间
+    int64 login_time = 6; //登录时间
+    bool is_new = 7;//是否是新手
 }
+
 message LogoutResponse{
 
 }
