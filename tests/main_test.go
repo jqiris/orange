@@ -86,5 +86,4 @@ func TestRoomCodeGenerate(t *testing.T) {
 		logger.Infof("code:%v", code)
 		return true
 	})
-	select {}
 }
