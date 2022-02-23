@@ -40,6 +40,11 @@ func (g *GateServer) AfterInit() {
 func (g *GateServer) ChanReq(s *session.Session, req *protos.MsgRequest) error {
 	logger.Infof("gate chanReq uid:%v, received: %v", s.UID(), req)
 	resp := &protos.MsgResponse{Code: constant.StatusOk}
+	if s.UID() < 1 && req.MsgId != protos.MsgId_MsgLogin {
+		resp.Code = constant.StatusError
+		resp.Msg = "请先登录"
+		return s.Response(resp)
+	}
 	hall := discover.GetServerByType("hall", s.RemoteAddr().String())
 	if hall == nil {
 		resp.Code = constant.StatusError
@@ -56,9 +61,10 @@ func (g *GateServer) ChanReq(s *session.Session, req *protos.MsgRequest) error {
 	if resp.Code == constant.StatusOk {
 		switch req.MsgId {
 		case protos.MsgId_MsgLogin:
-			s.Bind(req.GetLoginRequest().Uid)
-			s.Set("hall", hall) //设置用户的大厅信息
+			s.Bind(req.GetLoginRequest().Uid) //绑定用户id
+			s.Set("hall", hall)               //设置用户的大厅信息
 		case protos.MsgId_MsgLogout:
+			s.Unbind() //解绑关系
 			s.Close()
 		}
 	}
