@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -15,6 +14,7 @@ import (
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/stores"
 	"github.com/jqiris/orange/database"
+	_ "github.com/jqiris/orange/servers/db"
 	_ "github.com/jqiris/orange/servers/gate"
 	_ "github.com/jqiris/orange/servers/hall"
 	_ "github.com/jqiris/orange/servers/world"
@@ -53,7 +53,7 @@ func main() {
 	signal.Notify(sg, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
 	select {
 	case s := <-sg:
-		log.Println("server got shutdown signal", s)
+		logger.Warn("server got shutdown signal", s)
 	}
 	launch.Shutdown()
 }

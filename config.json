@@ -63,7 +63,9 @@
                 "server_ip": "127.0.0.1",
                 "client_port": 8488,
                 "is_launch": true,
-                "serial": true
+                "serial": true,
+                "launch_weight": -1,
+                "shut_weight": 1
             }
         },
         "connector": {

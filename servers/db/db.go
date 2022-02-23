@@ -9,14 +9,14 @@ import (
 	"github.com/jqiris/orange/constant"
 )
 
-//异步数据库操作服务
+//异步数据库操作服务,同步服务请直接用database库
 type DbServer struct {
 	*base.ServerBase
 	handler *rpc.Handler
 }
 
 func (d *DbServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	resp, err := d.handler.DealMsg(rpc.CodeTypeProto, d.Rpc, req)
+	resp, err := d.handler.DealMsg(rpc.CodeTypeJson, d.Rpc, req)
 	if err != nil {
 		logger.Error(err)
 		return nil

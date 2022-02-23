@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
-	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/memdb"
-	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
+	"github.com/jqiris/orange/servers/db"
 	"github.com/spf13/viper"
 )
 
@@ -48,18 +47,11 @@ func (h *HallServer) Login(req *protos.LoginRequest) *protos.MsgResponse {
 	}
 	//异步更新用户登录时间
 	nowTime := time.Now()
-	if dbServer := h.Rpc.Find(constant.DbServer, uid); dbServer != nil {
-		reqBuilder := rpc.NewReqBuilder(dbServer).SetCodeType(rpc.CodeTypeJson).SetSuffix(rpc.JsonSuffix).SetReq(&model.DbUpdateMember{
-			UserId: uid,
-			Updates: map[string]interface{}{
-				"login_time": nowTime,
-			},
-		}).Build()
-		if err := h.Rpc.Publish(reqBuilder); err != nil {
-			logger.Error(err)
-		}
-	} else {
-		logger.Errorf("hall login 找不到数据库服务器 uid:%v", uid)
+	if err := db.UpdateMember(h.Rpc, uid, map[string]interface{}{
+		"login_time":    nowTime,
+		"offline_state": 0,
+	}); err != nil {
+		logger.Error(err)
 	}
 	//返回前端数据
 	msg.Any = &protos.MsgResponse_LoginResponse{
@@ -83,5 +75,15 @@ func (h *HallServer) Logout(req *protos.LogoutRequest) *protos.MsgResponse {
 
 func (h *HallServer) Offline(req *protos.OfflineRequest) *protos.MsgResponse {
 	msg := &protos.MsgResponse{Code: constant.StatusOk}
+	uid := int(req.Uid)
+	//更新用户离线状态
+	if err := db.UpdateMember(h.Rpc, uid, map[string]interface{}{
+		"offline_state": 1,
+		"offline_time":  time.Now(),
+	}); err != nil {
+		logger.Error(err)
+	}
+	//清除用户服务记录缓存
+	h.Rpc.RemoveFindCache(uid)
 	return msg
 }
