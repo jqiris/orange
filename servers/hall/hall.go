@@ -12,11 +12,10 @@ import (
 
 type HallServer struct {
 	*base.ServerBase
-	handler *rpc.Handler
 }
 
 func (h *HallServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	resp, err := h.handler.DealMsg(rpc.CodeTypeProto, h.Rpc, req)
+	resp, err := h.DealMsg(rpc.CodeTypeProto, h.Rpc, req)
 	if err != nil {
 		logger.Error(err)
 		return nil
@@ -33,10 +32,8 @@ func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
-	//handle instance
-	handler := rpc.NewHandler()
-	handler.Register(int32(protos.MsgId_MsgChan), server.ChanResp)
-	server.handler = handler
+	//msg handler register
+	server.Register(int32(protos.MsgId_MsgChan), server.ChanResp)
 	return server, nil
 }
 

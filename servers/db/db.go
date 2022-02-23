@@ -12,11 +12,10 @@ import (
 //异步数据库操作服务,同步服务请直接用database库
 type DbServer struct {
 	*base.ServerBase
-	handler *rpc.Handler
 }
 
 func (d *DbServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	resp, err := d.handler.DealMsg(rpc.CodeTypeJson, d.Rpc, req)
+	resp, err := d.DealMsg(rpc.CodeTypeJson, d.Rpc, req)
 	if err != nil {
 		logger.Error(err)
 		return nil
@@ -34,10 +33,8 @@ func DbServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
-	//handle instance
-	handler := rpc.NewHandler()
-	handler.Register(constant.DbMsgIdUpdateMember, server.UpdateMember)
-	server.handler = handler
+	//msg handler register
+	server.Register(constant.DbMsgIdUpdateMember, server.UpdateMember)
 	return server, nil
 }
 
