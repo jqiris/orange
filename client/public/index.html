@@ -24,9 +24,21 @@
         var pomelo = window.pomelo;
         var host = "127.0.0.1";
         var port = "8288";
-        var uid = 1001;
+        var uid = 0;
+        //pomelo init
+        pomeloInit();
 
-        function show() {
+        function setUserId() {
+            uid = document.getElementById("user_id").value;
+            uid = parseInt(uid, 10);
+            if (uid < 1) {
+                alert("Please enter a user_id")
+                return
+            }
+            console.log("user_id:", uid)
+        }
+
+        function pomeloInit() {
             pomelo.init({
                 host: host,
                 port: port,
@@ -35,29 +47,44 @@
                 protoPath: "pomelo/protos.proto",
                 protoPackage: "protos"
             }, function() {
-                pomelo.request("GateServer.ChanReq", {
-                    msgId: 1,
-                    loginRequest: {
-                        uid: uid,
-                        nickname: "jason",
-                        token: "9ac82c7c17fd0cec5110c0293cdcf5a8"
-                    }
-                }, function(data) {
-                    console.log(data)
-                });
+                console.log("pomelo init succeeded");
+            })
+        }
+
+        function pomeloRequest(msgId, reqKey, reqData, callback) {
+            var data = {
+                msgId: msgId,
+            }
+            data[reqKey] = reqData
+            console.log("pomeloRequest:", data)
+            pomelo.request("GateServer.ChanReq", data, function(data) {
+                callback(data)
             });
         }
 
-        function createRoom() {
-            pomelo.request("GateServer.ChanReq", {
-                msgId: 4,
-                mjRoomCreateRequest: {
-                    uid: uid,
-                    gid: 1001,
-                }
-            }, function(data) {
+        function login() {
+            if (uid == null || uid < 1) {
+                alert("Please enter a user_id")
+                return
+            }
+            var data = {
+                uid: uid,
+                nickname: "jason",
+                token: "9ac82c7c17fd0cec5110c0293cdcf5a8"
+            }
+            pomeloRequest(1, "loginRequest", data, function(data) {
                 console.log(data)
-            });
+            })
+        }
+
+        function createRoom() {
+            var data = {
+                uid: uid,
+                gid: 1001
+            }
+            pomeloRequest(4, "mjRoomCreateRequest", data, function(data) {
+                console.log(data)
+            })
         }
     </script>
 </head>
@@ -78,8 +105,11 @@
             Home:
             <a href="https://github.com/node-pinus/pinus">https://github.com/node-pinus/pinus</a>
         </div>
+        <div class="g-link">
+            用户ID:<input type="text" name="user_id" id="user_id" /><input id="setUserId" type="button" value="设置用户ID" onclick="setUserId()" />
+        </div>
         <div class="g-button">
-            <input id="login" type="button" value="Test login" onclick="show()" />
+            <input id="login" type="button" value="Test login" onclick="login()" />
             <input id="createRoom" type="button" value="Test createRoom" onclick="createRoom()" />
         </div>
     </div>
