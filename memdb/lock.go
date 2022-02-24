@@ -33,7 +33,7 @@ func lockStart(key string, seconds int) bool {
 
 func lockEnd(key string) {
 	key = "Lock:" + key
-	if err := stores.Del(key); err != nil {
+	if _, err := stores.Del(key); err != nil {
 		logger.Error(err)
 	}
 }

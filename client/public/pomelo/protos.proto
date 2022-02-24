@@ -6,6 +6,7 @@ enum MsgId{
     MsgLogin = 1; //登录
     MsgLogout = 2; //登出
     MsgOffline = 3; //断线
+    MsgMjRoomCreate = 4;//创建麻将房间
 }
 
 //request
@@ -15,7 +16,13 @@ message MsgRequest{
        LoginRequest login_request = 2; //登陆
        LogoutRequest logout_request =3; //登出
        OfflineRequest offline_request = 4; //断线
+       MjRoomCreateRequest mj_room_create_request = 5; //创建麻将房间
    } 
+}
+
+message MjRoomCreateRequest{
+   int64 uid = 1;//用户id 
+   int32 gid = 2;//游戏id
 }
 
 message LoginRequest {
@@ -32,6 +39,7 @@ message OfflineRequest{
     int64 uid = 1; //用户id
 }
 
+
 //response
 message MsgResponse {
     int32 code = 1;
@@ -39,6 +47,7 @@ message MsgResponse {
     oneof any{
         LoginResponse login_response = 3;
         LogoutResponse logout_response =4;
+        MjRoomCreateResponse mj_room_create_response =5; //创建麻将房间回复
     }
 }
 
@@ -54,4 +63,10 @@ message LoginResponse{
 
 message LogoutResponse{
 
+}
+
+message MjRoomCreateResponse{
+    int64 code  = 1; //创建房间号
+    string sid = 2; //创建服务器id
+    int64 tid = 3; //创建桌号
 }

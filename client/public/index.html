@@ -24,6 +24,7 @@
         var pomelo = window.pomelo;
         var host = "127.0.0.1";
         var port = "8288";
+        var uid = 1001;
 
         function show() {
             pomelo.init({
@@ -37,14 +38,25 @@
                 pomelo.request("GateServer.ChanReq", {
                     msgId: 1,
                     loginRequest: {
-                        uid: 1001,
+                        uid: uid,
                         nickname: "jason",
                         token: "9ac82c7c17fd0cec5110c0293cdcf5a8"
                     }
                 }, function(data) {
                     console.log(data)
-                    alert(data);
                 });
+            });
+        }
+
+        function createRoom() {
+            pomelo.request("GateServer.ChanReq", {
+                msgId: 4,
+                mjRoomCreateRequest: {
+                    uid: uid,
+                    gid: 1001,
+                }
+            }, function(data) {
+                console.log(data)
             });
         }
     </script>
@@ -67,7 +79,8 @@
             <a href="https://github.com/node-pinus/pinus">https://github.com/node-pinus/pinus</a>
         </div>
         <div class="g-button">
-            <input id="test" type="button" value="Test Game Server" onclick="show()" />
+            <input id="login" type="button" value="Test login" onclick="show()" />
+            <input id="createRoom" type="button" value="Test createRoom" onclick="createRoom()" />
         </div>
     </div>
 </body>

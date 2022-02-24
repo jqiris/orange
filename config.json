@@ -73,11 +73,8 @@
                 "server_type": "mahjong",
                 "server_name": "mahjong",
                 "server_ip": "127.0.0.1",
-                "client_port": 8488,
-                "is_launch": true,
-                "serial": true,
-                "launch_weight": -1,
-                "shut_weight": 2
+                "client_port": 8588,
+                "is_launch": true
             }
         },
         "connector": {

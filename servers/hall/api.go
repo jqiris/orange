@@ -10,6 +10,7 @@ import (
 	"github.com/jqiris/orange/memdb"
 	"github.com/jqiris/orange/protos"
 	"github.com/jqiris/orange/servers/db"
+	"github.com/jqiris/orange/servers/mahjong"
 	"github.com/spf13/viper"
 )
 
@@ -23,6 +24,8 @@ func (h *HallServer) ChanResp(req *protos.MsgRequest) *protos.MsgResponse {
 		msg = h.Logout(req.GetLogoutRequest())
 	case protos.MsgId_MsgOffline:
 		msg = h.Offline(req.GetOfflineRequest())
+	case protos.MsgId_MsgMjRoomCreate:
+		msg = mahjong.MjRoomCreate(h.Rpc, req.GetMjRoomCreateRequest())
 	}
 	return msg
 }
