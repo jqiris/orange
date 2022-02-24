@@ -1,17 +1,14 @@
 package hall
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
-	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/memdb"
 	"github.com/jqiris/orange/protos"
 	"github.com/jqiris/orange/servers/db"
 	"github.com/jqiris/orange/servers/mahjong"
-	"github.com/spf13/viper"
 )
 
 func (h *HallServer) ChanResp(req *protos.MsgRequest) *protos.MsgResponse {
@@ -32,13 +29,13 @@ func (h *HallServer) ChanResp(req *protos.MsgRequest) *protos.MsgResponse {
 
 func (h *HallServer) Login(req *protos.LoginRequest) *protos.MsgResponse {
 	msg := &protos.MsgResponse{Code: constant.StatusOk}
-	tokenKey := viper.GetString("frame.connector.token_key")
-	token := utils.Md5(fmt.Sprintf("%d|%s|%s", req.Uid, req.Nickname, tokenKey))
-	if req.Token != token {
-		msg.Code = constant.StatusError
-		msg.Msg = "token不正确"
-		return msg
-	}
+	// tokenKey := viper.GetString("frame.connector.token_key")
+	// token := utils.Md5(fmt.Sprintf("%d|%s|%s", req.Uid, req.Nickname, tokenKey))
+	// if req.Token != token {
+	// 	msg.Code = constant.StatusError
+	// 	msg.Msg = "token不正确"
+	// 	return msg
+	// }
 	uid := int(req.Uid)
 	//查询用户数据库信息
 	user, err := memdb.GetUserMember(uid)
