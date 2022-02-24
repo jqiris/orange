@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ import (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	viper.SetConfigFile("../config.json")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
@@ -33,6 +35,26 @@ func init() {
 
 	//init stores
 	stores.InitStoreKeeper(config.GetStoresConf())
+
+	//logger
+	loggerCfg := viper.GetStringMap("logger")
+	initLogger(loggerCfg)
+}
+
+func initLogger(cfg map[string]interface{}) {
+	zipDay := time.Duration(cfg["zip_day"].(float64)*24) * time.Hour
+	options := []logger.Option{
+		logger.WithLogLevel(cfg["log_level"].(string)),
+		logger.WithOutType(cfg["out_type"].(string)),
+		logger.WithLogDir(cfg["log_dir"].(string)),
+		logger.WithLogName(cfg["log_name"].(string)),
+		logger.WithLogDump(cfg["log_dump"].(bool)),
+		logger.WithLogRuntime(cfg["log_runtime"].(bool)),
+		logger.WithStdColor(cfg["std_color"].(bool)),
+		logger.WithZipDuration(zipDay),
+	}
+	lg, cf := logger.NewLogger(options...)
+	logger.SetLogger(lg, cf)
 }
 
 func TestTokenKey(t *testing.T) {
@@ -57,13 +79,23 @@ func TestJsonProtoOneof(t *testing.T) {
 
 var codeMap sync.Map
 
-func GenerateCode(key string, low, high int) error {
+func GenerateCode(name, key string, low, high, max int) error {
 	for i := 0; i < 100000; i++ {
 		code := utils.NextRoomCode(key, low, high)
-		if _, ok := codeMap.Load(code); ok {
-			return fmt.Errorf("GenerateCode code exist:%v", code)
+		prefix := utils.RangeRand(10, 99)
+		roomCode := int(prefix)*1000000 + code
+		if roomCode > (100000000 - 1) {
+			return fmt.Errorf("big than max %v GenerateCode roomCode:%v, prefix:%v,code:%v", name, roomCode, prefix, code)
+		}
+		if _, ok := codeMap.Load(roomCode); ok {
+			// max++
+			// if max < 5 {
+			// 	return GenerateCode(name, key, low, high, max)
+			// }
+			return fmt.Errorf("%v GenerateCode code exist:%v", name, roomCode)
 		}
 		codeMap.Store(code, 1)
+		logger.Infof("%v GenerateCode:%v", name, roomCode)
 	}
 	return nil
 }
@@ -72,18 +104,38 @@ func TestRoomCodeGenerate(t *testing.T) {
 	w.AddCoroutine(func(wg *sync.WaitGroup) {
 		defer wg.Done()
 		time.Sleep(100 * time.Millisecond)
-		GenerateCode(constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh)
+		if err := GenerateCode("线程1", constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh, 0); err != nil {
+			logger.Error(err)
+		}
 	})
 	w.AddCoroutine(func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		time.Sleep(1000 * time.Millisecond)
-		GenerateCode(constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh)
+		time.Sleep(200 * time.Millisecond)
+		if err := GenerateCode("线程2", constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh, 0); err != nil {
+			logger.Error(err)
+		}
+	})
+	w.AddCoroutine(func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		time.Sleep(300 * time.Millisecond)
+		if err := GenerateCode("线程3", constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh, 0); err != nil {
+			logger.Error(err)
+		}
+	})
+	w.AddCoroutine(func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		time.Sleep(400 * time.Millisecond)
+		if err := GenerateCode("线程4", constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh, 0); err != nil {
+			logger.Error(err)
+		}
+	})
+	w.AddCoroutine(func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		time.Sleep(500 * time.Millisecond)
+		if err := GenerateCode("线程5", constant.MahjongRoomCode, constant.MahjongRoomCodeLow, constant.MahjongRoomCodeHigh, 0); err != nil {
+			logger.Error(err)
+		}
 	})
 	w.Wait()
 	logger.Info("GenerateCode success")
-	codeMap.Range(func(key, value interface{}) bool {
-		code := key.(int)
-		logger.Infof("code:%v", code)
-		return true
-	})
 }
