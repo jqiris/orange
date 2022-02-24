@@ -25,18 +25,36 @@
         var host = "127.0.0.1";
         var port = "8288";
         var uid = 0;
-        //pomelo init
-        pomeloInit();
+        var nickname = "";
+        var token = "";
 
-        function setUserId() {
+
+        //pomelo init
+        pomeloInit()
+
+        function setUserInfo() {
             uid = document.getElementById("user_id").value;
             uid = parseInt(uid, 10);
-            if (uid < 1) {
+            if (isNaN(uid) || uid < 1) {
                 alert("Please enter a user_id")
                 return
             }
             console.log("user_id:", uid)
+            nickname = document.getElementById("nickname").value;
+            if (nickname == null || nickname.length < 1) {
+                alert("Please enter a nickname")
+                return
+            }
+            console.log("nickname:", nickname)
+            token = document.getElementById("user_token").value;
+            if (token == null || token.length < 1) {
+                alert("Please enter a user_token")
+                return
+            }
+            console.log("user_token:", token)
         }
+
+
 
         function pomeloInit() {
             pomelo.init({
@@ -69,8 +87,8 @@
             }
             var data = {
                 uid: uid,
-                nickname: "jason",
-                token: "9ac82c7c17fd0cec5110c0293cdcf5a8"
+                nickname: nickname,
+                token: token
             }
             pomeloRequest(1, "loginRequest", data, function(data) {
                 console.log(data)
@@ -105,11 +123,13 @@
             Home:
             <a href="https://github.com/node-pinus/pinus">https://github.com/node-pinus/pinus</a>
         </div>
-        <div class="g-link">
-            用户ID:<input type="text" name="user_id" id="user_id" /><input id="setUserId" type="button" value="设置用户ID" onclick="setUserId()" />
+        <div class="g-button">
+            用户ID:<input type="text" name="user_id" id="user_id" /><br/>用户昵称:
+            <input type="text" name="nickname" id="nickname" /><br/> Token:
+            <input type="text" name="user_token" id="user_token" /><br/><input id="setUserInfo" type="button" value="设置用户信息" onclick="setUserInfo()" />
         </div>
         <div class="g-button">
-            <input id="login" type="button" value="Test login" onclick="login()" />
+            <input id="login" type="button" value="Test login" onclick="login()" /><br/>
             <input id="createRoom" type="button" value="Test createRoom" onclick="createRoom()" />
         </div>
     </div>

@@ -331,6 +331,8 @@
                 decodeIO_decoder = decodeIO_protobuf.loadJson(serverProtos);
                 pomelo.connectNext(params, url, cb);
             }
+        } else {
+            pomelo.connectNext(params, url, cb);
         }
     };
 
