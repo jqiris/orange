@@ -70,3 +70,15 @@ message MjRoomCreateResponse{
     string sid = 2; //创建服务器id
     int64 tid = 3; //创建桌号
 }
+
+message ChessConfigMultiple {
+    repeated int32 list = 1; //多选内容
+}
+
+message ChessConfig {
+  string type = 1; //麻将类型
+  map<string, int32> choices = 2;//选择 
+}
+
+
+
