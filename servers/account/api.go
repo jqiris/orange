@@ -4,15 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
+	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/database"
 	"github.com/jqiris/orange/model"
 	"github.com/spf13/viper"
-)
-
-const (
-	ACCOUNT_PRI_KEY = "^&*#$%()@"
-	ROOM_PRI_KEY    = "~!@#$(*&^%$&"
-	hallAddr        = "127.0.0.1:9001"
 )
 
 //注册
@@ -47,7 +42,7 @@ func (s *AccountServer) GetVersion(c *gin.Context) {
 func (s *AccountServer) GetServerinfo(c *gin.Context) {
 	resp := map[string]interface{}{
 		"version": viper.GetString("version"),
-		"hall":    hallAddr,
+		"hall":    constant.HALL_ADDR,
 		"appweb":  "http://fir.im/2f17",
 	}
 	c.JSON(200, resp)
@@ -56,12 +51,12 @@ func (s *AccountServer) GetServerinfo(c *gin.Context) {
 //游客账号
 func (s *AccountServer) Guest(c *gin.Context) {
 	account := "guest_" + c.Query("account")
-	sign := utils.Md5(account + c.ClientIP() + ACCOUNT_PRI_KEY)
+	sign := utils.Md5(account + c.ClientIP() + constant.ACCOUNT_PRI_KEY)
 	resp := map[string]interface{}{
 		"errcode":  0,
 		"errmsg":   "ok",
 		"account":  account,
-		"halladdr": hallAddr,
+		"halladdr": constant.HALL_ADDR,
 		"sign":     sign,
 	}
 	c.JSON(200, resp)
@@ -79,7 +74,7 @@ func (s *AccountServer) Auth(c *gin.Context) {
 		c.JSON(200, Msg{Errcode: 1, ErrMsg: "invalid account"})
 		return
 	}
-	sign := utils.Md5(account + c.ClientIP() + ACCOUNT_PRI_KEY)
+	sign := utils.Md5(account + c.ClientIP() + constant.ACCOUNT_PRI_KEY)
 	resp := map[string]interface{}{
 		"errcode": 0,
 		"errmsg":  "ok",

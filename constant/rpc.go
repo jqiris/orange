@@ -6,6 +6,7 @@ const (
 	GateServer    = "gate"
 	AccountServer = "account"
 	MahjongServer = "mahjong"
+	GameServer    = "game"
 )
 
 const (

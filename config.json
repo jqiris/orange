@@ -46,7 +46,7 @@
                 "server_name": "gate",
                 "server_ip": "127.0.0.1",
                 "client_port": 8288,
-                "is_launch": true,
+                "is_launch": false,
                 "shut_weight": 1
             },
             "hall_3001": {
@@ -55,7 +55,7 @@
                 "server_name": "hall",
                 "server_ip": "127.0.0.1",
                 "client_port": 8388,
-                "is_launch": true
+                "is_launch": false
             },
             "db_4001": {
                 "server_id": "db_4001",
@@ -63,7 +63,7 @@
                 "server_name": "db",
                 "server_ip": "127.0.0.1",
                 "client_port": 8488,
-                "is_launch": true,
+                "is_launch": false,
                 "serial": true,
                 "launch_weight": -1,
                 "shut_weight": 2
@@ -74,6 +74,14 @@
                 "server_name": "mahjong",
                 "server_ip": "127.0.0.1",
                 "client_port": 8588,
+                "is_launch": false
+            },
+            "game_1001": {
+                "server_id": "game_1001",
+                "server_type": "game",
+                "server_name": "game",
+                "server_ip": "127.0.0.1",
+                "client_port": 9003,
                 "is_launch": true
             }
         },

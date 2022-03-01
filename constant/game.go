@@ -14,3 +14,12 @@ const (
 	ACTION_HU     = 5
 	ACTION_ZIMO   = 6
 )
+
+const (
+	ACCOUNT_PRI_KEY = "^&*#$%()@"
+	ROOM_PRI_KEY    = "~!@#$(*&^%$&"
+	HALL_ADDR       = "127.0.0.1:9001"
+	SERVER_ID       = "001"
+	CLIENT_PORT     = 10000
+	TOKEN_KEY       = "!@#$%^&"
+)
