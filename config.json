@@ -32,12 +32,12 @@
             "db": 0
         },
         "servers": {
-            "world_1001": {
-                "server_id": "world_1001",
-                "server_type": "world",
-                "server_name": "world",
+            "account_1001": {
+                "server_id": "account_1001",
+                "server_type": "account",
+                "server_name": "account",
                 "server_ip": "127.0.0.1",
-                "client_port": 8188,
+                "client_port": 9000,
                 "is_launch": true
             },
             "gate_2001": {
@@ -105,7 +105,9 @@
         "port": 3306,
         "username": "root",
         "password": "123456",
-        "database": "orange",
+        "database": "db_babykylin",
         "showSql": true
-    }
+    },
+    "version": "20161227"
+
 }

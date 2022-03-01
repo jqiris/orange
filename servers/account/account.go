@@ -1,8 +1,7 @@
-package world
+package account
 
 import (
-	"net/http"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/base"
 	"github.com/jqiris/kungfu/v2/launch"
@@ -12,16 +11,21 @@ import (
 	"github.com/jqiris/orange/constant"
 )
 
-type WorldServer struct {
+type Msg struct {
+	Errcode int    `json:"errrcode"`
+	ErrMsg  string `json:"errmsg"`
+}
+
+type AccountServer struct {
 	*base.ServerHttp
 }
 
-func (s *WorldServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
+func (s *AccountServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
 	logger.Infof("world server handleSelfEvent:%+v", req)
 	return nil
 }
 
-func (s *WorldServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
+func (s *AccountServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
 	logger.Infof("world server HandleBroadcastEvent:%+v", req)
 	return nil
 }
@@ -31,24 +35,28 @@ func WorldServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//http handler
 	app := gin.Default()
 	//server entity
-	server := &WorldServer{
+	server := &AccountServer{
 		ServerHttp: base.NewServerHttp(s, app),
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
+	//cors
+	app.Use(cors.Default())
 	//router
 	server.Router(app)
 	return server, nil
 }
 
 func init() {
-	launch.RegisterCreator(constant.WorldServer, WorldServerCreator)
+	launch.RegisterCreator(constant.AccountServer, WorldServerCreator)
 }
 
 //router
-func (s *WorldServer) Router(app *gin.Engine) {
-	app.GET("/login", func(c *gin.Context) {
-		msg := s.Login(c)
-		c.JSON(http.StatusOK, msg)
-	})
+func (s *AccountServer) Router(app *gin.Engine) {
+	app.GET("/register", s.Register)
+	app.GET("/get_version", s.GetVersion)
+	app.GET("/get_serverinfo", s.GetServerinfo)
+	app.GET("/guest", s.Guest)
+	app.GET("/auth", s.Auth)
+	app.GET("/base_info", s.BaseInfo)
 }

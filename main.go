@@ -14,11 +14,11 @@ import (
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/stores"
 	"github.com/jqiris/orange/database"
+	_ "github.com/jqiris/orange/servers/account"
 	_ "github.com/jqiris/orange/servers/db"
 	_ "github.com/jqiris/orange/servers/gate"
 	_ "github.com/jqiris/orange/servers/hall"
 	_ "github.com/jqiris/orange/servers/mahjong"
-	_ "github.com/jqiris/orange/servers/world"
 	"github.com/spf13/viper"
 )
 

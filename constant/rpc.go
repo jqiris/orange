@@ -4,7 +4,7 @@ const (
 	DbServer      = "db"
 	HallServer    = "hall"
 	GateServer    = "gate"
-	WorldServer   = "world"
+	AccountServer = "account"
 	MahjongServer = "mahjong"
 )
 
