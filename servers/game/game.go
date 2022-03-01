@@ -55,4 +55,9 @@ func GameServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 
 func init() {
 	launch.RegisterCreator(constant.GameServer, GameServerCreator)
+
+	//inti mgr
+	roomMgr = NewRoomMgr()
+	tokenMgr = NewTokenMgr()
+	userMgr = NewUserMgr()
 }

@@ -87,18 +87,18 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 		c.Emit("login_result", Msg{Errcode: 2, Errmsg: "login failed invalid sign"})
 		return
 	}
-	if !s.tokenMgr.isTokenVaild(token) {
+	if !tokenMgr.isTokenVaild(token) {
 		c.Emit("login_result", Msg{Errcode: 3, Errmsg: "token out of time"})
 	}
 
-	userId := s.tokenMgr.getUserId(token)
-	roomId = s.roomMgr.getUserRoom(userId)
-	s.userMgr.bind(userId, c)
+	userId := tokenMgr.getUserId(token)
+	roomId = roomMgr.getUserRoom(userId)
+	userMgr.bind(userId, c)
 	ctx := &SocketCtx{UserId: userId}
 	c.SetContext(ctx)
 
 	//返回房间信息
-	roomInfo := s.roomMgr.getRoom(roomId)
+	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		c.Emit("login_result", Msg{
 			Errcode: 4,
@@ -106,7 +106,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 		})
 		return
 	}
-	seatIndex := s.roomMgr.getUserSeat(userId)
+	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
 	var userData Seat
 	var seats []Seat
@@ -114,7 +114,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 		rs := roomInfo.Seats[i]
 		online := false
 		if rs.UserId > 0 {
-			online = s.userMgr.isOnline(rs.UserId)
+			online = userMgr.isOnline(rs.UserId)
 		}
 		seat := Seat{
 			UserId:    rs.UserId,
@@ -143,7 +143,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	c.Emit("login_result", ret)
 
 	//通知其他客户端
-	s.userMgr.broadcastInRoom("new_user_comes_push", userData, userId)
+	userMgr.broadcastInRoom("new_user_comes_push", userData, userId)
 	ctx.GameMgr = roomInfo.GameMgr
 	//玩家上限，强制设置为true
 	ctx.GameMgr.setReady(userId)
@@ -156,14 +156,14 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 			"time":   remainingTime,
 			"states": dr.States,
 		}
-		s.userMgr.sendMsg(userId, "dissolve_notice_push", data)
+		userMgr.sendMsg(userId, "dissolve_notice_push", data)
 	}
 }
 
 func (s *GameServer) Ready(c socketio.Conn) {
 	if v := s.GetSocketCtx(c); v != nil {
 		v.GameMgr.setReady(v.UserId)
-		s.userMgr.broadcastInRoom("user_ready_push", map[string]interface{}{"userid": v.UserId, "ready": true}, v.UserId, true)
+		userMgr.broadcastInRoom("user_ready_push", map[string]interface{}{"userid": v.UserId, "ready": true}, v.UserId, true)
 	}
 }
 

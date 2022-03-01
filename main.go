@@ -16,6 +16,7 @@ import (
 	"github.com/jqiris/orange/database"
 	_ "github.com/jqiris/orange/servers/account"
 	_ "github.com/jqiris/orange/servers/db"
+	_ "github.com/jqiris/orange/servers/game"
 	_ "github.com/jqiris/orange/servers/gate"
 	_ "github.com/jqiris/orange/servers/hall"
 	_ "github.com/jqiris/orange/servers/mahjong"
