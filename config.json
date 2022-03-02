@@ -38,7 +38,7 @@
                 "server_name": "account",
                 "server_ip": "127.0.0.1",
                 "client_port": 9000,
-                "is_launch": true
+                "is_launch": false
             },
             "gate_2001": {
                 "server_id": "gate_2001",

@@ -98,8 +98,10 @@ func (m *XzddMj) begin(roomId int) {
 
 	for i := 0; i < len(seats); i++ {
 		st := seats[i]
+		holds := game.GameSeats[i].Holds
+		logger.Warnf("holds:%+v", holds)
 		//通知玩家手牌
-		userMgr.sendMsg(st.UserId, "game_holds_push", game.GameSeats[i].Holds)
+		userMgr.sendMsg(st.UserId, "game_holds_push", holds)
 		//通知还剩多少张牌
 		userMgr.sendMsg(st.UserId, "mj_count_push", numOfMJ)
 		//通知还剩多少局
@@ -140,9 +142,8 @@ func (m *XzddMj) mopai(game *GameData, seatIndex int) int {
 		return -1
 	}
 	data := game.GameSeats[seatIndex]
-	mahjongs := data.Holds
 	pai := game.Mahjongs[game.CurrentIndex]
-	mahjongs = append(mahjongs, pai)
+	data.Holds = append(data.Holds, pai)
 	data.CountMap[pai]++
 	game.CurrentIndex++
 	return pai
