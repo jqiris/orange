@@ -112,11 +112,11 @@ func (m *XzddMj) begin(roomId int) {
 		if huansanzhang == true {
 			game.State = "huanpai"
 			//通知准备换牌
-			userMgr.sendMsg(st.UserId, "game_huanpai_push", nil)
+			userMgr.sendMsg(st.UserId, "game_huanpai_push")
 		} else {
 			game.State = "dingque"
 			//通知准备定缺
-			userMgr.sendMsg(st.UserId, "game_dingque_push", nil)
+			userMgr.sendMsg(st.UserId, "game_dingque_push")
 		}
 	}
 }
@@ -199,7 +199,7 @@ func (m *XzddMj) setReady(userId int) {
 				}
 			}
 			//4个人到齐了，并且都准备好了，则开始新的一局
-			m.begin(roomId)
+			go m.begin(roomId)
 		}
 	} else {
 		numOfMJ := len(game.Mahjongs) - game.CurrentIndex
@@ -258,7 +258,7 @@ func (m *XzddMj) sendOperations(game *GameData, seatData *Seat, pai int) {
 		//如果可以有操作，则进行操作
 		userMgr.sendMsg(seatData.UserId, "game_action_push", data)
 	} else {
-		userMgr.sendMsg(seatData.UserId, "game_action_push", nil)
+		userMgr.sendMsg(seatData.UserId, "game_action_push")
 	}
 }
 
@@ -829,7 +829,7 @@ func (m *XzddMj) guo(userId int) {
 	}
 
 	doNothing := game.ChuPai == -1 && game.Turn == seatIndex
-	userMgr.sendMsg(seatData.UserId, "guo_result", nil)
+	userMgr.sendMsg(seatData.UserId, "guo_result")
 	m.clearAllOptions(game, seatData)
 
 	//这里还要处理过胡的情况

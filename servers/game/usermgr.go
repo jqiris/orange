@@ -52,10 +52,10 @@ func (m *UserMgr) broadcastInRoom(event string, data interface{}, sender int, ar
 	}
 }
 
-func (m *UserMgr) sendMsg(userId int, event string, msgdata interface{}) {
+func (m *UserMgr) sendMsg(userId int, event string, msgdata ...interface{}) {
 	socket := m.userList[userId]
 	if socket == nil {
 		return
 	}
-	socket.Emit(event, msgdata)
+	socket.Emit(event, msgdata...)
 }
