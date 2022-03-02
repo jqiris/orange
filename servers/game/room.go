@@ -25,7 +25,7 @@ type Room struct {
 	NumOfGames int           `json:"numOfGames"`
 	CreateTime int64         `json:"createTime"`
 	NextButton int           `json:"nextButton"`
-	Seats      []Seat        `json:"seats"`
+	Seats      []*Seat       `json:"seats"`
 	Conf       RoomConf      `json:"conf"`
 	GameMgr    GameMgr       `json:"gameMgr"`
 	Dr         *DissolveData `json:"dr"`

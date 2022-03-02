@@ -11,7 +11,7 @@ func (s *XlchMj) setReady(userId int) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *XlchMj) hasBegan(roomId int) {
+func (s *XlchMj) hasBegan(roomId int) bool {
 	panic("not implemented") // TODO: Implement
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jqiris/orange/model"
+	"github.com/jqiris/orange/tools"
 )
 
 func GetUserByAccount(account string) (*model.TUser, error) {
@@ -13,6 +14,7 @@ func GetUserByAccount(account string) (*model.TUser, error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Name = tools.GetBase64Val(res.Name)
 	return res, nil
 }
 
@@ -22,6 +24,7 @@ func GetUserById(userId int) (*model.TUser, error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Name = tools.GetBase64Val(res.Name)
 	return res, nil
 }
 
@@ -44,6 +47,10 @@ func GetRoomById(roomId int) (*model.TRoom, error) {
 	if err != nil {
 		return nil, err
 	}
+	res.UserName0 = tools.GetBase64Val(res.UserName0)
+	res.UserName1 = tools.GetBase64Val(res.UserName1)
+	res.UserName2 = tools.GetBase64Val(res.UserName2)
+	res.UserName3 = tools.GetBase64Val(res.UserName3)
 	return res, nil
 }
 

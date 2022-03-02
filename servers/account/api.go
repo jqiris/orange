@@ -1,6 +1,8 @@
 package account
 
 import (
+	"encoding/base64"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
@@ -92,10 +94,11 @@ func (s *AccountServer) BaseInfo(c *gin.Context) {
 		c.JSON(200, Msg{Errcode: 1, ErrMsg: "invalid userid"})
 		return
 	}
+	bs, _ := base64.StdEncoding.DecodeString(user.Name)
 	resp := map[string]interface{}{
 		"errcode":    0,
 		"errmsg":     "ok",
-		"name":       user.Name,
+		"name":       string(bs),
 		"sex":        user.Sex,
 		"headimgurl": user.Headimg,
 	}

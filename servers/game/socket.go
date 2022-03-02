@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -31,17 +32,24 @@ type LoginData struct {
 
 func (s *GameServer) SocketRouter(sc *socketio.Server) {
 	ns := "/"
-	sc.OnConnect(ns, s.OnConnect)        //连接
-	sc.OnDisconnect(ns, s.OnDisconnect)  //断开连接
-	sc.OnEvent(ns, "login", s.Login)     //登录
-	sc.OnEvent(ns, "ready", s.Ready)     //准备
-	sc.OnEvent(ns, "huanpai", s.Huanpai) //换牌
-	sc.OnEvent(ns, "dingque", s.Dingque) //定缺
-	sc.OnEvent(ns, "chupai", s.Chupai)   //出牌
-	sc.OnEvent(ns, "peng", s.Peng)       //碰
-	sc.OnEvent(ns, "gang", s.Gang)       //杠
-	sc.OnEvent(ns, "hu", s.Hu)           //胡
-	sc.OnEvent(ns, "guo", s.Guo)         //过
+	sc.OnConnect(ns, s.OnConnect)           //连接
+	sc.OnDisconnect(ns, s.OnDisconnect)     //断开连接
+	sc.OnEvent(ns, "login", s.Login)        //登录
+	sc.OnEvent(ns, "ready", s.Ready)        //准备
+	sc.OnEvent(ns, "huanpai", s.Huanpai)    //换牌
+	sc.OnEvent(ns, "dingque", s.Dingque)    //定缺
+	sc.OnEvent(ns, "chupai", s.Chupai)      //出牌
+	sc.OnEvent(ns, "peng", s.Peng)          //碰
+	sc.OnEvent(ns, "gang", s.Gang)          //杠
+	sc.OnEvent(ns, "hu", s.Hu)              //胡
+	sc.OnEvent(ns, "guo", s.Guo)            //过
+	sc.OnEvent(ns, "game_ping", s.GamePing) //心跳
+	go sc.Serve()
+	defer sc.Close()
+
+	http.Handle("/socket.io/", sc)
+	logger.Infof("socket server start at:%v", constant.CLIENT_PORT)
+	http.ListenAndServe(fmt.Sprintf(":%v", constant.CLIENT_PORT), nil)
 }
 
 func (s *GameServer) OnConnect(c socketio.Conn) error {
@@ -72,6 +80,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	var data LoginData
 	err := json.Unmarshal([]byte(msg), &data)
 	if err != nil {
+		logger.Error(err)
 		c.Emit("login_result", Msg{Errcode: 1, Errmsg: "invalid parameters"})
 		return
 	}
@@ -79,6 +88,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 		return //已经登录过
 	}
 	token := data.Token
+	//roomId := utils.StringToInt(data.Roomid)
 	roomId := data.Roomid
 	rtime := data.Time
 	sign := data.Sign
@@ -108,22 +118,22 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	}
 	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
-	var userData Seat
-	var seats []Seat
+	var userData map[string]interface{}
+	var seats []map[string]interface{}
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
 		online := false
 		if rs.UserId > 0 {
 			online = userMgr.isOnline(rs.UserId)
 		}
-		seat := Seat{
-			UserId:    rs.UserId,
-			Score:     rs.Score,
-			Name:      rs.Name,
-			Ready:     rs.Ready,
-			SeatIndex: i,
-			Ip:        rs.Ip,
-			Online:    online,
+		seat := map[string]interface{}{
+			"userid":    rs.UserId,
+			"score":     rs.Score,
+			"name":      rs.Name,
+			"ready":     rs.Ready,
+			"seatindex": i,
+			"ip":        rs.Ip,
+			"online":    online,
 		}
 		seats = append(seats, seat)
 		if userId == rs.UserId {
@@ -248,4 +258,14 @@ func (s *GameServer) Guo(c socketio.Conn) {
 		return
 	}
 	ctx.GameMgr.guo(ctx.UserId)
+}
+
+//心跳
+func (s *GameServer) GamePing(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	logger.Infof("GamePing:%v", ctx.UserId)
+	c.Emit("game_pong")
 }

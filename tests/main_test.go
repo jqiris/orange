@@ -16,6 +16,7 @@ import (
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/protos"
+	"github.com/jqiris/orange/tools"
 	"github.com/spf13/viper"
 )
 
@@ -138,4 +139,10 @@ func TestRoomCodeGenerate(t *testing.T) {
 	})
 	w.Wait()
 	logger.Info("GenerateCode success")
+}
+
+func TestSliceDelete(t *testing.T) {
+	arr := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	res := tools.SliceDel(arr, 6, 2)
+	fmt.Println(res)
 }

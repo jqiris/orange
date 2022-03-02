@@ -97,7 +97,7 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int)
 				NumOfGames: 0,
 				CreateTime: createTime,
 				NextButton: 0,
-				Seats:      make([]Seat, 4),
+				Seats:      make([]*Seat, 4),
 				Conf: RoomConf{
 					Type:        conf.Type,
 					Zimo:        conf.Zimo,
@@ -118,7 +118,7 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int)
 				roomInfo.GameMgr = NewXzddMj()
 			}
 			for i := 0; i < 4; i++ {
-				roomInfo.Seats[i] = Seat{
+				roomInfo.Seats[i] = &Seat{
 					UserId:      0,
 					Score:       0,
 					Name:        "",
@@ -222,7 +222,7 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 		NumOfGames: dbdata.NumOfTurns,
 		CreateTime: dbdata.CreateTime,
 		NextButton: dbdata.NextButton,
-		Seats:      make([]Seat, 4),
+		Seats:      make([]*Seat, 4),
 		Conf:       cfg,
 	}
 	if cfg.Type == "xlch" {
@@ -232,7 +232,7 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 	}
 	roomId := dbdata.ID
 	for i := 0; i < 4; i++ {
-		s := Seat{}
+		s := &Seat{}
 		switch i {
 		case 0:
 			s.UserId = dbdata.UserID0
@@ -270,4 +270,25 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 	m.rooms[roomId] = roomInfo
 	m.totalRooms++
 	return roomInfo, nil
+}
+
+func (m *RoomMgr) setReady(userId int, value bool) {
+	roomId := m.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	room := m.getRoom(roomId)
+	if room == nil {
+		return
+	}
+	seatIndex := m.getUserSeat(userId)
+	if seatIndex < 0 {
+		return
+	}
+	s := room.Seats[seatIndex]
+	s.Ready = value
+}
+
+func (m *RoomMgr) getTotallRooms() int {
+	return m.totalRooms
 }
