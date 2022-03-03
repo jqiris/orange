@@ -557,6 +557,7 @@ func (m *XzddMj) doDingQue(game *GameData, seatData *Seat) {
 	m.checkCanHu(game, turnSeat, turnSeat.Holds[len(turnSeat.Holds)-1])
 	//通知前端
 	m.sendOperations(game, turnSeat, game.ChuPai)
+	logger.Warnf("doDingQue,seat:%+v,turn:%+v", game.GameSeats[game.Turn], game.Turn)
 }
 
 func (m *XzddMj) chuPai(userId int, pai int) {
@@ -565,7 +566,7 @@ func (m *XzddMj) chuPai(userId int, pai int) {
 		logger.Error("can't find the user game data")
 		return
 	}
-
+	logger.Warnf("chuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
 	game := seatData.Game
 	if game.Turn != seatData.SeatIndex {
 		logger.Error("not your turn")
@@ -595,7 +596,73 @@ func (m *XzddMj) chuPai(userId int, pai int) {
 	seatData.CountMap[pai]--
 	game.ChuPai = pai
 	m.recordGameAction(game, game.Turn, constant.ACTION_CHUPAI, pai)
+	m.checkCanTingPai(game, seatData)
+	userMgr.broadcastInRoom("game_chupai_notify_push", map[string]interface{}{
+		"userId": seatData.UserId,
+		"pai":    pai,
+	}, seatData.UserId, true)
+	if v := seatData.TingMap[game.ChuPai]; v != nil {
+		seatData.GuoHuFan = v.Fan
+	}
+	//检查是否有人要胡，要碰 要杠
+	hasActions := false
+	for i, ddd := range game.GameSeats {
+		if game.Turn == i {
+			continue
+		}
+		if ddd.Hued {
+			continue
+		}
+		m.checkCanHu(game, ddd, pai)
+		if seatData.LastFangGangSeat == -1 {
+			if v, ok := seatData.TingMap[pai]; ok && ddd.CanHu && ddd.GuoHuFan >= 0 && v.Fan <= ddd.GuoHuFan {
+				ddd.CanHu = false
+				userMgr.sendMsg(ddd.UserId, "guohu_push")
+			}
+		}
+		m.checkCanPeng(game, ddd, pai)
+		m.checkCanDianGang(game, ddd, pai)
+		if m.hasOperations(ddd) {
+			m.sendOperations(game, ddd, game.ChuPai)
+			hasActions = true
+		}
+	}
+	//如果没有人有操作，则向下一家发牌，并通知他出牌
+	if !hasActions {
+		time.AfterFunc(500*time.Millisecond, func() {
+			userMgr.broadcastInRoom("guo_notify_push", map[string]interface{}{"userId": seatData.UserId, "pai": game.ChuPai}, seatData.UserId, true)
+			seatData.Folds = append(seatData.Folds, game.ChuPai)
+			game.ChuPai = -1
+			m.moveToNextUser(game, -1)
+			m.doUserMoPai(game)
+		})
+	}
+}
 
+func (m *XzddMj) checkCanDianGang(game *GameData, seatData *Seat, targetPai int) {
+	//检查玩家手上的牌
+	//如果没有牌了，则不能再杠
+	if len(game.Mahjongs) <= game.CurrentIndex {
+		return
+	}
+	if m.getMJType(targetPai) == seatData.Que {
+		return
+	}
+	count := seatData.CountMap[targetPai]
+	if count >= 3 {
+		seatData.CanGang = true
+		seatData.GangPai = append(seatData.GangPai, targetPai)
+		return
+	}
+}
+func (m *XzddMj) checkCanPeng(game *GameData, seatData *Seat, targetPai int) {
+	if m.getMJType(targetPai) == seatData.Que {
+		return
+	}
+	count := seatData.CountMap[targetPai]
+	if count >= 2 {
+		seatData.CanPeng = true
+	}
 }
 
 func (m *XzddMj) checkCanTingPai(game *GameData, seatData *Seat) {
