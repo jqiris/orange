@@ -373,7 +373,7 @@ func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
 		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
 		return
 	}
-	if len(seatData.Huanpais) < 1 {
+	if len(seatData.Huanpais) > 0 {
 		logger.Error("player has done this action")
 		return
 	}
@@ -1086,14 +1086,16 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 		}
 		userMgr.broadcastInRoom("game_over_push", map[string]interface{}{"results": results, "endinfo": endInfo}, userId, true)
 		//如果局数已够，则进行整体结算，并关闭房间
-		time.AfterFunc(1500*time.Millisecond, func() {
-			if roomInfo.NumOfGames > 1 {
-				m.storeHistory(roomInfo)
-			}
-			userMgr.kickAllInRoom(roomId)
-			roomMgr.destroy(roomId)
-			database.ArchiveGames(roomInfo.Uuid)
-		})
+		if isEnd {
+			time.AfterFunc(1500*time.Millisecond, func() {
+				if roomInfo.NumOfGames > 1 {
+					m.storeHistory(roomInfo)
+				}
+				userMgr.kickAllInRoom(roomId)
+				roomMgr.destroy(roomId)
+				database.ArchiveGames(roomInfo.Uuid)
+			})
+		}
 	}
 
 	if game != nil {
@@ -1542,10 +1544,12 @@ func (m *XzddMj) storeSingleHistory(userId int, history map[string]interface{}) 
 		return
 	}
 	var res []map[string]interface{}
-	err = json.Unmarshal([]byte(user.History), &res)
-	if err != nil {
-		logger.Error(err)
-		return
+	if len(user.History) > 0 {
+		err = json.Unmarshal([]byte(user.History), &res)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
 	}
 	if len(res) >= 10 {
 		res = res[1:]
