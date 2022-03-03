@@ -15,11 +15,11 @@ func (s *XlchMj) hasBegan(roomId int) bool {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *XlchMj) dissolveRequest(roomId int, userId int) {
+func (s *XlchMj) dissolveRequest(roomId int, userId int) *Room {
 	panic("not implemented") // TODO: Implement
 }
 
-func (s *XlchMj) dissolveAgree(roomId int, userId int, agree bool) {
+func (s *XlchMj) dissolveAgree(roomId int, userId int, agree bool) *Room {
 	panic("not implemented") // TODO: Implement
 }
 

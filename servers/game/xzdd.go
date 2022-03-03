@@ -1,24 +1,50 @@
 package game
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"math"
 	"math/rand"
+	"sync"
+	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/orange/constant"
+	"github.com/jqiris/orange/database"
+	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/tools"
 )
 
 type XzddMj struct {
-	games            map[int]*GameData
-	gameSeatsOfUsers map[int]*Seat
+	games            sync.Map
+	gameSeatsOfUsers sync.Map
+	dissolvingList   []int
 }
 
 func NewXzddMj() *XzddMj {
 	return &XzddMj{
-		games:            make(map[int]*GameData),
-		gameSeatsOfUsers: make(map[int]*Seat),
+		games:            sync.Map{},
+		gameSeatsOfUsers: sync.Map{},
+		dissolvingList:   make([]int, 0),
 	}
+}
+
+func (m *XzddMj) getGame(roomId int) *GameData {
+	if v, ok := m.games.Load(roomId); ok {
+		if game, okv := v.(*GameData); okv {
+			return game
+		}
+	}
+	return nil
+}
+
+func (m *XzddMj) getSeat(userId int) *Seat {
+	if v, ok := m.gameSeatsOfUsers.Load(userId); ok {
+		if seat, okv := v.(*Seat); okv {
+			return seat
+		}
+	}
+	return nil
 }
 
 func (m *XzddMj) String() string {
@@ -60,6 +86,7 @@ func (m *XzddMj) begin(roomId int) {
 		data.Folds = make([]int, 0)
 		data.Angangs = make([]int, 0)
 		data.Wangangs = make([]int, 0)
+		data.Diangangs = make([]int, 0)
 		data.Pengs = make([]int, 0)
 		data.Que = -1
 		data.Huanpais = make([]int, 0)
@@ -75,7 +102,7 @@ func (m *XzddMj) begin(roomId int) {
 		data.Hued = false
 		data.Iszimo = false
 		data.IsGangHu = false
-		data.Actions = make([]int, 0)
+		data.Actions = make([]*ActionData, 0)
 		data.Fan = 0
 		data.Score = 0
 		data.LastFangGangSeat = 0
@@ -87,9 +114,9 @@ func (m *XzddMj) begin(roomId int) {
 		data.NumMingGang = 0
 		data.NumChaJiao = 0
 		game.GameSeats[i] = data
-		m.gameSeatsOfUsers[data.UserId] = data
+		m.gameSeatsOfUsers.Store(data.UserId, data)
 	}
-	m.games[roomId] = game
+	m.games.Store(roomId, game)
 	m.shuffle(game)
 	m.deal(game)
 
@@ -178,8 +205,8 @@ func (m *XzddMj) shuffle(game *GameData) {
 	}
 }
 
-func (m *XzddMj) setReady(userId int) {
-	roomId := roomMgr.getUserRoom(userId)
+func (m *XzddMj) setReady(UserId int) {
+	roomId := roomMgr.getUserRoom(UserId)
 	if roomId < 1 {
 		return
 	}
@@ -187,9 +214,9 @@ func (m *XzddMj) setReady(userId int) {
 	if roomInfo == nil {
 		return
 	}
-	roomMgr.setReady(userId, true)
+	roomMgr.setReady(UserId, true)
 
-	game := m.games[roomId]
+	game := m.getGame(roomId)
 	if game == nil {
 		if len(roomInfo.Seats) == 4 {
 			for i := 0; i < 4; i++ {
@@ -226,7 +253,7 @@ func (m *XzddMj) setReady(userId int) {
 				Hued:      sd.Hued,
 				Iszimo:    sd.Iszimo,
 			}
-			if sd.UserId == userId {
+			if sd.UserId == UserId {
 				st.Holds = sd.Holds
 				st.Huanpais = sd.Huanpais
 				seatData = sd
@@ -237,7 +264,7 @@ func (m *XzddMj) setReady(userId int) {
 		}
 		data["seats"] = seats
 		//同步整个信息给客户端
-		userMgr.sendMsg(userId, "game_sync_push", data)
+		userMgr.sendMsg(UserId, "game_sync_push", data)
 		m.sendOperations(game, seatData, game.ChuPai)
 	}
 }
@@ -270,7 +297,7 @@ func (m *XzddMj) hasOperations(seatData *Seat) bool {
 }
 
 func (m *XzddMj) hasBegan(roomId int) bool {
-	game := m.games[roomId]
+	game := m.getGame(roomId)
 	if game != nil {
 		return true
 	}
@@ -281,28 +308,259 @@ func (m *XzddMj) hasBegan(roomId int) bool {
 	return false
 }
 
-func (m *XzddMj) dissolveRequest(roomId int, userId int) {
-	panic("not implemented") // TODO: Implement
+func (m *XzddMj) dissolveRequest(roomId int, userId int) *Room {
+	roomInfo := roomMgr.getRoom(roomId)
+	if roomInfo == nil {
+		return nil
+	}
+	if roomInfo.Dr != nil {
+		return nil
+	}
+	seatIndex := roomMgr.getUserSeat(userId)
+	if seatIndex == -1 {
+		return nil
+	}
+	dr := &DissolveData{
+		EndTime: time.Now().UnixMilli() + 30000,
+		States:  []bool{false, false, false, false},
+	}
+	dr.States[seatIndex] = true
+	m.dissolvingList = append(m.dissolvingList, roomId)
+	return roomInfo
 }
 
-func (m *XzddMj) dissolveAgree(roomId int, userId int, agree bool) {
-	panic("not implemented") // TODO: Implement
+func (m *XzddMj) dissolveAgree(roomId int, userId int, agree bool) *Room {
+	roomInfo := roomMgr.getRoom(roomId)
+	if roomInfo == nil {
+		return nil
+	}
+	if roomInfo.Dr == nil {
+		return nil
+	}
+	seatIndex := roomMgr.getUserSeat(userId)
+	if seatIndex == -1 {
+		return nil
+	}
+	if agree {
+		roomInfo.Dr.States[seatIndex] = true
+	} else {
+		roomInfo.Dr = nil
+		idx := tools.IndexOf(m.dissolvingList, roomId)
+		if idx != -1 {
+			m.dissolvingList = tools.SliceDel(m.dissolvingList, idx, 1)
+		}
+	}
+	return roomInfo
 }
 
 func (m *XzddMj) doDissolve(roomId int) {
-	panic("not implemented") // TODO: Implement
+	roomInfo := roomMgr.getRoom(roomId)
+	if roomInfo == nil {
+		return
+	}
+	game := m.getGame(roomId)
+	m.doGameOver(game, roomInfo.Seats[0].UserId, true)
 }
 
 func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
-	panic("not implemented") // TODO: Implement
+	seatData := m.getSeat(userId)
+	if seatData == nil {
+		logger.Error("can't find user game data.")
+		return
+	}
+	game := seatData.Game
+	if game.State != "huanpai" {
+		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
+		return
+	}
+	if len(seatData.Huanpais) < 1 {
+		logger.Error("player has done this action")
+		return
+	}
+	if seatData.CountMap[p1] == 0 {
+		return
+	}
+	seatData.CountMap[p1]--
+
+	if seatData.CountMap[p2] == 0 {
+		seatData.CountMap[p1]++
+		return
+	}
+	seatData.CountMap[p2]--
+
+	if seatData.CountMap[p3] == 0 {
+		seatData.CountMap[p1]++
+		seatData.CountMap[p2]++
+		return
+	}
+
+	seatData.CountMap[p1]++
+	seatData.CountMap[p2]++
+
+	seatData.Huanpais = []int{p1, p2, p3}
+
+	for _, p := range seatData.Huanpais {
+		idx := tools.IndexOf(seatData.Holds, p)
+		seatData.Holds = tools.SliceDel(seatData.Holds, idx, 1)
+		seatData.CountMap[p]--
+	}
+	userMgr.sendMsg(seatData.UserId, "game_holds_push", seatData.Holds)
+
+	for _, sd := range game.GameSeats {
+		if sd == seatData {
+			var rd = map[string]interface{}{
+				"si":       seatData.UserId,
+				"Huanpais": seatData.Huanpais,
+			}
+			userMgr.sendMsg(sd.UserId, "huanpai_notify", rd)
+		} else {
+			var rd = map[string]interface{}{
+				"si":       seatData.UserId,
+				"Huanpais": []int{},
+			}
+			userMgr.sendMsg(sd.UserId, "huanpai_notify", rd)
+		}
+	}
+
+	//如果还有未换牌的玩家，则继承等待
+	for _, gs := range game.GameSeats {
+		if len(gs.Huanpais) == 0 {
+			return
+		}
+	}
+
+	//换牌函数
+	var fn = func(s1 *Seat, huanjin []int) {
+		for i := 0; i < len(huanjin); i++ {
+			var p = huanjin[i]
+			s1.Holds = append(s1.Holds, p)
+			s1.CountMap[p]++
+		}
+	}
+
+	//开始换牌
+	var f = rand.Intn(100)
+	var s = game.GameSeats
+	var huanpaiMethod = 0
+	//对家换牌
+	if f < 33 {
+		fn(s[0], s[2].Huanpais)
+		fn(s[1], s[3].Huanpais)
+		fn(s[2], s[0].Huanpais)
+		fn(s[3], s[1].Huanpais)
+		huanpaiMethod = 0
+	} else if f < 66 {
+		//换下家的牌
+		fn(s[0], s[1].Huanpais)
+		fn(s[1], s[2].Huanpais)
+		fn(s[2], s[3].Huanpais)
+		fn(s[3], s[0].Huanpais)
+		huanpaiMethod = 1
+	} else {
+		//换上家的牌
+		fn(s[0], s[3].Huanpais)
+		fn(s[1], s[0].Huanpais)
+		fn(s[2], s[1].Huanpais)
+		fn(s[3], s[2].Huanpais)
+		huanpaiMethod = 2
+	}
+
+	var rd = map[string]interface{}{
+		"method": huanpaiMethod,
+	}
+	game.HuanpaiMethod = huanpaiMethod
+
+	game.State = "dingque"
+	for _, gs := range s {
+		UserId := gs.UserId
+		userMgr.sendMsg(UserId, "game_huanpai_over_push", rd)
+
+		userMgr.sendMsg(UserId, "game_holds_push", gs.Holds)
+		//通知准备定缺
+		userMgr.sendMsg(UserId, "game_dingque_push")
+	}
+}
+
+func (m *XzddMj) constructGameBaseInfo(game *GameData) {
+	var baseInfo = map[string]interface{}{
+		"type":     game.Conf.Type,
+		"button":   game.Button,
+		"index":    game.GameIndex,
+		"mahjongs": game.Mahjongs,
+	}
+	seats := make([][]int, 4)
+	for i := 0; i < 4; i++ {
+		seats[i] = game.GameSeats[i].Holds
+	}
+	baseInfo["game_seats"] = seats
+	bs, _ := json.Marshal(baseInfo)
+	game.BaseInfoJson = string(bs)
 }
 
 func (m *XzddMj) dingQue(userId int, que int) {
-	panic("not implemented") // TODO: Implement
+	seatData := m.getSeat(userId)
+	if seatData == nil {
+		logger.Error("can't find user game data.")
+		return
+	}
+	game := seatData.Game
+	if game.State != "dingque" {
+		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
+		return
+	}
+	if seatData.Que < 0 {
+		game.NumOfQue++
+	}
+	seatData.Que = que
+
+	//检查玩家可以做的动作
+	//如果4个人都定缺了，通知庄家出牌
+	if game.NumOfQue == 4 {
+		go m.doDingQue(game, seatData)
+	} else {
+		userMgr.broadcastInRoom("game_dingque_notify_push", seatData.UserId, seatData.UserId, true)
+	}
+}
+
+func (m *XzddMj) doDingQue(game *GameData, seatData *Seat) {
+	m.constructGameBaseInfo(game)
+	arr := []int{1, 1, 1, 1}
+	for i, gs := range game.GameSeats {
+		arr[i] = gs.Que
+	}
+	userMgr.broadcastInRoom("game_dingque_finish_push", arr, seatData.UserId, true)
+	userMgr.broadcastInRoom("game_playing_push", nil, seatData.UserId, true)
+
+	//进行听牌检查
+	for _, gs := range game.GameSeats {
+		duoyu := -1
+		if len(gs.Holds) == 14 {
+			gs.Holds, duoyu = tools.SlicePop(gs.Holds)
+			gs.CountMap[duoyu] -= 1
+		}
+		m.checkCanTingPai(game, gs)
+		if duoyu >= 0 {
+			gs.Holds = append(gs.Holds, duoyu)
+			gs.CountMap[duoyu]++
+		}
+	}
+
+	turnSeat := game.GameSeats[game.Turn]
+	game.State = "playing"
+	//通知玩家出牌方
+	turnSeat.CanChuPai = true
+	userMgr.broadcastInRoom("game_chupai_push", turnSeat.UserId, turnSeat.UserId, true)
+	//检查是否可以暗杠或者胡
+	//直杠
+	m.checkCanAnGang(game, turnSeat)
+	//检查胡 用最后一张来检查
+	m.checkCanHu(game, turnSeat, turnSeat.Holds[len(turnSeat.Holds)-1])
+	//通知前端
+	m.sendOperations(game, turnSeat, game.ChuPai)
 }
 
 func (m *XzddMj) chuPai(userId int, pai int) {
-	seatData := m.gameSeatsOfUsers[userId]
+	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find the user game data")
 		return
@@ -446,7 +704,7 @@ func (m *XzddMj) recordGameAction(game *GameData, si, action, pai int) {
 }
 
 func (m *XzddMj) peng(userId int) {
-	seatData := m.gameSeatsOfUsers[userId]
+	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
 		return
@@ -556,7 +814,7 @@ func (m *XzddMj) clearAllOptions(game *GameData, seatData *Seat) {
 }
 
 func (m *XzddMj) gang(userId int, pai int) {
-	seatData := m.gameSeatsOfUsers[userId]
+	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
 		return
@@ -663,18 +921,18 @@ func (m *XzddMj) doGang(game *GameData, turnSeat, seatData *Seat, gangtype strin
 	if gangtype == "angang" {
 		seatData.Angangs = append(seatData.Angangs, pai)
 		var ac = m.recordUserAction(game, seatData, "angang")
-		ac["score"] = game.Conf.BaseScore * 2
+		ac.Score = game.Conf.BaseScore * 2
 	} else if gangtype == "diangang" {
 		seatData.Diangangs = append(seatData.Diangangs, pai)
 		var ac = m.recordUserAction(game, seatData, "diangang", gameTurn)
-		ac["score"] = game.Conf.BaseScore * 2
+		ac.Score = game.Conf.BaseScore * 2
 		var fs = turnSeat
 		m.recordUserAction(game, fs, "fanggang", seatIndex)
 	} else if gangtype == "wangang" {
 		seatData.Wangangs = append(seatData.Wangangs, pai)
 		if isZhuanShouGang == false {
 			var ac = m.recordUserAction(game, seatData, "wangang")
-			ac["score"] = game.Conf.BaseScore
+			ac.Score = game.Conf.BaseScore
 		} else {
 			m.recordUserAction(game, seatData, "zhuanshougang")
 		}
@@ -728,13 +986,600 @@ func (m *XzddMj) doUserMoPai(game *GameData) {
 	m.sendOperations(game, turnSeat, game.ChuPai)
 }
 
-func (m *XzddMj) doGameOver(game *GameData, UserId int, forceEnd ...bool) {
-	//todo doGameOver
+func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
+	forceEnd := false
+	if len(args) > 0 {
+		forceEnd = args[0]
+	}
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	roomInfo := roomMgr.getRoom(roomId)
+	if roomInfo == nil {
+		return
+	}
+	var results []map[string]interface{}
+	dbresult := []int{0, 0, 0, 0}
+	fnNoticeResult := func(isEnd bool) {
+		var endInfo []map[string]interface{}
+		if isEnd {
+			for _, rs := range roomInfo.Seats {
+				endInfo = append(endInfo, map[string]interface{}{
+					"numzimo":      rs.NumZiMo,
+					"numjiepao":    rs.NumJiePao,
+					"numdianpao":   rs.NumDianPao,
+					"numangang":    rs.NumAnGang,
+					"numminggang":  rs.NumMingGang,
+					"numchadajiao": rs.NumChaJiao,
+				})
+			}
+		}
+		userMgr.broadcastInRoom("game_over_push", map[string]interface{}{"results": results, "endinfo": endInfo}, userId, true)
+		//如果局数已够，则进行整体结算，并关闭房间
+		time.AfterFunc(1500*time.Millisecond, func() {
+			if roomInfo.NumOfGames > 1 {
+				m.storeHistory(roomInfo)
+			}
+			userMgr.kickAllInRoom(roomId)
+			roomMgr.destroy(roomId)
+			database.ArchiveGames(roomInfo.Uuid)
+		})
+	}
+
+	if game != nil {
+		if !forceEnd {
+			m.calculateResult(game, roomInfo)
+		}
+		for i, rs := range roomInfo.Seats {
+			sd := game.GameSeats[i]
+			rs.Ready = false
+			rs.Score += sd.Score
+			rs.NumZiMo += sd.NumZiMo
+			rs.NumJiePao += sd.NumJiePao
+			rs.NumDianPao += sd.NumDianPao
+			rs.NumAnGang += sd.NumAnGang
+			rs.NumMingGang += sd.NumMingGang
+			rs.NumChaJiao += sd.NumChaJiao
+			userRT := map[string]interface{}{
+				"userId":     sd.UserId,
+				"pengs":      sd.Pengs,
+				"actions":    nil,
+				"wangangs":   sd.Wangangs,
+				"diangangs":  sd.Diangangs,
+				"angangs":    sd.Angangs,
+				"numofgen":   sd.Numofgen,
+				"holds":      sd.Holds,
+				"fan":        sd.Fan,
+				"score":      sd.Score,
+				"totalscore": rs.Score,
+				"qingyise":   sd.Qingyise,
+				"pattern":    sd.Pattern,
+				"isganghu":   sd.IsGangHu,
+				"menqing":    sd.IsMenQing,
+				"zhongzhang": sd.IsZhongZhang,
+				"jingouhu":   sd.IsJinGouHu,
+				"haidihu":    sd.IsHaiDiHu,
+				"tianhu":     sd.IsTianHu,
+				"dihu":       sd.IsDiHu,
+				"huorder":    tools.IndexOf(game.HupaiList, i),
+			}
+			var actions []map[string]interface{}
+			for _, ac := range sd.Actions {
+				actions = append(actions, map[string]interface{}{"type": ac.Type})
+			}
+			userRT["actions"] = actions
+			results = append(results, userRT)
+
+			dbresult[i] = sd.Score
+			m.gameSeatsOfUsers.Delete(sd.UserId)
+		}
+		m.games.Delete(roomId)
+		old := roomInfo.NextButton
+		if game.Yipaoduoxiang >= 0 {
+			roomInfo.NextButton = game.Yipaoduoxiang
+		} else if game.FirstHupai >= 0 {
+			roomInfo.NextButton = game.FirstHupai
+		} else {
+			roomInfo.NextButton = (game.Turn + 1) % 4
+		}
+		if old != roomInfo.NextButton {
+			database.UpdateRoom(roomId, map[string]interface{}{"next_button": roomInfo.NextButton})
+		}
+	}
+	if forceEnd || game == nil {
+		fnNoticeResult(true)
+	} else {
+		err := m.storeGame(game)
+		if err != nil {
+			logger.Error(err)
+		}
+		database.UpdateGame(roomInfo.Uuid, game.GameIndex, map[string]interface{}{
+			"result":         tools.Stringify(dbresult),
+			"action_records": tools.Stringify(game.ActionList),
+		})
+		database.UpdateRoom(roomId, map[string]interface{}{"num_of_turns": roomInfo.NumOfGames})
+		if roomInfo.NumOfGames == 1 {
+			cost := 2
+			if roomInfo.Conf.MaxGames == 8 {
+				cost = 3
+			}
+			if err := database.CostGems(userId, cost); err != nil {
+				logger.Error(err)
+			}
+		}
+		isEnd := roomInfo.NumOfGames >= roomInfo.Conf.MaxGames
+		fnNoticeResult(isEnd)
+	}
 }
 
-func (m *XzddMj) recordUserAction(game *GameData, seatData *Seat, typ string, target ...interface{}) map[string]interface{} {
-	//todo recordUserAction
-	return nil
+func (m *XzddMj) storeGame(game *GameData) error {
+	return database.CreateGame(&model.TGame{
+		RoomUUID:   game.RoomInfo.Uuid,
+		GameIndex:  game.GameIndex,
+		BaseInfo:   game.BaseInfoJson,
+		CreateTime: time.Now().Unix(),
+	})
+}
+
+func (m *XzddMj) calculateResult(game *GameData, roomInfo *Room) {
+	isNeedChaDaJiao := m.needChaDaJiao(game)
+	if isNeedChaDaJiao {
+		m.chaJiao(game)
+	}
+	baseScore := game.Conf.BaseScore
+	numOfHued := 0
+	for _, sd := range game.GameSeats {
+		if sd.Hued {
+			numOfHued++
+		}
+	}
+	for _, sd := range game.GameSeats {
+		sd.NumAnGang = len(sd.Angangs)
+		sd.NumMingGang = len(sd.Wangangs) + len(sd.Diangangs)
+		//对所有胡牌的玩家进行统计
+		if m.isTinged(sd) {
+			//统计自己的番子和分数
+			//基础番(平胡0番，对对胡1番、七对2番) + 清一色2番 + 杠+1番
+			//杠上花+1番，杠上炮+1番 抢杠胡+1番，金钩胡+1番，海底胡+1番
+			var fan = sd.Fan
+			if m.isQingYiSe(sd) {
+				sd.Qingyise = true
+				fan += 2
+			}
+
+			var numOfGangs = len(sd.Diangangs) + len(sd.Wangangs) + len(sd.Angangs)
+			for _, pai := range sd.Pengs {
+				if sd.CountMap[pai] == 1 {
+					numOfGangs++
+				}
+			}
+			for _, c := range sd.CountMap {
+				if c == 4 {
+					numOfGangs++
+				}
+			}
+			sd.Numofgen = numOfGangs
+
+			//金钩胡
+			if len(sd.Holds) == 1 || len(sd.Holds) == 2 {
+				fan += 1
+				sd.IsJinGouHu = true
+			}
+
+			if sd.IsHaiDiHu {
+				fan += 1
+			}
+
+			if game.Conf.Tiandihu {
+				if sd.IsTianHu {
+					fan += 3
+				} else if sd.IsDiHu {
+					fan += 2
+				}
+			}
+
+			var isjiangdui = false
+			if game.Conf.Jiangdui {
+				if sd.Pattern == "7pairs" {
+					if sd.Numofgen > 0 {
+						sd.Numofgen -= 1
+						sd.Pattern = "l7pairs"
+						isjiangdui = m.isJiangDui(sd)
+						if isjiangdui {
+							sd.Pattern = "j7paris"
+							fan += 2
+						} else {
+							fan += 1
+						}
+					}
+				} else if sd.Pattern == "duidui" {
+					isjiangdui = m.isJiangDui(sd)
+					if isjiangdui {
+						sd.Pattern = "jiangdui"
+						fan += 2
+					}
+				}
+			}
+
+			if game.Conf.Menqing {
+				//不是将对，才检查中张
+				if !isjiangdui {
+					sd.IsZhongZhang = m.isZhongZhang(sd)
+					if sd.IsZhongZhang {
+						fan += 1
+					}
+				}
+
+				sd.IsMenQing = m.isMenQing(sd)
+				if sd.IsMenQing {
+					fan += 1
+				}
+			}
+
+			fan += sd.Numofgen
+			if sd.IsGangHu {
+				fan += 1
+			}
+			if sd.IsQiangGangHu {
+				fan += 1
+			}
+
+			//收杠钱
+			var additonalscore = 0
+			for a := 0; a < len(sd.Actions); a++ {
+				var ac = sd.Actions[a]
+				if ac.Type == "fanggang" {
+					var ts = game.GameSeats[ac.Targets[0]]
+					//检查放杠的情况，如果目标没有和牌，且没有叫牌，则不算 用于优化前端显示
+					if isNeedChaDaJiao && (ts.Hued) == false && (m.isTinged(ts) == false) {
+						ac.State = "nop"
+					}
+				} else if ac.Type == "angang" || ac.Type == "wangang" || ac.Type == "diangang" {
+					if ac.State != "nop" {
+						var acscore = ac.Score
+						additonalscore += len(ac.Targets) * acscore * baseScore
+						//扣掉目标方的分
+						for t := 0; t < len(ac.Targets); t++ {
+							var six = ac.Targets[t]
+							game.GameSeats[six].Score -= acscore * baseScore
+						}
+					}
+				} else if ac.Type == "maozhuanyu" {
+					//对于呼叫转移，如果对方没有叫牌，表示不得行
+					if m.isTinged(ac.Owner) {
+						//如果
+						var ref = ac.Ref
+						var acscore = ref.Score
+						var total = len(ref.Targets) * acscore * baseScore
+						additonalscore += total
+						//扣掉目标方的分
+						if ref.PayTimes == 0 {
+							for t := 0; t < len(ref.Targets); t++ {
+								var six = ref.Targets[t]
+								game.GameSeats[six].Score -= acscore * baseScore
+							}
+						} else {
+							//如果已经被扣过一次了，则由杠牌这家赔
+							ac.Owner.Score -= total
+						}
+						ref.PayTimes++
+						ac.Owner = nil
+						ac.Ref = nil
+					}
+				} else if ac.Type == "zimo" || ac.Type == "hu" || ac.Type == "ganghua" || ac.Type == "dianganghua" || ac.Type == "gangpaohu" || ac.Type == "qiangganghu" || ac.Type == "chadajiao" {
+					var extraScore = 0
+					if ac.Iszimo {
+						if game.Conf.Zimo == 0 {
+							//自摸加底
+							extraScore = baseScore
+						}
+						if game.Conf.Zimo == 1 {
+							fan += 1
+						} else {
+							//nothing.
+						}
+						sd.NumZiMo++
+					} else {
+						if ac.Type != "chadajiao" {
+							sd.NumJiePao++
+						}
+					}
+
+					var score = m.computeFanScore(game, fan) + extraScore
+					sd.Score += score * len(ac.Targets)
+
+					for t := 0; t < len(ac.Targets); t++ {
+						var six = ac.Targets[t]
+						var td = game.GameSeats[six]
+						td.Score -= score
+						if td != sd {
+							if ac.Type == "chadajiao" {
+								td.NumChaJiao++
+							} else if !ac.Iszimo {
+								td.NumDianPao++
+							}
+						}
+					}
+				}
+			}
+			if fan > game.Conf.MaxFan {
+				fan = game.Conf.MaxFan
+			}
+			//一定要用 += 。 因为此时的sd.score可能是负的
+			sd.Score += additonalscore
+			if len(sd.Pattern) > 0 {
+				sd.Fan = fan
+			}
+		} else {
+			var arr []int
+			for a := len(sd.Actions) - 1; a >= 0; a-- {
+				var ac = sd.Actions[a]
+				if ac.Type == "angang" || ac.Type == "wangang" || ac.Type == "diangang" {
+					//如果3家都胡牌，则需要结算。否则认为是查叫
+					if numOfHued < 3 {
+						arr = append(arr, a)
+					} else {
+						if ac.State != "nop" {
+							var acscore = ac.Score
+							sd.Score += len(ac.Targets) * acscore * baseScore
+							//扣掉目标方的分
+							for t := 0; t < len(ac.Targets); t++ {
+								var six = ac.Targets[t]
+								game.GameSeats[six].Score -= acscore * baseScore
+							}
+						}
+					}
+				}
+			}
+			if len(arr) > 0 {
+				for _, a := range arr {
+					sd.Actions = append(sd.Actions[:a], sd.Actions[a+1:]...)
+				}
+			}
+		}
+	}
+}
+
+func (m *XzddMj) computeFanScore(game *GameData, fan int) int {
+	if fan > game.Conf.MaxFan {
+		fan = game.Conf.MaxFan
+	}
+	return (1 << fan) * game.Conf.BaseScore
+}
+
+func (m *XzddMj) isMenQing(gameSeatData *Seat) bool {
+	return len(gameSeatData.Pengs)+len(gameSeatData.Wangangs)+len(gameSeatData.Diangangs) == 0
+}
+
+func (m *XzddMj) isZhongZhang(gameSeatData *Seat) bool {
+	fn := func(arr []int) bool {
+		for i := 0; i < len(arr); i++ {
+			var pai = arr[i]
+			if pai == 0 || pai == 8 || pai == 9 || pai == 17 || pai == 18 || pai == 26 {
+				return false
+			}
+		}
+		return true
+	}
+
+	if fn(gameSeatData.Pengs) == false {
+		return false
+	}
+	if fn(gameSeatData.Angangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Diangangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Wangangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Holds) == false {
+		return false
+	}
+	return true
+}
+
+func (m *XzddMj) isJiangDui(gameSeatData *Seat) bool {
+	fn := func(arr []int) bool {
+		for i := 0; i < len(arr); i++ {
+			var pai = arr[i]
+			if pai != 1 && pai != 4 && pai != 7 && pai != 9 && pai != 13 && pai != 16 && pai != 18 && pai != 21 && pai != 25 {
+				return false
+			}
+		}
+		return true
+	}
+
+	if fn(gameSeatData.Pengs) == false {
+		return false
+	}
+	if fn(gameSeatData.Angangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Diangangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Wangangs) == false {
+		return false
+	}
+	if fn(gameSeatData.Holds) == false {
+		return false
+	}
+	return true
+}
+
+func (m *XzddMj) isQingYiSe(gameSeatData *Seat) bool {
+	typ := m.getMJType(gameSeatData.Holds[0])
+	//检查手上的牌
+	if m.isSameType(typ, gameSeatData.Holds) == false {
+		return false
+	}
+	//检查杠下的牌
+	if m.isSameType(typ, gameSeatData.Angangs) == false {
+		return false
+	}
+	if m.isSameType(typ, gameSeatData.Wangangs) == false {
+		return false
+	}
+	if m.isSameType(typ, gameSeatData.Diangangs) == false {
+		return false
+	}
+
+	//检查碰牌
+	if m.isSameType(typ, gameSeatData.Pengs) == false {
+		return false
+	}
+	return true
+}
+
+func (m *XzddMj) isSameType(typ int, arr []int) bool {
+	for _, pai := range arr {
+		t := m.getMJType(pai)
+		if typ != -1 && typ != t {
+			return false
+		}
+		typ = t
+	}
+	return true
+}
+
+func (m *XzddMj) storeHistory(roomInfo *Room) {
+	seats := roomInfo.Seats
+	var history = map[string]interface{}{
+		"uuid": roomInfo.Uuid,
+		"id":   roomInfo.Id,
+		"time": roomInfo.CreateTime,
+	}
+	nseats := make([]map[string]interface{}, len(seats))
+	for i, rs := range seats {
+		nseats[i] = map[string]interface{}{
+			"userid": rs.UserId,
+			"name":   base64.StdEncoding.EncodeToString([]byte(rs.Name)),
+			"score":  rs.Score,
+		}
+	}
+	history["seats"] = nseats
+	for _, s := range seats {
+		m.storeSingleHistory(s.UserId, history)
+	}
+}
+
+func (m *XzddMj) storeSingleHistory(userId int, history map[string]interface{}) {
+	user, err := database.GetUserById(userId)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	var res []map[string]interface{}
+	err = json.Unmarshal([]byte(user.History), &res)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	if len(res) >= 10 {
+		res = res[1:]
+	}
+	res = append(res, history)
+	database.UpdateUser(userId, map[string]interface{}{"history": tools.Stringify(res)})
+}
+
+func (m *XzddMj) chaJiao(game *GameData) {
+	arr := m.findUnTingedPlayers(game)
+	for _, ts := range game.GameSeats {
+		//如果没有胡，但是听牌了，则未叫牌的人要给钱
+		if !ts.Hued && m.isTinged(ts) {
+			cur := m.findMaxFanTingPai(ts)
+			ts.Fan = cur.Fan
+			ts.Pattern = cur.Pattern
+			m.recordUserAction(game, ts, "chadajiao", arr)
+		}
+	}
+}
+func (m *XzddMj) findMaxFanTingPai(ts *Seat) *TingData {
+	//找出最大番
+	var cur *TingData
+	for _, tpai := range ts.TingMap {
+		if cur == nil || tpai.Fan > cur.Fan {
+			cur = tpai
+		}
+	}
+	return cur
+}
+
+func (m *XzddMj) findUnTingedPlayers(game *GameData) []int {
+	var arr []int
+	for i, ts := range game.GameSeats {
+		//如果没有胡，且没有听牌
+		if !ts.Hued && !m.isTinged(ts) {
+			arr = append(arr, i)
+			m.recordUserAction(game, ts, "beichadajiao", -1)
+		}
+	}
+	return arr
+}
+
+//是否需要查大叫(有两家以上未胡，且有人没有下叫)
+func (m *XzddMj) needChaDaJiao(game *GameData) bool {
+	numOfHued := 0
+	numOfTinged := 0
+	numOfUntinged := 0
+	for _, ts := range game.GameSeats {
+		if ts.Hued {
+			numOfHued++
+			numOfTinged++
+		} else if m.isTinged(ts) {
+			numOfTinged++
+		} else {
+			numOfUntinged++
+		}
+	}
+	//如果三家都胡牌了，不需要查叫
+	if numOfHued == 3 {
+		return false
+	}
+
+	//如果没有任何一个人叫牌，也没有任何一个胡牌，则不需要查叫
+	if numOfTinged == 0 {
+		return false
+	}
+
+	//如果都听牌了，也不需要查叫
+	if numOfUntinged == 0 {
+		return false
+	}
+	return true
+}
+
+func (m *XzddMj) isTinged(seatData *Seat) bool {
+	return len(seatData.TingMap) > 0
+}
+
+func (m *XzddMj) recordUserAction(game *GameData, seatData *Seat, typ string, args ...interface{}) *ActionData {
+	var target interface{}
+	if len(args) > 0 {
+		target = args[0]
+	}
+	d := &ActionData{Type: typ, Targets: []int{}}
+	if target != nil {
+		switch v := target.(type) {
+		case int:
+			d.Targets = append(d.Targets, v)
+		case []int:
+			d.Targets = v
+		default:
+			logger.Errorf("unknown target type:%+v", target)
+		}
+	} else {
+		for i, s := range game.GameSeats {
+			if i != seatData.SeatIndex && s.Hued == false {
+				d.Targets = append(d.Targets, i)
+			}
+		}
+	}
+	seatData.Actions = append(seatData.Actions, d)
+	return d
 }
 
 //检查是否可以暗杠
@@ -812,11 +1657,202 @@ func (m *XzddMj) checkCanHu(game *GameData, seatData *Seat, targetPai int) {
 }
 
 func (m *XzddMj) hu(userId int) {
-	panic("not implemented") // TODO: Implement
+	seatData := m.getSeat(userId)
+	if seatData == nil {
+		logger.Error("can't find user game data.")
+		return
+	}
+	var seatIndex = seatData.SeatIndex
+	var game = seatData.Game
+
+	//如果他不能和牌，那和个啥啊
+	if seatData.CanHu == false {
+		logger.Info("invalid request.")
+		return
+	}
+
+	//和的了，就不要再来了
+	if seatData.Hued {
+		logger.Info("you have already hued. no kidding plz.")
+		return
+	}
+
+	//标记为和牌
+	seatData.Hued = true
+	var hupai = game.ChuPai
+	var isZimo = false
+
+	var turnSeat = game.GameSeats[game.Turn]
+	seatData.IsGangHu = turnSeat.LastFangGangSeat >= 0
+	var notify = -1
+
+	if game.QiangGangContext != nil {
+		var gangSeat = game.QiangGangContext.SeatData
+		hupai = game.QiangGangContext.Pai
+		notify = hupai
+		var ac = m.recordUserAction(game, seatData, "qiangganghu", gangSeat.SeatIndex)
+		ac.Iszimo = false
+		m.recordGameAction(game, seatIndex, constant.ACTION_HU, hupai)
+		seatData.IsQiangGangHu = true
+		game.QiangGangContext.IsValid = false
+
+		idx := tools.IndexOf(gangSeat.Holds, hupai)
+		if idx != -1 {
+			gangSeat.Holds = tools.SliceDel(gangSeat.Holds, idx, 1)
+			gangSeat.CountMap[hupai]--
+			userMgr.sendMsg(gangSeat.UserId, "game_holds_push", gangSeat.Holds)
+		}
+		//将牌添加到玩家的手牌列表，供前端显示
+		seatData.Holds = append(seatData.Holds, hupai)
+		seatData.CountMap[hupai]++
+
+		m.recordUserAction(game, gangSeat, "beiqianggang", seatIndex)
+	} else if game.ChuPai == -1 {
+		hupai = seatData.Holds[len(seatData.Holds)-1]
+		notify = -1
+		if seatData.IsGangHu {
+			if turnSeat.LastFangGangSeat == seatIndex {
+				var ac = m.recordUserAction(game, seatData, "ganghua")
+				ac.Iszimo = true
+			} else {
+				var diangganghua_zimo = game.Conf.Dianganghua == 1
+				if diangganghua_zimo {
+					var ac = m.recordUserAction(game, seatData, "dianganghua")
+					ac.Iszimo = true
+				} else {
+					var ac = m.recordUserAction(game, seatData, "dianganghua", turnSeat.LastFangGangSeat)
+					ac.Iszimo = false
+				}
+			}
+		} else {
+			var ac = m.recordUserAction(game, seatData, "zimo")
+			ac.Iszimo = true
+		}
+
+		isZimo = true
+		m.recordGameAction(game, seatIndex, constant.ACTION_ZIMO, hupai)
+	} else {
+		notify = game.ChuPai
+		//将牌添加到玩家的手牌列表，供前端显示
+		seatData.Holds = append(seatData.Holds, game.ChuPai)
+		seatData.CountMap[game.ChuPai]++
+
+		logger.Info(seatData.Holds)
+
+		var at = "hu"
+		//炮胡
+		if turnSeat.LastFangGangSeat >= 0 {
+			at = "gangpaohu"
+		}
+
+		var ac = m.recordUserAction(game, seatData, at, game.Turn)
+		ac.Iszimo = false
+
+		//毛转雨
+		if turnSeat.LastFangGangSeat >= 0 {
+			for i := len(turnSeat.Actions) - 1; i >= 0; i-- {
+				var t = turnSeat.Actions[i]
+				if t.Type == "diangang" || t.Type == "wangang" || t.Type == "angang" {
+					t.State = "nop"
+					t.PayTimes = 0
+
+					var nac = &ActionData{
+						Type:  "maozhuanyu",
+						Owner: turnSeat,
+						Ref:   t,
+					}
+					seatData.Actions = append(seatData.Actions, nac)
+					break
+				}
+			}
+		}
+
+		//记录玩家放炮信息
+		fs := game.GameSeats[game.Turn]
+		m.recordUserAction(game, fs, "fangpao", seatIndex)
+
+		m.recordGameAction(game, seatIndex, constant.ACTION_HU, hupai)
+
+		game.Fangpaoshumu++
+
+		if game.Fangpaoshumu > 1 {
+			game.Yipaoduoxiang = seatIndex
+		}
+	}
+
+	if game.FirstHupai < 0 {
+		game.FirstHupai = seatIndex
+	}
+
+	//保存番数
+	ti := seatData.TingMap[hupai]
+	seatData.Fan = ti.Fan
+	seatData.Pattern = ti.Pattern
+	seatData.Iszimo = isZimo
+	//如果是最后一张牌，则认为是海底胡
+	seatData.IsHaiDiHu = game.CurrentIndex == len(game.Mahjongs)
+	game.HupaiList = append(game.HupaiList, seatData.SeatIndex)
+
+	if game.Conf.Tiandihu {
+		if game.ChupaiCnt == 0 && game.Button == seatData.SeatIndex && game.ChuPai == -1 {
+			seatData.IsTianHu = true
+		} else if game.ChupaiCnt == 1 && game.Turn == game.Button && game.Button != seatData.SeatIndex && game.ChuPai != -1 {
+			seatData.IsDiHu = true
+		}
+	}
+
+	m.clearAllOptions(game, seatData)
+
+	//通知前端，有人和牌了
+	userMgr.broadcastInRoom("hu_push", map[string]interface{}{"seatindex": seatIndex, "iszimo": isZimo, "hupai": notify}, seatData.UserId, true)
+
+	//
+	if game.LastHuPaiSeat == -1 {
+		game.LastHuPaiSeat = seatIndex
+	} else {
+		var lp = (game.LastFangGangSeat - game.Turn + 4) % 4
+		var cur = (seatData.SeatIndex - game.Turn + 4) % 4
+		if cur > lp {
+			game.LastHuPaiSeat = seatData.SeatIndex
+		}
+	}
+
+	//如果只有一家没有胡，则结束
+	var numOfHued = 0
+	for _, ddd := range game.GameSeats {
+		if ddd.Hued {
+			numOfHued++
+		}
+	}
+	//和了三家
+	if numOfHued == 3 {
+		m.doGameOver(game, seatData.UserId)
+		return
+	}
+
+	//清空所有非胡牌操作
+	for _, ddd := range game.GameSeats {
+		ddd.CanPeng = false
+		ddd.CanGang = false
+		ddd.CanChuPai = false
+		m.sendOperations(game, ddd, hupai)
+	}
+	//如果还有人可以胡牌，则等待
+	for _, ddd := range game.GameSeats {
+		if ddd.CanHu {
+			return
+		}
+	}
+
+	//和牌的下家继续打
+	m.clearAllOptions(game, nil)
+	game.Turn = game.LastHuPaiSeat
+	m.moveToNextUser(game, -1)
+	m.doUserMoPai(game)
 }
 
 func (m *XzddMj) guo(userId int) {
-	seatData := m.gameSeatsOfUsers[userId]
+	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
 		return
@@ -852,7 +1888,7 @@ func (m *XzddMj) guo(userId int) {
 	//如果是已打出的牌，则需要通知。
 	if game.ChuPai >= 0 {
 		uid := game.GameSeats[game.Turn].UserId
-		userMgr.broadcastInRoom("guo_notify_push", map[string]interface{}{"userId": uid, "pai": game.ChuPai}, seatData.UserId, true)
+		userMgr.broadcastInRoom("guo_notify_push", map[string]interface{}{"UserId": uid, "pai": game.ChuPai}, seatData.UserId, true)
 		seatData.Folds = append(seatData.Folds, game.ChuPai)
 		game.ChuPai = -1
 	}

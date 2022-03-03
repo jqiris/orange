@@ -2,6 +2,7 @@ package tools
 
 import (
 	"encoding/base64"
+	"encoding/json"
 
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
@@ -34,11 +35,12 @@ func SliceDel(arr []int, index, num int) []int {
 	return append(arr[:index], arr[index+num:]...)
 }
 
-func SlicePop(arr []int) []int {
-	if len(arr) == 0 {
-		return arr
+func SlicePop(arr []int) ([]int, int) {
+	arrLen := len(arr)
+	if arrLen == 0 {
+		return arr, -1
 	}
-	return arr[:len(arr)-1]
+	return arr[:arrLen-1], arr[arrLen-1]
 }
 func GetBase64Val(val string) string {
 	if bs, err := base64.StdEncoding.DecodeString(val); err == nil {
@@ -47,4 +49,12 @@ func GetBase64Val(val string) string {
 		logger.Error(err)
 		return val
 	}
+}
+
+func Stringify(data interface{}) string {
+	bs, err := json.Marshal(data)
+	if err != nil {
+		logger.Error(err)
+	}
+	return string(bs)
 }

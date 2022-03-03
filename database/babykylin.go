@@ -28,6 +28,10 @@ func GetUserById(userId int) (*model.TUser, error) {
 	return res, nil
 }
 
+func UpdateUser(userId int, data map[string]interface{}) error {
+	return db.Table("t_users").Where("userid=?", userId).Updates(data).Error
+}
+
 func CreateAccount(data *model.TAccount) error {
 	return db.Create(data).Error
 }
@@ -58,6 +62,14 @@ func CreateRoom(data *model.TRoom) error {
 	return db.Create(data).Error
 }
 
+func DeleteRoom(roomId int) error {
+	return db.Where("id=?", roomId).Delete(&model.TRoom{}).Error
+}
+
+func UpdateRoom(roomId int, data map[string]interface{}) error {
+	return db.Table("t_rooms").Where("id=?", roomId).Updates(data).Error
+}
+
 func UpdateSeatInfo(roomId, seatIndex, userId int, icon, name string) error {
 	colUserId := fmt.Sprintf("user_id%d", seatIndex)
 	colIcon := fmt.Sprintf("user_icon%d", seatIndex)
@@ -69,4 +81,22 @@ func UpdateSeatInfo(roomId, seatIndex, userId int, icon, name string) error {
 		colUserName: name,
 	}
 	return db.Table("t_rooms").Where("id = ?", roomId).Updates(data).Error
+}
+
+func ArchiveGames(uuid string) error {
+	sql := "INSERT INTO t_games_archive(SELECT * FROM t_games WHERE room_uuid = '?')"
+	return db.Exec(sql, uuid).Error
+}
+
+func CreateGame(data *model.TGame) error {
+	return db.Create(data).Error
+}
+
+func UpdateGame(uuid string, index int, data map[string]interface{}) error {
+	return db.Table("t_games").Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
+}
+
+func CostGems(userId int, cost int) error {
+	sql := "UPDATE t_users SET gems = gems -? where userid = ?"
+	return db.Exec(sql, cost, userId).Error
 }

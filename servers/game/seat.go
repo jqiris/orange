@@ -36,7 +36,16 @@ type Seat struct {
 	Hued             bool              `json:"hued"`
 	Iszimo           bool              `json:"iszimo"`
 	IsGangHu         bool              `json:"isGangHu"`
-	Actions          []int             `json:"actions"`
+	IsMenQing        bool              `json:"isMenQing"`
+	IsZhongZhang     bool              `json:"isZhongZhang"`
+	IsJinGouHu       bool              `json:"isJinGouHu"`
+	IsQiangGangHu    bool              `json:"isQiangGangHu"`
+	IsHaiDiHu        bool              `json:"isHaiDiHu"`
+	IsTianHu         bool              `json:"isTianHu"`
+	IsDiHu           bool              `json:"isDiHu"`
+	Qingyise         bool              `json:"qingyise"`
+	Actions          []*ActionData     `json:"actions"`
 	Fan              int               `json:"fan"`
 	LastFangGangSeat int               `json:"lastFangGangSeat"`
+	Numofgen         int               `json:"numofgen"`
 }

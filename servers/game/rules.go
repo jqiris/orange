@@ -3,8 +3,8 @@ package game
 type GameMgr interface {
 	setReady(userId int)
 	hasBegan(roomId int) bool
-	dissolveRequest(roomId, userId int)
-	dissolveAgree(roomId, userId int, agree bool)
+	dissolveRequest(roomId, userId int) *Room
+	dissolveAgree(roomId, userId int, agree bool) *Room
 	doDissolve(roomId int)
 	huanSanZhang(userId int, p1, p2, p3 int)
 	dingQue(userId int, que int)
@@ -36,6 +36,8 @@ type GameData struct {
 	HuanpaiMethod    int
 	QiangGangContext *QiangGangData
 	LastHuPaiSeat    int
+	LastFangGangSeat int
+	BaseInfoJson     string
 }
 type TingData struct {
 	Fan     int    `json:"fan"`
@@ -47,6 +49,17 @@ type QiangGangData struct {
 	SeatData *Seat `json:"seat"`
 	Pai      int   `json:"pai"`
 	IsValid  bool  `json:"isValid"`
+}
+
+type ActionData struct {
+	Type     string      `json:"type"`
+	Owner    *Seat       `json:"owner,omitempty"`
+	State    string      `json:"state"`
+	PayTimes int64       `json:"payTimes,omitempty"`
+	Ref      *ActionData `json:"ref,omitempty"`
+	Targets  []int       `json:"targets,omitempty"`
+	Score    int         `json:"score,omitempty"`
+	Iszimo   bool        `json:"iszimo,omitempty"`
 }
 
 //public method

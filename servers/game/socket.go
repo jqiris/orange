@@ -32,22 +32,33 @@ type LoginData struct {
 
 func (s *GameServer) SocketRouter(sc *socketio.Server) {
 	ns := "/"
-	sc.OnConnect(ns, s.OnConnect)           //连接
-	sc.OnDisconnect(ns, s.OnDisconnect)     //断开连接
-	sc.OnEvent(ns, "login", s.Login)        //登录
-	sc.OnEvent(ns, "ready", s.Ready)        //准备
-	sc.OnEvent(ns, "huanpai", s.Huanpai)    //换牌
-	sc.OnEvent(ns, "dingque", s.Dingque)    //定缺
-	sc.OnEvent(ns, "chupai", s.Chupai)      //出牌
-	sc.OnEvent(ns, "peng", s.Peng)          //碰
-	sc.OnEvent(ns, "gang", s.Gang)          //杠
-	sc.OnEvent(ns, "hu", s.Hu)              //胡
-	sc.OnEvent(ns, "guo", s.Guo)            //过
-	sc.OnEvent(ns, "game_ping", s.GamePing) //心跳
+	sc.OnConnect(ns, s.OnConnect)                         //连接
+	sc.OnDisconnect(ns, s.OnDisconnect)                   //断开连接
+	sc.OnEvent(ns, "login", s.Login)                      //登录
+	sc.OnEvent(ns, "ready", s.Ready)                      //准备
+	sc.OnEvent(ns, "huanpai", s.Huanpai)                  //换牌
+	sc.OnEvent(ns, "dingque", s.Dingque)                  //定缺
+	sc.OnEvent(ns, "chupai", s.Chupai)                    //出牌
+	sc.OnEvent(ns, "peng", s.Peng)                        //碰
+	sc.OnEvent(ns, "gang", s.Gang)                        //杠
+	sc.OnEvent(ns, "hu", s.Hu)                            //胡
+	sc.OnEvent(ns, "guo", s.Guo)                          //过
+	sc.OnEvent(ns, "game_ping", s.GamePing)               //心跳
+	sc.OnEvent(ns, "chat", s.Chat)                        //聊天
+	sc.OnEvent(ns, "quick_chat", s.QuickChat)             //快速聊天
+	sc.OnEvent(ns, "voice_msg", s.VoiceMsg)               //语音聊天
+	sc.OnEvent(ns, "emoji", s.Emoji)                      //表情
+	sc.OnEvent(ns, "exit", s.Exit)                        //退出房间
+	sc.OnEvent(ns, "dispress", s.Dispress)                //解散房间
+	sc.OnEvent(ns, "dissolve_request", s.DissolveRequest) //解散房间请求
+	sc.OnEvent(ns, "dissolve_agree", s.DissolveAgree)     //解散房间同意
+	sc.OnEvent(ns, "dissolve_reject", s.DissolveReject)   //解散房间不同意
+
 	go sc.Serve()
 	defer sc.Close()
 
 	http.Handle("/socket.io/", sc)
+	http.Handle("/hi", sc)
 	logger.Infof("socket server start at:%v", constant.CLIENT_PORT)
 	http.ListenAndServe(fmt.Sprintf(":%v", constant.CLIENT_PORT), nil)
 }
@@ -59,13 +70,202 @@ func (s *GameServer) OnConnect(c socketio.Conn) error {
 
 func (s *GameServer) OnDisconnect(c socketio.Conn, reason string) {
 	logger.Warnf("Disconnect:%v,reason:%v", c.Context(), reason)
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	//如果是旧链接断开，则不需要处理。
+	if userMgr.get(userId) != c {
+		return
+	}
+
+	var data = map[string]interface{}{
+		"userid": userId,
+		"online": false,
+	}
+
+	//通知房间内其它玩家
+	userMgr.broadcastInRoom("user_state_push", data, userId)
+
+	//清除玩家的在线信息
+	userMgr.del(userId)
+	ctx.UserId = 0
+}
+func (s *GameServer) DissolveReject(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	ret := ctx.GameMgr.dissolveAgree(roomId, userId, false)
+	if ret != nil {
+		userMgr.broadcastInRoom("dissolve_cancel_push", nil, userId, true)
+	}
+}
+
+func (s *GameServer) DissolveAgree(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	ret := ctx.GameMgr.dissolveAgree(roomId, userId, true)
+	if ret != nil {
+		dr := ret.Dr
+		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
+		data := map[string]interface{}{
+			"time":   remainingTime,
+			"states": dr.States,
+		}
+		userMgr.broadcastInRoom("dissolve_notice_push", data, userId, true)
+
+		doAllAgree := true
+		for i := 0; i < len(dr.States); i++ {
+			if dr.States[i] == false {
+				doAllAgree = false
+				break
+			}
+		}
+
+		if doAllAgree {
+			ctx.GameMgr.doDissolve(roomId)
+		}
+	}
+}
+
+func (s *GameServer) DissolveRequest(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	if ctx.GameMgr.hasBegan(roomId) == false {
+		return
+	}
+	ret := ctx.GameMgr.dissolveRequest(roomId, userId)
+	if ret != nil {
+		dr := ret.Dr
+		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
+		data := map[string]interface{}{
+			"time":   remainingTime,
+			"states": dr.States,
+		}
+		userMgr.broadcastInRoom("dissolve_notice_push", data, userId, true)
+	}
+}
+
+func (s *GameServer) Dispress(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	//如果游戏已经开始，则不可以
+	if ctx.GameMgr.hasBegan(roomId) {
+		return
+	}
+
+	//如果不是房主，则不能解散房间
+	if roomMgr.isCreator(roomId, userId) == false {
+		return
+	}
+	userMgr.broadcastInRoom("dispress_push", nil, userId, true)
+	userMgr.kickAllInRoom(roomId)
+	roomMgr.destroy(roomId)
+	c.Close()
+}
+
+func (s *GameServer) Exit(c socketio.Conn) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userId := ctx.UserId
+	roomId := roomMgr.getUserRoom(userId)
+	if roomId < 1 {
+		return
+	}
+	if ctx.GameMgr.hasBegan(roomId) {
+		return
+	}
+	//如果是房主，则只能走解散房间
+	if roomMgr.isCreator(roomId, userId) {
+		return
+	}
+	//通知其它玩家，有人退出了房间
+	userMgr.broadcastInRoom("exit_notify_push", userId, userId, false)
+	roomMgr.exitRoom(userId)
+	userMgr.del(userId)
+	c.Emit("exit_result")
+	c.Close()
+}
+
+func (s *GameServer) Emoji(c socketio.Conn, msg string) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userMgr.broadcastInRoom("emoji_push", map[string]interface{}{
+		"sender":  ctx.UserId,
+		"content": msg,
+	}, ctx.UserId, true)
+}
+
+func (s *GameServer) VoiceMsg(c socketio.Conn, msg string) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userMgr.broadcastInRoom("voice_msg_push", map[string]interface{}{
+		"sender":  ctx.UserId,
+		"content": msg,
+	}, ctx.UserId, true)
+}
+
+func (s *GameServer) QuickChat(c socketio.Conn, msg string) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userMgr.broadcastInRoom("quick_chat_push", map[string]interface{}{
+		"sender":  ctx.UserId,
+		"content": msg,
+	}, ctx.UserId, true)
+}
+func (s *GameServer) Chat(c socketio.Conn, msg string) {
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return
+	}
+	userMgr.broadcastInRoom("chat_push", map[string]interface{}{
+		"sender":  ctx.UserId,
+		"content": msg,
+	}, ctx.UserId, true)
 }
 
 func (s *GameServer) IsLogined(c socketio.Conn) bool {
-	if v, ok := c.Context().(*SocketCtx); ok {
-		return v.UserId > 0
+	ctx := s.GetSocketCtx(c)
+	if ctx == nil {
+		return false
 	}
-	return false
+	return ctx.UserId > 0
 }
 
 func (s *GameServer) GetSocketCtx(c socketio.Conn) *SocketCtx {
@@ -118,22 +318,22 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	}
 	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
-	var userData map[string]interface{}
-	var seats []map[string]interface{}
+	var userData *Seat
+	var seats []*Seat
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
 		online := false
 		if rs.UserId > 0 {
 			online = userMgr.isOnline(rs.UserId)
 		}
-		seat := map[string]interface{}{
-			"userid":    rs.UserId,
-			"score":     rs.Score,
-			"name":      rs.Name,
-			"ready":     rs.Ready,
-			"seatindex": i,
-			"ip":        rs.Ip,
-			"online":    online,
+		seat := &Seat{
+			UserId:    rs.UserId,
+			Score:     rs.Score,
+			Name:      rs.Name,
+			Ready:     rs.Ready,
+			SeatIndex: i,
+			Ip:        rs.Ip,
+			Online:    online,
 		}
 		seats = append(seats, seat)
 		if userId == rs.UserId {
@@ -198,22 +398,20 @@ func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
 }
 
 //定缺
-func (s *GameServer) Dingque(c socketio.Conn, msg string) {
+func (s *GameServer) Dingque(c socketio.Conn, que int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
 	}
-	que := utils.StringToInt(msg)
 	ctx.GameMgr.dingQue(ctx.UserId, que)
 }
 
 //出牌
-func (s *GameServer) Chupai(c socketio.Conn, msg string) {
+func (s *GameServer) Chupai(c socketio.Conn, pai int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
 	}
-	pai := utils.StringToInt(msg)
 	ctx.GameMgr.chuPai(ctx.UserId, pai)
 }
 
@@ -227,15 +425,11 @@ func (s *GameServer) Peng(c socketio.Conn) {
 }
 
 //杠
-func (s *GameServer) Gang(c socketio.Conn, msg string) {
+func (s *GameServer) Gang(c socketio.Conn, pai int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
 	}
-	if len(msg) < 1 {
-		return
-	}
-	pai := utils.StringToInt(msg)
 	if pai < 0 {
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
@@ -21,34 +22,54 @@ var (
 )
 
 type RoomMgr struct {
-	userLocation  map[int]*UserLocation //用户位置信息
-	rooms         map[int]*Room         //房间map
-	creatingRooms map[int]bool          //创建标记
-	totalRooms    int                   //房间总数
+	userLocation  sync.Map //用户位置信息
+	rooms         sync.Map //房间map
+	creatingRooms sync.Map //创建标记
+	totalRooms    int      //房间总数
 
 }
 
 func NewRoomMgr() *RoomMgr {
 	return &RoomMgr{
-		userLocation:  make(map[int]*UserLocation),
-		rooms:         make(map[int]*Room),
-		creatingRooms: make(map[int]bool),
+		userLocation:  sync.Map{},
+		rooms:         sync.Map{},
+		creatingRooms: sync.Map{},
 		totalRooms:    0,
 	}
 }
-
+func (m *RoomMgr) getCreatingRoom(roomId int) bool {
+	if v, ok := m.creatingRooms.Load(roomId); ok {
+		if loc, okv := v.(bool); okv {
+			return loc
+		}
+	}
+	return false
+}
 func (m *RoomMgr) getRoom(roomId int) *Room {
-	return m.rooms[roomId]
+	if v, ok := m.rooms.Load(roomId); ok {
+		if loc, okv := v.(*Room); okv {
+			return loc
+		}
+	}
+	return nil
+}
+func (m *RoomMgr) getLocation(userId int) *UserLocation {
+	if v, ok := m.userLocation.Load(userId); ok {
+		if loc, okv := v.(*UserLocation); okv {
+			return loc
+		}
+	}
+	return nil
 }
 
 func (m *RoomMgr) getUserSeat(userId int) int {
-	if v, ok := m.userLocation[userId]; ok {
+	if v := m.getLocation(userId); v != nil {
 		return v.SeatIndex
 	}
 	return -1
 }
 
-func (m *RoomMgr) getUserLocations() map[int]*UserLocation {
+func (m *RoomMgr) getUserLocations() sync.Map {
 	return m.userLocation
 }
 
@@ -82,12 +103,13 @@ func (m *RoomMgr) createRoom(userId int, conf model.GameConf, gems, serverIp str
 
 func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int) (int, int) {
 	roomId := m.generateRoomId()
-	if m.rooms[roomId] != nil || m.creatingRooms[roomId] {
+	room := m.getRoom(roomId)
+	if room != nil || m.getCreatingRoom(roomId) {
 		return m.fnCreate(userId, conf, ip, port)
 	} else {
-		m.creatingRooms[roomId] = true
+		m.creatingRooms.Store(roomId, true)
 		if _, err := database.GetRoomById(roomId); err == nil {
-			delete(m.creatingRooms, roomId)
+			m.creatingRooms.Delete(roomId)
 			return m.fnCreate(userId, conf, ip, port)
 		} else {
 			createTime := time.Now().Unix()
@@ -146,7 +168,7 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int)
 				return 3, 0
 			} else {
 				roomInfo.Uuid = uuid
-				m.rooms[roomId] = roomInfo
+				m.rooms.Store(roomId, roomInfo)
 				m.totalRooms++
 				return 0, roomId
 			}
@@ -164,7 +186,7 @@ func (m *RoomMgr) generateRoomId() int {
 }
 
 func (m *RoomMgr) getUserRoom(userId int) int {
-	if v, ok := m.userLocation[userId]; ok {
+	if v := m.getLocation(userId); v != nil {
 		return v.RoomId
 	}
 	return 0
@@ -180,10 +202,10 @@ func (m *RoomMgr) enterRoom(roomId, userId int, userName string) int {
 			if seat.UserId <= 0 {
 				seat.UserId = userId
 				seat.Name = userName
-				m.userLocation[userId] = &UserLocation{
+				m.userLocation.Store(userId, &UserLocation{
 					RoomId:    roomId,
 					SeatIndex: i,
-				}
+				})
 				err := database.UpdateSeatInfo(roomId, i, seat.UserId, "", seat.Name)
 				if err != nil {
 					logger.Error(err)
@@ -193,7 +215,7 @@ func (m *RoomMgr) enterRoom(roomId, userId int, userName string) int {
 		}
 		return 1 //房间已满
 	}
-	room := m.rooms[roomId]
+	room := m.getRoom(roomId)
 	if room != nil {
 		return fnTakeSeat(room)
 	} else {
@@ -260,14 +282,14 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 		s.NumMingGang = 0
 		s.NumChaJiao = 0
 		if s.UserId > 0 {
-			m.userLocation[s.UserId] = &UserLocation{
+			m.userLocation.Store(s.UserId, &UserLocation{
 				RoomId:    roomId,
 				SeatIndex: i,
-			}
+			})
 		}
 		roomInfo.Seats[i] = s
 	}
-	m.rooms[roomId] = roomInfo
+	m.rooms.Store(roomId, roomInfo)
 	m.totalRooms++
 	return roomInfo, nil
 }
@@ -291,4 +313,56 @@ func (m *RoomMgr) setReady(userId int, value bool) {
 
 func (m *RoomMgr) getTotallRooms() int {
 	return m.totalRooms
+}
+
+func (m *RoomMgr) destroy(roomId int) {
+	roomInfo := m.getRoom(roomId)
+	if roomInfo == nil {
+		return
+	}
+	for _, seat := range roomInfo.Seats {
+		userId := seat.UserId
+		if userId > 0 {
+			m.userLocation.Delete(userId)
+			database.UpdateUser(userId, map[string]interface{}{"roomid": ""})
+		}
+	}
+	m.rooms.Delete(roomId)
+	m.totalRooms--
+	database.DeleteRoom(roomId)
+}
+
+func (m *RoomMgr) isCreator(roomId, userId int) bool {
+	roomInfo := m.getRoom(roomId)
+	if roomInfo == nil {
+		return false
+	}
+	return roomInfo.Conf.Creator == userId
+}
+
+func (m *RoomMgr) exitRoom(userId int) {
+	location := m.getLocation(userId)
+	if location == nil {
+		return
+	}
+	roomId := location.RoomId
+	seatIndex := location.SeatIndex
+	room := m.getRoom(roomId)
+	m.userLocation.Delete(userId)
+	if room == nil || seatIndex == -1 {
+		return
+	}
+	seat := room.Seats[seatIndex]
+	seat.UserId = 0
+	seat.Name = ""
+	numOfPlayers := 0
+	for _, gs := range room.Seats {
+		if gs.UserId > 0 {
+			numOfPlayers++
+		}
+	}
+	database.UpdateUser(userId, map[string]interface{}{"roomid": ""})
+	if numOfPlayers == 0 {
+		m.destroy(roomId)
+	}
 }

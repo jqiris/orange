@@ -24,9 +24,9 @@ type TAccount struct {
 // TGame [...]
 type TGame struct {
 	RoomUUID      string `gorm:"primaryKey;column:room_uuid;type:char(20);not null" json:"room_uuid"`
-	GameIndex     int16  `gorm:"primaryKey;column:game_index;type:smallint;not null" json:"game_index"`
+	GameIndex     int    `gorm:"primaryKey;column:game_index;type:smallint;not null" json:"game_index"`
 	BaseInfo      string `gorm:"column:base_info;type:varchar(1024);not null" json:"base_info"`
-	CreateTime    int    `gorm:"column:create_time;type:int;not null" json:"create_time"`
+	CreateTime    int64  `gorm:"column:create_time;type:int;not null" json:"create_time"`
 	Snapshots     string `gorm:"column:snapshots;type:char(255)" json:"snapshots"`
 	ActionRecords string `gorm:"column:action_records;type:varchar(2048)" json:"action_records"`
 	Result        string `gorm:"column:result;type:char(255)" json:"result"`

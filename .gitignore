@@ -9,3 +9,4 @@ deploy/nats/streaming2/data/
 deploy/nats/streaming2/log/
 deploy/nats/streaming3/log/
 deploy/nats/streaming3/data/
+__debug_bin.exe
