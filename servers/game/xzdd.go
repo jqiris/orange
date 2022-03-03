@@ -771,6 +771,7 @@ func (m *XzddMj) recordGameAction(game *GameData, si, action, pai int) {
 }
 
 func (m *XzddMj) peng(userId int) {
+	logger.Warnf("peng,userId:%v", userId)
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -796,9 +797,9 @@ func (m *XzddMj) peng(userId int) {
 	}
 
 	//如果有人可以胡牌，则需要等待
-	var i = game.Turn
+	i := game.Turn
 	for {
-		var i = (i + 1) % 4
+		i = (i + 1) % 4
 		if i == game.Turn {
 			break
 		} else {
@@ -843,6 +844,7 @@ func (m *XzddMj) peng(userId int) {
 	//广播通知玩家出牌方
 	seatData.CanChuPai = true
 	userMgr.broadcastInRoom("game_chupai_push", seatData.UserId, seatData.UserId, true)
+	logger.Warnf("peng end,userId:%v", userId)
 }
 
 func (m *XzddMj) moveToNextUser(game *GameData, nextSeat int) {
@@ -907,9 +909,9 @@ func (m *XzddMj) gang(userId int, pai int) {
 	}
 
 	//如果有人可以胡牌，则需要等待
-	var i = game.Turn
+	i := game.Turn
 	for {
-		var i = (i + 1) % 4
+		i = (i + 1) % 4
 		if i == game.Turn {
 			break
 		} else {
