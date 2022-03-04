@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50736
 File Encoding         : 65001
 
-Date: 2022-03-04 22:47:04
+Date: 2022-03-04 22:50:56
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -137,6 +137,7 @@ CREATE TABLE `t_rooms` (
   `user_score3` int(11) NOT NULL DEFAULT '0',
   `ip` varchar(16) DEFAULT NULL,
   `port` int(11) DEFAULT '0',
+  `server_id` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`uuid`),
   UNIQUE KEY `uuid` (`uuid`),
   UNIQUE KEY `id` (`id`)
@@ -145,7 +146,7 @@ CREATE TABLE `t_rooms` (
 -- ----------------------------
 -- Records of t_rooms
 -- ----------------------------
-INSERT INTO `t_rooms` VALUES ('1490875578938526035', '526035', '{\"type\":\"xzdd\",\"baseScore\":1,\"zimo\":0,\"jiangdui\":false,\"hsz\":false,\"dianganghua\":0,\"menqing\":false,\"tiandihu\":false,\"maxFan\":4,\"maxGames\":4,\"creator\":9}', '1490875579', '0', '0', '9', '', '5aSP5L6v6LWM5L6g', '0', '10', '', '55qH55Sr56iz6LWi', '0', '11', '', '5Lic5pa56ZuA5Zyj', '0', '12', '', '5qyn6Ziz6Ieq5pG4', '0', '127.0.0.1', '10000');
+INSERT INTO `t_rooms` VALUES ('1490875578938526035', '526035', '{\"type\":\"xzdd\",\"baseScore\":1,\"zimo\":0,\"jiangdui\":false,\"hsz\":false,\"dianganghua\":0,\"menqing\":false,\"tiandihu\":false,\"maxFan\":4,\"maxGames\":4,\"creator\":9}', '1490875579', '0', '0', '9', '', '5aSP5L6v6LWM5L6g', '0', '10', '', '55qH55Sr56iz6LWi', '0', '11', '', '5Lic5pa56ZuA5Zyj', '0', '12', '', '5qyn6Ziz6Ieq5pG4', '0', '127.0.0.1', '10000', null);
 
 -- ----------------------------
 -- Table structure for t_users
