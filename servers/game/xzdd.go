@@ -359,7 +359,7 @@ func (m *XzddMj) doDissolve(roomId int) {
 		return
 	}
 	game := m.getGame(roomId)
-	m.doGameOver(game, roomInfo.Seats[0].UserId, true)
+	go m.doGameOver(game, roomInfo.Seats[0].UserId, true)
 }
 
 func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
@@ -1028,7 +1028,7 @@ func (m *XzddMj) doUserMoPai(game *GameData) {
 	pai := m.mopai(game, game.Turn)
 	//牌摸完了，结束
 	if pai == -1 {
-		m.doGameOver(game, turnSeat.UserId)
+		go m.doGameOver(game, turnSeat.UserId)
 		return
 	} else {
 		numOfMJ := len(game.Mahjongs) - game.CurrentIndex
