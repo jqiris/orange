@@ -1115,7 +1115,7 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 			userRT := map[string]any{
 				"userId":     sd.UserId,
 				"pengs":      sd.Pengs,
-				"actions":    nil,
+				"actions":    map[string]any{},
 				"wangangs":   sd.Wangangs,
 				"diangangs":  sd.Diangangs,
 				"angangs":    sd.Angangs,
@@ -1899,7 +1899,7 @@ func (m *XzddMj) hu(userId int) {
 	}
 	//和了三家
 	if numOfHued == 3 {
-		m.doGameOver(game, seatData.UserId)
+		go m.doGameOver(game, seatData.UserId)
 		return
 	}
 
