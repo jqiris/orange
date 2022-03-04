@@ -58,7 +58,6 @@ func (s *GameServer) SocketRouter(sc *socketio.Server) {
 	defer sc.Close()
 
 	http.Handle("/socket.io/", sc)
-	http.Handle("/hi", sc)
 	logger.Infof("socket server start at:%v", s.Server.ClientPort)
 	http.ListenAndServe(fmt.Sprintf(":%v", s.Server.ClientPort), nil)
 }
@@ -239,14 +238,14 @@ func (s *GameServer) VoiceMsg(c socketio.Conn, msg string) {
 	}, ctx.UserId, true)
 }
 
-func (s *GameServer) QuickChat(c socketio.Conn, msg string) {
+func (s *GameServer) QuickChat(c socketio.Conn, chatId int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
 	}
 	userMgr.broadcastInRoom("quick_chat_push", map[string]any{
 		"sender":  ctx.UserId,
-		"content": msg,
+		"content": chatId,
 	}, ctx.UserId, true)
 }
 func (s *GameServer) Chat(c socketio.Conn, msg string) {
