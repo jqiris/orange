@@ -84,7 +84,7 @@ func UpdateSeatInfo(roomId, seatIndex, userId int, icon, name string) error {
 }
 
 func ArchiveGames(uuid string) error {
-	sql := "INSERT INTO t_games_archive(SELECT * FROM t_games WHERE room_uuid = '?')"
+	sql := "INSERT INTO t_games_archive(SELECT * FROM t_games WHERE room_uuid = ?)"
 	return db.Exec(sql, uuid).Error
 }
 
