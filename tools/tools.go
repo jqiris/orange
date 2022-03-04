@@ -51,7 +51,7 @@ func GetBase64Val(val string) string {
 	}
 }
 
-func Stringify(data interface{}) string {
+func Stringify(data any) string {
 	bs, err := json.Marshal(data)
 	if err != nil {
 		logger.Error(err)

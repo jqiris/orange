@@ -11,7 +11,7 @@ var (
 	db *gorm.DB
 )
 
-func InitDatabase(data map[string]interface{}) {
+func InitDatabase(data map[string]any) {
 	var err error
 	dsn := fmt.Sprintf(
 		"%v:%v@tcp(%v:%v)/%v?%v",

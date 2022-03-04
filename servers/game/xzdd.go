@@ -230,7 +230,7 @@ func (m *XzddMj) setReady(UserId int) {
 		}
 	} else {
 		numOfMJ := len(game.Mahjongs) - game.CurrentIndex
-		data := map[string]interface{}{
+		data := map[string]any{
 			"state":         game.State,
 			"numofmj":       numOfMJ,
 			"button":        game.Button,
@@ -274,7 +274,7 @@ func (m *XzddMj) sendOperations(game *GameData, seatData *Seat, pai int) {
 		if pai == -1 {
 			pai = seatData.Holds[len(seatData.Holds)-1]
 		}
-		data := map[string]interface{}{
+		data := map[string]any{
 			"pai":     pai,
 			"hu":      seatData.CanHu,
 			"peng":    seatData.CanPeng,
@@ -408,13 +408,13 @@ func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
 
 	for _, sd := range game.GameSeats {
 		if sd == seatData {
-			var rd = map[string]interface{}{
+			var rd = map[string]any{
 				"si":       seatData.UserId,
 				"Huanpais": seatData.Huanpais,
 			}
 			userMgr.sendMsg(sd.UserId, "huanpai_notify", rd)
 		} else {
-			var rd = map[string]interface{}{
+			var rd = map[string]any{
 				"si":       seatData.UserId,
 				"Huanpais": []int{},
 			}
@@ -465,7 +465,7 @@ func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
 		huanpaiMethod = 2
 	}
 
-	var rd = map[string]interface{}{
+	var rd = map[string]any{
 		"method": huanpaiMethod,
 	}
 	game.HuanpaiMethod = huanpaiMethod
@@ -482,7 +482,7 @@ func (m *XzddMj) huanSanZhang(userId int, p1 int, p2 int, p3 int) {
 }
 
 func (m *XzddMj) constructGameBaseInfo(game *GameData) {
-	var baseInfo = map[string]interface{}{
+	var baseInfo = map[string]any{
 		"type":     game.Conf.Type,
 		"button":   game.Button,
 		"index":    game.GameIndex,
@@ -597,7 +597,7 @@ func (m *XzddMj) chuPai(userId int, pai int) {
 	game.ChuPai = pai
 	m.recordGameAction(game, game.Turn, constant.ACTION_CHUPAI, pai)
 	m.checkCanTingPai(game, seatData)
-	userMgr.broadcastInRoom("game_chupai_notify_push", map[string]interface{}{
+	userMgr.broadcastInRoom("game_chupai_notify_push", map[string]any{
 		"userId": seatData.UserId,
 		"pai":    pai,
 	}, seatData.UserId, true)
@@ -630,7 +630,7 @@ func (m *XzddMj) chuPai(userId int, pai int) {
 	//如果没有人有操作，则向下一家发牌，并通知他出牌
 	if !hasActions {
 		time.AfterFunc(500*time.Millisecond, func() {
-			userMgr.broadcastInRoom("guo_notify_push", map[string]interface{}{"userId": seatData.UserId, "pai": game.ChuPai}, seatData.UserId, true)
+			userMgr.broadcastInRoom("guo_notify_push", map[string]any{"userId": seatData.UserId, "pai": game.ChuPai}, seatData.UserId, true)
 			seatData.Folds = append(seatData.Folds, game.ChuPai)
 			game.ChuPai = -1
 			m.moveToNextUser(game, -1)
@@ -838,7 +838,7 @@ func (m *XzddMj) peng(userId int) {
 	game.ChuPai = -1
 	m.recordGameAction(game, seatData.SeatIndex, constant.ACTION_PENG, pai)
 	//广播通知其它玩家
-	userMgr.broadcastInRoom("peng_notify_push", map[string]interface{}{"userid": seatData.UserId, "pai": pai}, seatData.UserId, true)
+	userMgr.broadcastInRoom("peng_notify_push", map[string]any{"userid": seatData.UserId, "pai": pai}, seatData.UserId, true)
 	//碰的玩家打牌
 	m.moveToNextUser(game, seatData.SeatIndex)
 	//广播通知玩家出牌方
@@ -1009,7 +1009,7 @@ func (m *XzddMj) doGang(game *GameData, turnSeat, seatData *Seat, gangtype strin
 
 	m.checkCanTingPai(game, seatData)
 	//通知其他玩家，有人杠了牌
-	userMgr.broadcastInRoom("gang_notify_push", map[string]interface{}{"userid": seatData.UserId, "pai": pai, "gangtype": gangtype}, seatData.UserId, true)
+	userMgr.broadcastInRoom("gang_notify_push", map[string]any{"userid": seatData.UserId, "pai": pai, "gangtype": gangtype}, seatData.UserId, true)
 
 	//变成自己的轮子
 	m.moveToNextUser(game, seatIndex)
@@ -1068,13 +1068,13 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 	if roomInfo == nil {
 		return
 	}
-	var results []map[string]interface{}
+	var results []map[string]any
 	dbresult := []int{0, 0, 0, 0}
 	fnNoticeResult := func(isEnd bool) {
-		var endInfo []map[string]interface{}
+		var endInfo []map[string]any
 		if isEnd {
 			for _, rs := range roomInfo.Seats {
-				endInfo = append(endInfo, map[string]interface{}{
+				endInfo = append(endInfo, map[string]any{
 					"numzimo":      rs.NumZiMo,
 					"numjiepao":    rs.NumJiePao,
 					"numdianpao":   rs.NumDianPao,
@@ -1084,7 +1084,7 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 				})
 			}
 		}
-		userMgr.broadcastInRoom("game_over_push", map[string]interface{}{"results": results, "endinfo": endInfo}, userId, true)
+		userMgr.broadcastInRoom("game_over_push", map[string]any{"results": results, "endinfo": endInfo}, userId, true)
 		//如果局数已够，则进行整体结算，并关闭房间
 		time.AfterFunc(1500*time.Millisecond, func() {
 			if roomInfo.NumOfGames > 1 {
@@ -1110,7 +1110,7 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 			rs.NumAnGang += sd.NumAnGang
 			rs.NumMingGang += sd.NumMingGang
 			rs.NumChaJiao += sd.NumChaJiao
-			userRT := map[string]interface{}{
+			userRT := map[string]any{
 				"userId":     sd.UserId,
 				"pengs":      sd.Pengs,
 				"actions":    nil,
@@ -1133,9 +1133,9 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 				"dihu":       sd.IsDiHu,
 				"huorder":    tools.IndexOf(game.HupaiList, i),
 			}
-			var actions []map[string]interface{}
+			var actions []map[string]any
 			for _, ac := range sd.Actions {
-				actions = append(actions, map[string]interface{}{"type": ac.Type})
+				actions = append(actions, map[string]any{"type": ac.Type})
 			}
 			userRT["actions"] = actions
 			results = append(results, userRT)
@@ -1153,7 +1153,7 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 			roomInfo.NextButton = (game.Turn + 1) % 4
 		}
 		if old != roomInfo.NextButton {
-			database.UpdateRoom(roomId, map[string]interface{}{"next_button": roomInfo.NextButton})
+			database.UpdateRoom(roomId, map[string]any{"next_button": roomInfo.NextButton})
 		}
 	}
 	if forceEnd || game == nil {
@@ -1163,11 +1163,11 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 		if err != nil {
 			logger.Error(err)
 		}
-		database.UpdateGame(roomInfo.Uuid, game.GameIndex, map[string]interface{}{
+		database.UpdateGame(roomInfo.Uuid, game.GameIndex, map[string]any{
 			"result":         tools.Stringify(dbresult),
 			"action_records": tools.Stringify(game.ActionList),
 		})
-		database.UpdateRoom(roomId, map[string]interface{}{"num_of_turns": roomInfo.NumOfGames})
+		database.UpdateRoom(roomId, map[string]any{"num_of_turns": roomInfo.NumOfGames})
 		if roomInfo.NumOfGames == 1 {
 			cost := 2
 			if roomInfo.Conf.MaxGames == 8 {
@@ -1516,14 +1516,14 @@ func (m *XzddMj) isSameType(typ int, arr []int) bool {
 
 func (m *XzddMj) storeHistory(roomInfo *Room) {
 	seats := roomInfo.Seats
-	var history = map[string]interface{}{
+	var history = map[string]any{
 		"uuid": roomInfo.Uuid,
 		"id":   roomInfo.Id,
 		"time": roomInfo.CreateTime,
 	}
-	nseats := make([]map[string]interface{}, len(seats))
+	nseats := make([]map[string]any, len(seats))
 	for i, rs := range seats {
-		nseats[i] = map[string]interface{}{
+		nseats[i] = map[string]any{
 			"userid": rs.UserId,
 			"name":   base64.StdEncoding.EncodeToString([]byte(rs.Name)),
 			"score":  rs.Score,
@@ -1535,13 +1535,13 @@ func (m *XzddMj) storeHistory(roomInfo *Room) {
 	}
 }
 
-func (m *XzddMj) storeSingleHistory(userId int, history map[string]interface{}) {
+func (m *XzddMj) storeSingleHistory(userId int, history map[string]any) {
 	user, err := database.GetUserById(userId)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	var res []map[string]interface{}
+	var res []map[string]any
 	err = json.Unmarshal([]byte(user.History), &res)
 	if err != nil {
 		logger.Error(err)
@@ -1551,7 +1551,7 @@ func (m *XzddMj) storeSingleHistory(userId int, history map[string]interface{}) 
 		res = res[1:]
 	}
 	res = append(res, history)
-	database.UpdateUser(userId, map[string]interface{}{"history": tools.Stringify(res)})
+	database.UpdateUser(userId, map[string]any{"history": tools.Stringify(res)})
 }
 
 func (m *XzddMj) chaJiao(game *GameData) {
@@ -1625,8 +1625,8 @@ func (m *XzddMj) isTinged(seatData *Seat) bool {
 	return len(seatData.TingMap) > 0
 }
 
-func (m *XzddMj) recordUserAction(game *GameData, seatData *Seat, typ string, args ...interface{}) *ActionData {
-	var target interface{}
+func (m *XzddMj) recordUserAction(game *GameData, seatData *Seat, typ string, args ...any) *ActionData {
+	var target any
 	if len(args) > 0 {
 		target = args[0]
 	}
@@ -1873,7 +1873,7 @@ func (m *XzddMj) hu(userId int) {
 	m.clearAllOptions(game, seatData)
 
 	//通知前端，有人和牌了
-	userMgr.broadcastInRoom("hu_push", map[string]interface{}{"seatindex": seatIndex, "iszimo": isZimo, "hupai": notify}, seatData.UserId, true)
+	userMgr.broadcastInRoom("hu_push", map[string]any{"seatindex": seatIndex, "iszimo": isZimo, "hupai": notify}, seatData.UserId, true)
 
 	//
 	if game.LastHuPaiSeat == -1 {
@@ -1957,7 +1957,7 @@ func (m *XzddMj) guo(userId int) {
 	//如果是已打出的牌，则需要通知。
 	if game.ChuPai >= 0 {
 		uid := game.GameSeats[game.Turn].UserId
-		userMgr.broadcastInRoom("guo_notify_push", map[string]interface{}{"UserId": uid, "pai": game.ChuPai}, seatData.UserId, true)
+		userMgr.broadcastInRoom("guo_notify_push", map[string]any{"UserId": uid, "pai": game.ChuPai}, seatData.UserId, true)
 		seatData.Folds = append(seatData.Folds, game.ChuPai)
 		game.ChuPai = -1
 	}

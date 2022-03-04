@@ -42,7 +42,7 @@ func init() {
 	initLogger(loggerCfg)
 }
 
-func initLogger(cfg map[string]interface{}) {
+func initLogger(cfg map[string]any) {
 	zipDay := time.Duration(cfg["zip_day"].(float64)*24) * time.Hour
 	options := []logger.Option{
 		logger.WithLogLevel(cfg["log_level"].(string)),

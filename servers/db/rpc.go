@@ -12,7 +12,7 @@ var (
 	builder = rpc.DefaultReqBuilder().SetCodeType(rpc.CodeTypeJson).SetSuffix(rpc.JsonSuffix)
 )
 
-func UpdateMember(s rpc.ServerRpc, uid int, data map[string]interface{}) error {
+func UpdateMember(s rpc.ServerRpc, uid int, data map[string]any) error {
 	dbServer := s.Find(constant.DbServer, uid)
 	if dbServer == nil {
 		return errors.New(constant.ErrNotFoundDbServer)

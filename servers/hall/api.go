@@ -47,7 +47,7 @@ func (h *HallServer) Login(req *protos.LoginRequest) *protos.MsgResponse {
 	}
 	//异步更新用户登录时间
 	nowTime := time.Now()
-	if err := db.UpdateMember(h.Rpc, uid, map[string]interface{}{
+	if err := db.UpdateMember(h.Rpc, uid, map[string]any{
 		"login_time":    nowTime,
 		"offline_state": 0,
 	}); err != nil {
@@ -77,7 +77,7 @@ func (h *HallServer) Offline(req *protos.OfflineRequest) *protos.MsgResponse {
 	msg := &protos.MsgResponse{Code: constant.StatusOk}
 	uid := int(req.Uid)
 	//更新用户离线状态
-	if err := db.UpdateMember(h.Rpc, uid, map[string]interface{}{
+	if err := db.UpdateMember(h.Rpc, uid, map[string]any{
 		"offline_state": 1,
 		"offline_time":  time.Now(),
 	}); err != nil {

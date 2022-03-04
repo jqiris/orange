@@ -324,7 +324,7 @@ func (m *RoomMgr) destroy(roomId int) {
 		userId := seat.UserId
 		if userId > 0 {
 			m.userLocation.Delete(userId)
-			database.UpdateUser(userId, map[string]interface{}{"roomid": ""})
+			database.UpdateUser(userId, map[string]any{"roomid": ""})
 		}
 	}
 	m.rooms.Delete(roomId)
@@ -361,7 +361,7 @@ func (m *RoomMgr) exitRoom(userId int) {
 			numOfPlayers++
 		}
 	}
-	database.UpdateUser(userId, map[string]interface{}{"roomid": ""})
+	database.UpdateUser(userId, map[string]any{"roomid": ""})
 	if numOfPlayers == 0 {
 		m.destroy(roomId)
 	}

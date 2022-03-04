@@ -20,6 +20,6 @@ func GetUserByOpenId(openId string) (*model.UserMember, error) {
 	return user, nil
 }
 
-func UpdateUserMember(userId int, updates map[string]interface{}) error {
+func UpdateUserMember(userId int, updates map[string]any) error {
 	return db.Model(&model.UserMember{}).Where("user_id= ?", userId).Updates(updates).Error
 }

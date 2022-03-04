@@ -33,7 +33,7 @@ func (m *UserMgr) isOnline(userId int) bool {
 	return exist
 }
 
-func (m *UserMgr) broadcastInRoom(event string, data interface{}, sender int, args ...bool) {
+func (m *UserMgr) broadcastInRoom(event string, data any, sender int, args ...bool) {
 	includingSender := false
 	if len(args) > 0 {
 		includingSender = args[0]
@@ -61,7 +61,7 @@ func (m *UserMgr) broadcastInRoom(event string, data interface{}, sender int, ar
 	}
 }
 
-func (m *UserMgr) sendMsg(userId int, event string, msgdata ...interface{}) {
+func (m *UserMgr) sendMsg(userId int, event string, msgdata ...any) {
 	socket := m.get(userId)
 	if socket == nil {
 		return

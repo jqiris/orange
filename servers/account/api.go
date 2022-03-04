@@ -34,7 +34,7 @@ func (s *AccountServer) Register(c *gin.Context) {
 
 //返回版本号
 func (s *AccountServer) GetVersion(c *gin.Context) {
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"version": viper.GetString("version"),
 	}
 	c.JSON(200, resp)
@@ -42,7 +42,7 @@ func (s *AccountServer) GetVersion(c *gin.Context) {
 
 //返回服务信息
 func (s *AccountServer) GetServerinfo(c *gin.Context) {
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"version": viper.GetString("version"),
 		"hall":    constant.HALL_ADDR,
 		"appweb":  "http://fir.im/2f17",
@@ -54,7 +54,7 @@ func (s *AccountServer) GetServerinfo(c *gin.Context) {
 func (s *AccountServer) Guest(c *gin.Context) {
 	account := "guest_" + c.Query("account")
 	sign := utils.Md5(account + c.ClientIP() + constant.ACCOUNT_PRI_KEY)
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"errcode":  0,
 		"errmsg":   "ok",
 		"account":  account,
@@ -77,7 +77,7 @@ func (s *AccountServer) Auth(c *gin.Context) {
 		return
 	}
 	sign := utils.Md5(account + c.ClientIP() + constant.ACCOUNT_PRI_KEY)
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"errcode": 0,
 		"errmsg":  "ok",
 		"account": account,
@@ -95,7 +95,7 @@ func (s *AccountServer) BaseInfo(c *gin.Context) {
 		return
 	}
 	bs, _ := base64.StdEncoding.DecodeString(user.Name)
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"errcode":    0,
 		"errmsg":     "ok",
 		"name":       string(bs),

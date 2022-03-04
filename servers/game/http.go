@@ -44,10 +44,10 @@ func (s *GameServer) Error(c *gin.Context, msg string, args ...int) {
 	if len(args) > 0 {
 		errcode = args[0]
 	}
-	c.JSON(200, map[string]interface{}{"errcode": errcode, "errmsg": msg})
+	c.JSON(200, map[string]any{"errcode": errcode, "errmsg": msg})
 }
 
-func (s *GameServer) Success(c *gin.Context, data map[string]interface{}) {
+func (s *GameServer) Success(c *gin.Context, data map[string]any) {
 	data["errcode"] = 0
 	data["errmsg"] = "ok"
 	c.JSON(200, data)
@@ -74,7 +74,7 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 		}
 		return true
 	})
-	s.Success(c, map[string]interface{}{"userroominfo": arr})
+	s.Success(c, map[string]any{"userroominfo": arr})
 }
 
 //创建房间
@@ -100,7 +100,7 @@ func (s *GameServer) CreateRoom(c *gin.Context) {
 		s.Error(c, "create failed")
 		return
 	}
-	s.Success(c, map[string]interface{}{"roomid": roomId})
+	s.Success(c, map[string]any{"roomid": roomId})
 }
 
 //进入房间
@@ -130,7 +130,7 @@ func (s *GameServer) EnterRoom(c *gin.Context) {
 		}
 	}
 	token := tokenMgr.createToken(userId, 5000)
-	s.Success(c, map[string]interface{}{"token": token})
+	s.Success(c, map[string]any{"token": token})
 }
 
 //房间是否运行
@@ -145,5 +145,5 @@ func (s *GameServer) IsRoomRuning(c *gin.Context) {
 		s.Error(c, "sign check failed", 2)
 		return
 	}
-	s.Success(c, map[string]interface{}{"runing": true})
+	s.Success(c, map[string]any{"runing": true})
 }

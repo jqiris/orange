@@ -13,9 +13,9 @@ import (
 )
 
 type Msg struct {
-	Errcode int                    `json:"errcode"`
-	Errmsg  string                 `json:"errmsg"`
-	Data    map[string]interface{} `json:"data"`
+	Errcode int            `json:"errcode"`
+	Errmsg  string         `json:"errmsg"`
+	Data    map[string]any `json:"data"`
 }
 
 type SocketCtx struct {
@@ -80,7 +80,7 @@ func (s *GameServer) OnDisconnect(c socketio.Conn, reason string) {
 		return
 	}
 
-	var data = map[string]interface{}{
+	var data = map[string]any{
 		"userid": userId,
 		"online": false,
 	}
@@ -122,7 +122,7 @@ func (s *GameServer) DissolveAgree(c socketio.Conn) {
 	if ret != nil {
 		dr := ret.Dr
 		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
-		data := map[string]interface{}{
+		data := map[string]any{
 			"time":   remainingTime,
 			"states": dr.States,
 		}
@@ -159,7 +159,7 @@ func (s *GameServer) DissolveRequest(c socketio.Conn) {
 	if ret != nil {
 		dr := ret.Dr
 		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
-		data := map[string]interface{}{
+		data := map[string]any{
 			"time":   remainingTime,
 			"states": dr.States,
 		}
@@ -222,7 +222,7 @@ func (s *GameServer) Emoji(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	userMgr.broadcastInRoom("emoji_push", map[string]interface{}{
+	userMgr.broadcastInRoom("emoji_push", map[string]any{
 		"sender":  ctx.UserId,
 		"content": msg,
 	}, ctx.UserId, true)
@@ -233,7 +233,7 @@ func (s *GameServer) VoiceMsg(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	userMgr.broadcastInRoom("voice_msg_push", map[string]interface{}{
+	userMgr.broadcastInRoom("voice_msg_push", map[string]any{
 		"sender":  ctx.UserId,
 		"content": msg,
 	}, ctx.UserId, true)
@@ -244,7 +244,7 @@ func (s *GameServer) QuickChat(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	userMgr.broadcastInRoom("quick_chat_push", map[string]interface{}{
+	userMgr.broadcastInRoom("quick_chat_push", map[string]any{
 		"sender":  ctx.UserId,
 		"content": msg,
 	}, ctx.UserId, true)
@@ -254,7 +254,7 @@ func (s *GameServer) Chat(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	userMgr.broadcastInRoom("chat_push", map[string]interface{}{
+	userMgr.broadcastInRoom("chat_push", map[string]any{
 		"sender":  ctx.UserId,
 		"content": msg,
 	}, ctx.UserId, true)
@@ -343,7 +343,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	ret := Msg{
 		Errcode: 0,
 		Errmsg:  "ok",
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"roomid":     roomInfo.Id,
 			"conf":       roomInfo.Conf,
 			"numofgames": roomInfo.NumOfGames,
@@ -362,7 +362,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	if roomInfo.Dr != nil {
 		dr := roomInfo.Dr
 		remainingTime := dr.EndTime - time.Now().Unix()
-		data := map[string]interface{}{
+		data := map[string]any{
 			"time":   remainingTime,
 			"states": dr.States,
 		}
@@ -373,7 +373,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 func (s *GameServer) Ready(c socketio.Conn) {
 	if v := s.GetSocketCtx(c); v != nil {
 		v.GameMgr.setReady(v.UserId)
-		userMgr.broadcastInRoom("user_ready_push", map[string]interface{}{"userid": v.UserId, "ready": true}, v.UserId, true)
+		userMgr.broadcastInRoom("user_ready_push", map[string]any{"userid": v.UserId, "ready": true}, v.UserId, true)
 	}
 }
 

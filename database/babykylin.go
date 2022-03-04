@@ -28,7 +28,7 @@ func GetUserById(userId int) (*model.TUser, error) {
 	return res, nil
 }
 
-func UpdateUser(userId int, data map[string]interface{}) error {
+func UpdateUser(userId int, data map[string]any) error {
 	return db.Table("t_users").Where("userid=?", userId).Updates(data).Error
 }
 
@@ -66,7 +66,7 @@ func DeleteRoom(roomId int) error {
 	return db.Where("id=?", roomId).Delete(&model.TRoom{}).Error
 }
 
-func UpdateRoom(roomId int, data map[string]interface{}) error {
+func UpdateRoom(roomId int, data map[string]any) error {
 	return db.Table("t_rooms").Where("id=?", roomId).Updates(data).Error
 }
 
@@ -75,7 +75,7 @@ func UpdateSeatInfo(roomId, seatIndex, userId int, icon, name string) error {
 	colIcon := fmt.Sprintf("user_icon%d", seatIndex)
 	colUserName := fmt.Sprintf("user_name%d", seatIndex)
 	name = base64.StdEncoding.EncodeToString([]byte(name))
-	data := map[string]interface{}{
+	data := map[string]any{
 		colUserId:   userId,
 		colIcon:     icon,
 		colUserName: name,
@@ -92,7 +92,7 @@ func CreateGame(data *model.TGame) error {
 	return db.Create(data).Error
 }
 
-func UpdateGame(uuid string, index int, data map[string]interface{}) error {
+func UpdateGame(uuid string, index int, data map[string]any) error {
 	return db.Table("t_games").Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
 }
 
