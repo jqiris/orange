@@ -11,15 +11,16 @@ import (
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/model"
+	"github.com/jqiris/orange/protos"
 )
 
-//router
-func (s *GameServer) HttpRouter(app *gin.Engine) {
-	app.GET("/get_server_info", s.GetServerInfo)
-	app.GET("/create_room", s.CreateRoom)
-	app.GET("/enter_room", s.EnterRoom)
-	app.GET("/is_room_runing", s.IsRoomRuning)
-}
+// //router
+// func (s *GameServer) HttpRouter(app *gin.Engine) {
+// 	app.GET("/get_server_info", s.GetServerInfo)
+// 	app.GET("/create_room", s.CreateRoom)
+// 	app.GET("/enter_room", s.EnterRoom)
+// 	app.GET("/is_room_runing", s.IsRoomRuning)
+// }
 
 //向大厅服定时心跳
 func (s *GameServer) update() {
@@ -78,59 +79,77 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 }
 
 //创建房间
-func (s *GameServer) CreateRoom(c *gin.Context) {
-	userId, sign, gems, conf := utils.StringToInt(c.Query("userid")), c.Query("sign"), c.Query("gems"), c.Query("conf")
+func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
+	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
+	userId, gems, sign, conf := int(req.Userid), int(req.Gems), req.Sign, req.Conf
 	if userId < 1 || len(sign) < 1 || len(conf) < 1 {
-		s.Error(c, "Invalid parameters")
-		return
+		resp.Errmsg = "Invalid parameters"
+		return resp
 	}
-	md5 := utils.Md5(c.Query("userid") + conf + gems + constant.ROOM_PRI_KEY)
+	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, gems, constant.ROOM_PRI_KEY))
 	if md5 != sign {
-		s.Error(c, "sign check failed")
-		return
+		resp.Errmsg = "sign check failed"
+		return resp
 	}
 	var cfg model.GameConf
 	err := json.Unmarshal([]byte(conf), &cfg)
 	if err != nil {
-		s.Error(c, err.Error())
-		return
+		resp.Errmsg = err.Error()
+		return resp
 	}
-	errcode, roomId := roomMgr.createRoom(userId, cfg, gems, c.ClientIP(), constant.CLIENT_PORT)
+	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int(s.Server.ClientPort)
+	errcode, roomId := roomMgr.createRoom(userId, cfg, gems, serverId, ip, port)
 	if errcode != 0 || roomId < 1 {
-		s.Error(c, "create failed")
-		return
+		resp.Errmsg = "create failed"
+		return resp
 	}
-	s.Success(c, map[string]any{"roomid": roomId})
+	resp.Errcode = 0
+	resp.Errmsg = "ok"
+	resp.Any = &protos.InnerMsgResp_CreateRoom{
+		CreateRoom: &protos.InnerCreateRoomResp{
+			Roomid:   int32(roomId),
+			ServerId: s.Server.ServerId,
+		},
+	}
+	return resp
 }
 
 //进入房间
-func (s *GameServer) EnterRoom(c *gin.Context) {
-	userId, name, roomId, sign := utils.StringToInt(c.Query("userid")), c.Query("name"), utils.StringToInt(c.Query("roomid")), c.Query("sign")
+func (s *GameServer) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMsgResp {
+	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
+	userId, roomId, name, sign := int(req.Userid), int(req.Roomid), req.Name, req.Sign
 	if userId < 1 || roomId < 1 || len(sign) < 1 {
-		s.Error(c, "invalid parameters")
-		return
+		resp.Errmsg = "Invalid parameters"
+		return resp
 	}
 	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.ROOM_PRI_KEY))
 	if md5 != sign {
-		s.Error(c, "sign check failed")
-		return
+		resp.Errmsg = "sign check failed"
+		return resp
 	}
 	ret := roomMgr.enterRoom(roomId, userId, name)
 	if ret != 0 {
 		switch ret {
 		case 1:
-			s.Error(c, "room is full")
-			return
+			resp.Errmsg = "room is full"
+			return resp
 		case 2:
-			s.Error(c, "can't find room")
-			return
+			resp.Errmsg = "can't find room"
+			return resp
 		case 3:
-			s.Error(c, "build room from db failed")
-			return
+			resp.Errmsg = "build room from db failed"
+			return resp
 		}
 	}
 	token := tokenMgr.createToken(userId, 5000)
-	s.Success(c, map[string]any{"token": token})
+	resp.Errcode = 0
+	resp.Errmsg = "ok"
+	resp.Any = &protos.InnerMsgResp_EnterRoom{
+		EnterRoom: &protos.InnerEnterRoomResp{
+			Token: token,
+		},
+	}
+	return resp
 }
 
 //房间是否运行

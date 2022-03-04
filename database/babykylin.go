@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/tools"
 )
@@ -30,6 +31,10 @@ func GetUserById(userId int) (*model.TUser, error) {
 
 func UpdateUser(userId int, data map[string]any) error {
 	return db.Table("t_users").Where("userid=?", userId).Updates(data).Error
+}
+
+func CreateUser(data *model.TUser) error {
+	return db.Create(data).Error
 }
 
 func CreateAccount(data *model.TAccount) error {
@@ -99,4 +104,34 @@ func UpdateGame(uuid string, index int, data map[string]any) error {
 func CostGems(userId int, cost int) error {
 	sql := "UPDATE t_users SET gems = gems -? where userid = ?"
 	return db.Exec(sql, cost, userId).Error
+}
+func GetGameArchive(uuid string) (*model.TGamesArchive, error) {
+	res := &model.TGamesArchive{}
+	err := db.Where("room_uuid = ?", uuid).First(res).Error
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func GetGameArchiveDetail(uuid string, index int) (*model.TGamesArchive, error) {
+	res := &model.TGamesArchive{}
+	err := db.Where("room_uuid = ? and game_index", uuid, index).First(res).Error
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func GetMessage(typ, version string) (*model.TMessage, error) {
+	res := &model.TMessage{}
+	do := db.Where("type=?", typ)
+	if len(version) > 0 && version != constant.Null {
+		do = do.Where("version = ?", version)
+	}
+	err := do.First(res).Error
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

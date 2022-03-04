@@ -38,7 +38,7 @@
                 "server_name": "account",
                 "server_ip": "127.0.0.1",
                 "client_port": 9000,
-                "is_launch": false
+                "is_launch": true
             },
             "gate_2001": {
                 "server_id": "gate_2001",
@@ -54,8 +54,8 @@
                 "server_type": "hall",
                 "server_name": "hall",
                 "server_ip": "127.0.0.1",
-                "client_port": 8388,
-                "is_launch": false
+                "client_port": 9001,
+                "is_launch": true
             },
             "db_4001": {
                 "server_id": "db_4001",

@@ -27,4 +27,5 @@ const (
 	HTTP_TICK_TIME  = 5000
 	TOKEN_KEY       = "!@#$%^&"
 	HTTP_PORT       = 9003
+	Null            = "null"
 )

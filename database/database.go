@@ -27,3 +27,7 @@ func InitDatabase(data map[string]any) {
 		panic(err)
 	}
 }
+
+func ErrRecordNotFound(err error) bool {
+	return err == gorm.ErrRecordNotFound
+}

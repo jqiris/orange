@@ -59,8 +59,8 @@ func (s *GameServer) SocketRouter(sc *socketio.Server) {
 
 	http.Handle("/socket.io/", sc)
 	http.Handle("/hi", sc)
-	logger.Infof("socket server start at:%v", constant.CLIENT_PORT)
-	http.ListenAndServe(fmt.Sprintf(":%v", constant.CLIENT_PORT), nil)
+	logger.Infof("socket server start at:%v", s.Server.ClientPort)
+	http.ListenAndServe(fmt.Sprintf(":%v", s.Server.ClientPort), nil)
 }
 
 func (s *GameServer) OnConnect(c socketio.Conn) error {
@@ -460,6 +460,6 @@ func (s *GameServer) GamePing(c socketio.Conn) {
 	if ctx == nil {
 		return
 	}
-	logger.Infof("GamePing:%v", ctx.UserId)
+	// logger.Infof("GamePing:%v", ctx.UserId)
 	c.Emit("game_pong")
 }

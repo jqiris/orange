@@ -126,7 +126,7 @@ func (m *XzddMj) begin(roomId int) {
 	for i := 0; i < len(seats); i++ {
 		st := seats[i]
 		holds := game.GameSeats[i].Holds
-		logger.Warnf("holds:%+v", holds)
+		logger.Infof("holds:%+v", holds)
 		//通知玩家手牌
 		userMgr.sendMsg(st.UserId, "game_holds_push", holds)
 		//通知还剩多少张牌
@@ -557,7 +557,7 @@ func (m *XzddMj) doDingQue(game *GameData, seatData *Seat) {
 	m.checkCanHu(game, turnSeat, turnSeat.Holds[len(turnSeat.Holds)-1])
 	//通知前端
 	m.sendOperations(game, turnSeat, game.ChuPai)
-	logger.Warnf("doDingQue,seat:%+v,turn:%+v", game.GameSeats[game.Turn], game.Turn)
+	// logger.Infof("doDingQue,seat:%+v,turn:%+v", game.GameSeats[game.Turn], game.Turn)
 }
 
 func (m *XzddMj) chuPai(userId int, pai int) {
@@ -566,7 +566,7 @@ func (m *XzddMj) chuPai(userId int, pai int) {
 		logger.Error("can't find the user game data")
 		return
 	}
-	logger.Warnf("chuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
+	// logger.Infof("chuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
 	game := seatData.Game
 	if game.Turn != seatData.SeatIndex {
 		logger.Error("not your turn")
@@ -771,7 +771,7 @@ func (m *XzddMj) recordGameAction(game *GameData, si, action, pai int) {
 }
 
 func (m *XzddMj) peng(userId int) {
-	logger.Warnf("peng,userId:%v", userId)
+	logger.Infof("peng,userId:%v", userId)
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -844,7 +844,7 @@ func (m *XzddMj) peng(userId int) {
 	//广播通知玩家出牌方
 	seatData.CanChuPai = true
 	userMgr.broadcastInRoom("game_chupai_push", seatData.UserId, seatData.UserId, true)
-	logger.Warnf("peng end,userId:%v", userId)
+	logger.Infof("peng end,userId:%v", userId)
 }
 
 func (m *XzddMj) moveToNextUser(game *GameData, nextSeat int) {

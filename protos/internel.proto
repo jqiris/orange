@@ -1,0 +1,57 @@
+syntax = "proto3";
+package protos;
+option go_package = "../protos";
+
+enum InnerMsgId {
+    InnerMsgChan = 0; //通道消息
+    InnerMsgCreateRoom = 1;//创建房间
+    InnerMsgEnterRoom = 2;//进入房间
+    InnerMsgRegServer = 3;//注册服务器
+}
+
+
+message InnerMsgResp{
+    int32 errcode = 1;//错误码
+    string errmsg = 2;//错误消息
+    oneof any{
+        InnerCreateRoomResp create_room = 3;//创建房间
+        InnerEnterRoomResp enter_room = 4;//进入房间
+        InnerRegServerResp reg_server = 5;//注册服务器
+    }
+}
+
+message InnerCreateRoomReq{
+    int64 userid = 1;//用户id
+    int64 gems = 2;//钻石数量
+    string conf = 3;//配置内容
+    string sign = 4;//签名
+}
+
+message InnerCreateRoomResp{
+    int32 roomid = 1;//房间id
+    string server_id = 2;//服务器ID
+}
+
+
+message InnerEnterRoomReq{
+    int64 userid = 1;//用户id
+    string name = 2;//用户名称
+    int32 roomid = 3;//房间id
+    string sign = 4;//签名
+}
+
+message InnerEnterRoomResp{
+    string token = 1; //token
+}
+
+message InnerRegServerReq{
+    string id = 1;//服务器id
+    string clientip = 2;//客户端ip
+    int32 clientport = 3;//客户端port
+    int32 httpPort = 4;//httpport
+    int32 load = 5;//负载量
+}
+
+message InnerRegServerResp{
+    string ip = 1; //ip
+}

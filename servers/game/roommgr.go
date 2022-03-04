@@ -73,7 +73,7 @@ func (m *RoomMgr) getUserLocations() sync.Map {
 	return m.userLocation
 }
 
-func (m *RoomMgr) createRoom(userId int, conf model.GameConf, gems, serverIp string, port int) (errcode int, roomId int) {
+func (m *RoomMgr) createRoom(userId int, conf model.GameConf, gems int, serverId, serverIp string, port int) (errcode int, roomId int) {
 	errcode = 1
 	if len(conf.Type) < 1 {
 		return
@@ -91,26 +91,25 @@ func (m *RoomMgr) createRoom(userId int, conf model.GameConf, gems, serverIp str
 	if conf.Jushuxuanze < 0 || conf.Jushuxuanze > len(JU_SHU) {
 		return
 	}
-	diamond := utils.StringToInt(gems)
 	cost := JU_SHU_COST[conf.Jushuxuanze]
-	if cost > diamond {
+	if cost > gems {
 		errcode = 2222
 		return
 	}
-	errcode, roomId = m.fnCreate(userId, conf, serverIp, port)
+	errcode, roomId = m.fnCreate(userId, conf, serverId, serverIp, port)
 	return
 }
 
-func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int) (int, int) {
+func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, serverId, ip string, port int) (int, int) {
 	roomId := m.generateRoomId()
 	room := m.getRoom(roomId)
 	if room != nil || m.getCreatingRoom(roomId) {
-		return m.fnCreate(userId, conf, ip, port)
+		return m.fnCreate(userId, conf, serverId, ip, port)
 	} else {
 		m.creatingRooms.Store(roomId, true)
 		if _, err := database.GetRoomById(roomId); err == nil {
 			m.creatingRooms.Delete(roomId)
-			return m.fnCreate(userId, conf, ip, port)
+			return m.fnCreate(userId, conf, serverId, ip, port)
 		} else {
 			createTime := time.Now().Unix()
 			roomInfo := &Room{
@@ -161,6 +160,7 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, ip string, port int)
 				ID:         roomId,
 				BaseInfo:   string(bs),
 				CreateTime: createTime,
+				ServerId:   serverId,
 				IP:         ip,
 				Port:       port,
 			}); err != nil {

@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/googollee/go-socket.io/engineio"
 	"github.com/googollee/go-socket.io/engineio/transport"
@@ -17,8 +15,8 @@ import (
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
-	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
+	"github.com/jqiris/orange/protos"
 )
 
 var (
@@ -28,12 +26,12 @@ var (
 )
 
 type GameServer struct {
-	*base.ServerHttp
+	*base.ServerBase
 	gameServerInfo url.Values
 }
 
 func (s *GameServer) AfterInit() {
-	s.ServerHttp.AfterInit()
+	s.ServerBase.AfterInit()
 	//socket handler
 	allowOrigin := func(r *http.Request) bool {
 		return true
@@ -57,19 +55,23 @@ func (s *GameServer) AfterInit() {
 
 	//服务信息
 
-	s.gameServerInfo = url.Values{
-		"id":         {constant.SERVER_ID},
-		"clientip":   {constant.CLIENT_IP},
-		"clientport": {utils.IntToString(constant.CLIENT_PORT)},
-		"httpPort":   {utils.IntToString(constant.HTTP_PORT)},
-		"load":       {utils.IntToString(roomMgr.getTotallRooms())},
-	}
-	go s.update()
+	// s.gameServerInfo = url.Values{
+	// 	"id":         {constant.SERVER_ID},
+	// 	"clientip":   {constant.CLIENT_IP},
+	// 	"clientport": {utils.IntToString(constant.CLIENT_PORT)},
+	// 	"httpPort":   {utils.IntToString(constant.HTTP_PORT)},
+	// 	"load":       {utils.IntToString(roomMgr.getTotallRooms())},
+	// }
+	// go s.update()
 }
 
 func (s *GameServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("game server handleSelfEvent:%+v", req)
-	return nil
+	resp, err := s.DealMsg(rpc.CodeTypeProto, s.Rpc, req)
+	if err != nil {
+		logger.Error(err)
+		return nil
+	}
+	return resp
 }
 
 func (s *GameServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
@@ -78,18 +80,21 @@ func (s *GameServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
 }
 func GameServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	logger.Infof("world server creat:%+v", s)
-	//http handler
-	app := gin.Default()
+	// //http handler
+	// app := gin.Default()
 	//server entity
 	server := &GameServer{
-		ServerHttp: base.NewServerHttp(s, app),
+		ServerBase: base.NewServerBase(s),
 	}
 	server.SelfEventHandler = server.HandleSelfEvent
 	server.BroadcastEventHandler = server.HandleBroadcastEvent
+	//reg init handler
+	server.Register(int32(protos.InnerMsgId_InnerMsgCreateRoom), server.CreateRoom)
+	server.Register(int32(protos.InnerMsgId_InnerMsgEnterRoom), server.EnterRoom)
 	//cors
-	app.Use(cors.Default())
+	// app.Use(cors.Default())
 	//http router
-	server.HttpRouter(app)
+	// server.HttpRouter(app)
 	return server, nil
 }
 
