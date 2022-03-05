@@ -3,11 +3,8 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/model"
@@ -23,22 +20,22 @@ import (
 // }
 
 //向大厅服定时心跳
-func (s *GameServer) update() {
-	ticker := time.NewTicker(time.Duration(constant.HTTP_TICK_TIME) * time.Millisecond)
-	for {
-		select {
-		case <-ticker.C:
-			s.gameServerInfo["load"] = []string{utils.IntToString(roomMgr.getTotallRooms())}
-			url := fmt.Sprintf("http://%v:%v/register_gs?%v", constant.HALL_IP, constant.HALL_PORT, s.gameServerInfo.Encode())
-			resp, err := http.Get(url)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			logger.Infof("game http heart:%v", resp.StatusCode)
-		}
-	}
-}
+// func (s *GameServer) update() {
+// 	ticker := time.NewTicker(time.Duration(constant.HTTP_TICK_TIME) * time.Millisecond)
+// 	for {
+// 		select {
+// 		case <-ticker.C:
+// 			s.gameServerInfo["load"] = []string{utils.IntToString(roomMgr.getTotallRooms())}
+// 			url := fmt.Sprintf("http://%v:%v/register_gs?%v", constant.HALL_IP, constant.HALL_PORT, s.gameServerInfo.Encode())
+// 			resp, err := http.Get(url)
+// 			if err != nil {
+// 				logger.Error(err)
+// 				continue
+// 			}
+// 			logger.Infof("game http heart:%v", resp.StatusCode)
+// 		}
+// 	}
+// }
 
 func (s *GameServer) Error(c *gin.Context, msg string, args ...int) {
 	errcode := 1

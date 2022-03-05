@@ -4,43 +4,29 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/base"
+	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
-	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
 )
 
 type HallServer struct {
-	*base.ServerHttp
-}
-
-func (h *HallServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	resp, err := h.DealMsg(rpc.CodeTypeProto, h.Rpc, req)
-	if err != nil {
-		logger.Error(err)
-		return nil
-	}
-	return resp
-}
-func (h *HallServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
-	return nil
+	*base.ServerBase
 }
 
 func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+
+	server := &HallServer{
+		ServerBase: base.NewServerBase(s),
+	}
 	//http handler
 	app := gin.Default()
-	server := &HallServer{
-		ServerHttp: base.NewServerHttp(s, app),
-	}
-	server.SelfEventHandler = server.HandleSelfEvent
-	server.BroadcastEventHandler = server.HandleBroadcastEvent
-	//msg handler register
-	// server.Register(int32(protos.MsgId_MsgChan), server.ChanResp)
-	//cors
 	app.Use(cors.Default())
-	//router
 	server.Router(app)
+	//reg plugin
+	plug := plugin.NewServerHttp(app)
+	server.AddPlugin(plug)
 	return server, nil
 }
 

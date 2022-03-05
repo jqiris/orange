@@ -2,6 +2,7 @@ package gate
 
 import (
 	"github.com/jqiris/kungfu/v2/base"
+	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/packet/nano"
@@ -13,26 +14,16 @@ import (
 
 //前端负载器
 type GateServer struct {
-	*base.ServerConnector
-}
-
-func (g *GateServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("gate server handleSelfEvent:%+v", req)
-	return nil
-}
-
-func (g *GateServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("gate server HandleBroadcastEvent:%+v", req)
-	return nil
+	*base.ServerBase
 }
 
 func GateServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	server := &GateServer{
-		ServerConnector: base.NewServerConnector(s),
+		ServerBase: base.NewServerBase(s),
 	}
-	server.SelfEventHandler = server.HandleSelfEvent
-	server.BroadcastEventHandler = server.HandleBroadcastEvent
-	server.RouteHandler = func(s tcpface.IServer) {
+	//reg plugin
+	plug := plugin.NewServerConnector()
+	plug.RouteHandler = func(s tcpface.IServer) {
 		rs := s.GetMsgHandler()
 		router := rs.(*nano.MsgHandle)
 		err := router.Register(server)
@@ -40,6 +31,7 @@ func GateServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 			logger.Fatal(err)
 		}
 	}
+	server.AddPlugin(plug)
 	return server, nil
 }
 

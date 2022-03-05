@@ -4,8 +4,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/base"
+	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
-	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
@@ -17,38 +17,26 @@ type Msg struct {
 }
 
 type AccountServer struct {
-	*base.ServerHttp
+	*base.ServerBase
 }
 
-func (s *AccountServer) HandleSelfEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("world server handleSelfEvent:%+v", req)
-	return nil
-}
-
-func (s *AccountServer) HandleBroadcastEvent(req *rpc.MsgRpc) []byte {
-	logger.Infof("world server HandleBroadcastEvent:%+v", req)
-	return nil
-}
-
-func WorldServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
-	logger.Infof("world server creat:%+v", s)
-	//http handler
-	app := gin.Default()
+func AccountServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//server entity
 	server := &AccountServer{
-		ServerHttp: base.NewServerHttp(s, app),
+		ServerBase: base.NewServerBase(s),
 	}
-	server.SelfEventHandler = server.HandleSelfEvent
-	server.BroadcastEventHandler = server.HandleBroadcastEvent
-	//cors
+	//http handler
+	app := gin.Default()
 	app.Use(cors.Default())
-	//router
 	server.Router(app)
+	//reg plugin
+	plug := plugin.NewServerHttp(app)
+	server.AddPlugin(plug)
 	return server, nil
 }
 
 func init() {
-	launch.RegisterCreator(constant.AccountServer, WorldServerCreator)
+	launch.RegisterCreator(constant.AccountServer, AccountServerCreator)
 }
 
 //router

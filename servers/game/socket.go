@@ -3,10 +3,10 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
@@ -30,36 +30,33 @@ type LoginData struct {
 	Sign   string `json:"sign"`
 }
 
-func (s *GameServer) SocketRouter(sc *socketio.Server) {
-	ns := "/"
-	sc.OnConnect(ns, s.OnConnect)                         //连接
-	sc.OnDisconnect(ns, s.OnDisconnect)                   //断开连接
-	sc.OnEvent(ns, "login", s.Login)                      //登录
-	sc.OnEvent(ns, "ready", s.Ready)                      //准备
-	sc.OnEvent(ns, "huanpai", s.Huanpai)                  //换牌
-	sc.OnEvent(ns, "dingque", s.Dingque)                  //定缺
-	sc.OnEvent(ns, "chupai", s.Chupai)                    //出牌
-	sc.OnEvent(ns, "peng", s.Peng)                        //碰
-	sc.OnEvent(ns, "gang", s.Gang)                        //杠
-	sc.OnEvent(ns, "hu", s.Hu)                            //胡
-	sc.OnEvent(ns, "guo", s.Guo)                          //过
-	sc.OnEvent(ns, "game_ping", s.GamePing)               //心跳
-	sc.OnEvent(ns, "chat", s.Chat)                        //聊天
-	sc.OnEvent(ns, "quick_chat", s.QuickChat)             //快速聊天
-	sc.OnEvent(ns, "voice_msg", s.VoiceMsg)               //语音聊天
-	sc.OnEvent(ns, "emoji", s.Emoji)                      //表情
-	sc.OnEvent(ns, "exit", s.Exit)                        //退出房间
-	sc.OnEvent(ns, "dispress", s.Dispress)                //解散房间
-	sc.OnEvent(ns, "dissolve_request", s.DissolveRequest) //解散房间请求
-	sc.OnEvent(ns, "dissolve_agree", s.DissolveAgree)     //解散房间同意
-	sc.OnEvent(ns, "dissolve_reject", s.DissolveReject)   //解散房间不同意
+func (s *GameServer) SocketRouter(sc *plugin.ServerSocket) {
+	sc.OnConnect(s.OnConnect)                         //连接
+	sc.OnDisconnect(s.OnDisconnect)                   //断开连接
+	sc.OnEvent("login", s.Login)                      //登录
+	sc.OnEvent("ready", s.Ready)                      //准备
+	sc.OnEvent("huanpai", s.Huanpai)                  //换牌
+	sc.OnEvent("dingque", s.Dingque)                  //定缺
+	sc.OnEvent("chupai", s.Chupai)                    //出牌
+	sc.OnEvent("peng", s.Peng)                        //碰
+	sc.OnEvent("gang", s.Gang)                        //杠
+	sc.OnEvent("hu", s.Hu)                            //胡
+	sc.OnEvent("guo", s.Guo)                          //过
+	sc.OnEvent("game_ping", s.GamePing)               //心跳
+	sc.OnEvent("chat", s.Chat)                        //聊天
+	sc.OnEvent("quick_chat", s.QuickChat)             //快速聊天
+	sc.OnEvent("voice_msg", s.VoiceMsg)               //语音聊天
+	sc.OnEvent("emoji", s.Emoji)                      //表情
+	sc.OnEvent("exit", s.Exit)                        //退出房间
+	sc.OnEvent("dispress", s.Dispress)                //解散房间
+	sc.OnEvent("dissolve_request", s.DissolveRequest) //解散房间请求
+	sc.OnEvent("dissolve_agree", s.DissolveAgree)     //解散房间同意
+	sc.OnEvent("dissolve_reject", s.DissolveReject)   //解散房间不同意
+	sc.OnError(s.OnError)                             //发生错误报错
+}
 
-	go sc.Serve()
-	defer sc.Close()
-
-	http.Handle("/socket.io/", sc)
-	logger.Infof("socket server start at:%v", s.Server.ClientPort)
-	http.ListenAndServe(fmt.Sprintf(":%v", s.Server.ClientPort), nil)
+func (s *GameServer) OnError(c socketio.Conn, err error) {
+	logger.Errorf("OnError,conn:%+v,err:%v", c, err)
 }
 
 func (s *GameServer) OnConnect(c socketio.Conn) error {

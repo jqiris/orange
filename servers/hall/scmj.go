@@ -68,7 +68,7 @@ func (h *HallServer) Login(c *gin.Context) {
 		if _, err := database.GetRoomById(data.Roomid); err == nil {
 			ret["roomid"] = data.Roomid
 		} else if database.ErrRecordNotFound(err) {
-			database.UpdateUser(data.Userid, map[string]interface{}{"roomid": ""})
+			database.UpdateUser(data.Userid, map[string]interface{}{"roomid": 0})
 		} else {
 			logger.Error(err)
 		}

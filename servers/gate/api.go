@@ -11,7 +11,7 @@ import (
 )
 
 func (g *GateServer) AfterInit() {
-	g.ServerConnector.AfterInit()
+	g.ServerBase.AfterInit()
 	session.Lifetime.OnClosed(func(s *session.Session) {
 		uid, addr := s.UID(), s.RemoteAddr()
 		logger.Infof("gate offline,uid:%v,ip:%v", uid, addr)
