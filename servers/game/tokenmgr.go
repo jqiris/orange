@@ -9,24 +9,24 @@ import (
 )
 
 type TokenData struct {
-	UserId   int   `json:"user_id"`
+	UserId   int64 `json:"user_id"`
 	Time     int64 `json:"time"`
 	LifeTime int64 `json:"life_time"`
 }
 
 type TokenMgr struct {
 	tokens map[string]TokenData
-	users  map[int]string
+	users  map[int64]string
 }
 
 func NewTokenMgr() *TokenMgr {
 	return &TokenMgr{
 		tokens: make(map[string]TokenData),
-		users:  make(map[int]string),
+		users:  make(map[int64]string),
 	}
 }
 
-func (m *TokenMgr) createToken(userId int, lifeTime int64) string {
+func (m *TokenMgr) createToken(userId, lifeTime int64) string {
 	if token, ok := m.users[userId]; ok {
 		m.delToken(token)
 	}
@@ -41,7 +41,7 @@ func (m *TokenMgr) createToken(userId int, lifeTime int64) string {
 	return token
 }
 
-func (m *TokenMgr) getToken(userId int) string {
+func (m *TokenMgr) getToken(userId int64) string {
 	return m.users[userId]
 }
 
@@ -61,7 +61,7 @@ func (m *TokenMgr) isTokenVaild(token string) bool {
 	return false
 }
 
-func (m *TokenMgr) getUserId(token string) int {
+func (m *TokenMgr) getUserId(token string) int64 {
 	if v, ok := m.tokens[token]; ok {
 		return v.UserId
 	}

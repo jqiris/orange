@@ -10,6 +10,7 @@ import (
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
+	"github.com/jqiris/orange/protos"
 )
 
 type Msg struct {
@@ -19,13 +20,13 @@ type Msg struct {
 }
 
 type SocketCtx struct {
-	UserId  int
+	UserId  int64
 	GameMgr GameMgr
 }
 
 type LoginData struct {
 	Token  string `json:"token"`
-	Roomid int    `json:"roomid"`
+	Roomid int32  `json:"roomid"`
 	Time   int64  `json:"time"`
 	Sign   string `json:"sign"`
 }
@@ -314,25 +315,25 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	}
 	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
-	var userData *Seat
-	var seats []*Seat
+	var userData *protos.Seat
+	var seats []*protos.Seat
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
 		online := false
-		if rs.UserId > 0 {
-			online = userMgr.isOnline(rs.UserId)
+		if rs.Userid > 0 {
+			online = userMgr.isOnline(rs.Userid)
 		}
-		seat := &Seat{
-			UserId:    rs.UserId,
+		seat := &protos.Seat{
+			Userid:    rs.Userid,
 			Score:     rs.Score,
 			Name:      rs.Name,
 			Ready:     rs.Ready,
-			SeatIndex: i,
+			Seatindex: int32(i),
 			Ip:        rs.Ip,
 			Online:    online,
 		}
 		seats = append(seats, seat)
-		if userId == rs.UserId {
+		if userId == rs.Userid {
 			userData = seat
 		}
 	}
@@ -379,7 +380,7 @@ func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	data := make(map[string]int)
+	data := make(map[string]int32)
 	err := json.Unmarshal([]byte(msg), &data)
 	if err != nil {
 		logger.Error(err)
@@ -394,7 +395,7 @@ func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
 }
 
 //定缺
-func (s *GameServer) Dingque(c socketio.Conn, que int) {
+func (s *GameServer) Dingque(c socketio.Conn, que int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -403,7 +404,7 @@ func (s *GameServer) Dingque(c socketio.Conn, que int) {
 }
 
 //出牌
-func (s *GameServer) Chupai(c socketio.Conn, pai int) {
+func (s *GameServer) Chupai(c socketio.Conn, pai int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -421,7 +422,7 @@ func (s *GameServer) Peng(c socketio.Conn) {
 }
 
 //杠
-func (s *GameServer) Gang(c socketio.Conn, pai int) {
+func (s *GameServer) Gang(c socketio.Conn, pai int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return

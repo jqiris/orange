@@ -6,14 +6,9 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-type UserLocation struct {
-	RoomId    int `json:"roomId"`
-	SeatIndex int `json:"seatIndex"`
-}
-
 type UserMgr struct {
 	userList   sync.Map
-	userOnline int
+	userOnline int32
 }
 
 func NewUserMgr() *UserMgr {
@@ -23,17 +18,17 @@ func NewUserMgr() *UserMgr {
 	}
 }
 
-func (m *UserMgr) bind(userId int, c socketio.Conn) {
+func (m *UserMgr) bind(userId int64, c socketio.Conn) {
 	m.userList.Store(userId, c)
 	m.userOnline++
 }
 
-func (m *UserMgr) isOnline(userId int) bool {
+func (m *UserMgr) isOnline(userId int64) bool {
 	_, exist := m.userList.Load(userId)
 	return exist
 }
 
-func (m *UserMgr) broadcastInRoom(event string, data any, sender int, args ...bool) {
+func (m *UserMgr) broadcastInRoom(event string, data any, sender int64, args ...bool) {
 	includingSender := false
 	if len(args) > 0 {
 		includingSender = args[0]
@@ -48,10 +43,10 @@ func (m *UserMgr) broadcastInRoom(event string, data any, sender int, args ...bo
 	}
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
-		if rs.UserId == sender && !includingSender {
+		if rs.Userid == sender && !includingSender {
 			continue
 		}
-		if socket := m.get(rs.UserId); socket != nil {
+		if socket := m.get(rs.Userid); socket != nil {
 			if data != nil {
 				socket.Emit(event, data)
 			} else {
@@ -61,7 +56,7 @@ func (m *UserMgr) broadcastInRoom(event string, data any, sender int, args ...bo
 	}
 }
 
-func (m *UserMgr) sendMsg(userId int, event string, msgdata ...any) {
+func (m *UserMgr) sendMsg(userId int64, event string, msgdata ...any) {
 	socket := m.get(userId)
 	if socket == nil {
 		return
@@ -69,7 +64,7 @@ func (m *UserMgr) sendMsg(userId int, event string, msgdata ...any) {
 	socket.Emit(event, msgdata...)
 }
 
-func (m *UserMgr) get(userId int) socketio.Conn {
+func (m *UserMgr) get(userId int64) socketio.Conn {
 	if v, ok := m.userList.Load(userId); ok {
 		if socket, okv := v.(socketio.Conn); okv {
 			return socket
@@ -78,7 +73,7 @@ func (m *UserMgr) get(userId int) socketio.Conn {
 	return nil
 }
 
-func (m *UserMgr) kickAllInRoom(roomId int) {
+func (m *UserMgr) kickAllInRoom(roomId int32) {
 	if roomId < 1 {
 		return
 	}
@@ -88,16 +83,16 @@ func (m *UserMgr) kickAllInRoom(roomId int) {
 	}
 
 	for _, rs := range roomInfo.Seats {
-		if rs.UserId > 0 {
-			socket := m.get(rs.UserId)
+		if rs.Userid > 0 {
+			socket := m.get(rs.Userid)
 			if socket != nil {
-				m.del(rs.UserId)
+				m.del(rs.Userid)
 				socket.Close()
 			}
 		}
 	}
 }
-func (m *UserMgr) del(userId int) {
+func (m *UserMgr) del(userId int64) {
 	m.userList.Delete(userId)
 	m.userOnline--
 }

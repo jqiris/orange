@@ -66,7 +66,7 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 	locations := roomMgr.getUserLocations()
 	var arr []int
 	for userId, location := range locations {
-		arr = append(arr, userId, location.RoomId)
+		arr = append(arr, int(userId), int(location.RoomId))
 	}
 	s.Success(c, map[string]any{"userroominfo": arr})
 }
@@ -74,7 +74,7 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 //创建房间
 func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
-	userId, gems, sign, conf := int(req.Userid), int(req.Gems), req.Sign, req.Conf
+	userId, gems, sign, conf := int64(req.Userid), int32(req.Gems), req.Sign, req.Conf
 	if userId < 1 || len(sign) < 1 || len(conf) < 1 {
 		resp.Errmsg = "Invalid parameters"
 		return resp
@@ -90,7 +90,7 @@ func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsg
 		resp.Errmsg = err.Error()
 		return resp
 	}
-	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int(s.Server.ClientPort)
+	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int32(s.Server.ClientPort)
 	errcode, roomId := roomMgr.createRoom(userId, cfg, gems, serverId, ip, port)
 	if errcode != 0 || roomId < 1 {
 		resp.Errmsg = "create failed"
@@ -110,7 +110,7 @@ func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsg
 //进入房间
 func (s *GameServer) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
-	userId, roomId, name, sign := int(req.Userid), int(req.Roomid), req.Name, req.Sign
+	userId, roomId, name, sign := int64(req.Userid), int32(req.Roomid), req.Name, req.Sign
 	if userId < 1 || roomId < 1 || len(sign) < 1 {
 		resp.Errmsg = "Invalid parameters"
 		return resp

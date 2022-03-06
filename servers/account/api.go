@@ -88,7 +88,7 @@ func (s *AccountServer) Auth(c *gin.Context) {
 
 //用户基本信息
 func (s *AccountServer) BaseInfo(c *gin.Context) {
-	userId := utils.StringToInt(c.Query("userid"))
+	userId := utils.StringToInt64(c.Query("userid"))
 	user, err := database.GetUserById(userId)
 	if err != nil {
 		c.JSON(200, Msg{Errcode: 1, ErrMsg: "invalid userid"})

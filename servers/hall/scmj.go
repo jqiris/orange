@@ -83,7 +83,7 @@ func (h *HallServer) CreateUser(c *gin.Context) {
 		return
 	}
 	name := c.Query("name")
-	coins, gems := 1000, 21
+	var coins, gems int32 = 1000, 21
 
 	if _, err := database.GetUserByAccount(account); err == nil {
 		h.Error(c, "account have already exist.")
@@ -180,7 +180,7 @@ func (h *HallServer) EnterPrivateRoom(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
-	roomId := utils.StringToInt(c.Query("roomid"))
+	roomId := utils.StringToInt32(c.Query("roomid"))
 	if roomId < 1 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
@@ -278,7 +278,7 @@ func (h *HallServer) GetDetailOfGame(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
-	uuid, index := c.Query("uuid"), utils.StringToInt(c.Query("index"))
+	uuid, index := c.Query("uuid"), utils.StringToInt32(c.Query("index"))
 	if len(uuid) == 0 || index < 0 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return

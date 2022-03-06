@@ -5,16 +5,9 @@ import (
 	"encoding/json"
 
 	"github.com/jqiris/kungfu/v2/logger"
-	"github.com/jqiris/kungfu/v2/utils"
 )
 
-func CreateRoomCode(key string, low, high int) int {
-	code := utils.NextRoomCode(key, low, high)
-	prefix := utils.RangeRand(10, 99)
-	return prefix*1000000 + code
-}
-
-func IndexOf(arr []int, val int) int {
+func IndexOf(arr []int32, val int32) int {
 	for k, v := range arr {
 		if v == val {
 			return k
@@ -23,7 +16,7 @@ func IndexOf(arr []int, val int) int {
 	return -1
 }
 
-func SliceDel(arr []int, index, num int) []int {
+func SliceDel(arr []int32, index, num int) []int32 {
 	arrLen := len(arr)
 	if index < 0 || index >= arrLen {
 		return arr
@@ -35,7 +28,7 @@ func SliceDel(arr []int, index, num int) []int {
 	return append(arr[:index], arr[index+num:]...)
 }
 
-func SlicePop(arr []int) ([]int, int) {
+func SlicePop(arr []int32) ([]int32, int32) {
 	arrLen := len(arr)
 	if arrLen == 0 {
 		return arr, -1

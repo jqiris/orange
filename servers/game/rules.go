@@ -1,80 +1,35 @@
 package game
 
+import "github.com/jqiris/orange/protos"
+
 type GameMgr interface {
-	setReady(userId int)
-	hasBegan(roomId int) bool
-	dissolveRequest(roomId, userId int) *Room
-	dissolveAgree(roomId, userId int, agree bool) *Room
-	doDissolve(roomId int)
-	huanSanZhang(userId int, p1, p2, p3 int)
-	dingQue(userId int, que int)
-	chuPai(userId, pai int)
-	peng(userId int)
-	gang(userId, pai int)
-	hu(userId int)
-	guo(userId int)
-}
-
-type GameData struct {
-	Conf             RoomConf       `json:"conf"`
-	Uuid             string         `json:"uuid"`
-	GameIndex        int            `json:"gameIndex"`
-	Button           int            `json:"button"`
-	Mahjongs         []int          `json:"mahjongs"`
-	CurrentIndex     int            `json:"currentIndex"`
-	GameSeats        []*Seat        `json:"gameSeats"`
-	NumOfQue         int            `json:"numOfQue"`
-	Turn             int            `json:"turn"`
-	ChuPai           int            `json:"chuPai"`
-	State            string         `json:"state"`
-	FirstHupai       int            `json:"firstHupai"`
-	Yipaoduoxiang    int            `json:"yipaoduoxiang"`
-	Fangpaoshumu     int            `json:"fangpaoshumu"`
-	ActionList       []int          `json:"actionList"`
-	HupaiList        []int          `json:"hupaiList"`
-	ChupaiCnt        int            `json:"chupaiCnt"`
-	HuanpaiMethod    int            `json:"huanpaiMethod"`
-	QiangGangContext *QiangGangData `json:"qiangGangContext"`
-	LastHuPaiSeat    int            `json:"lastHuPaiSeat"`
-	LastFangGangSeat int            `json:"lastFangGangSeat"`
-	BaseInfoJson     string         `json:"baseInfoJson"`
-}
-type TingData struct {
-	Fan     int    `json:"fan"`
-	Pattern string `json:"pattern"`
-}
-
-type QiangGangData struct {
-	TurnSeat *Seat `json:"turnSeat"`
-	SeatData *Seat `json:"seat"`
-	Pai      int   `json:"pai"`
-	IsValid  bool  `json:"isValid"`
-}
-
-type ActionData struct {
-	Type     string      `json:"type"`
-	Owner    *Seat       `json:"owner"`
-	State    string      `json:"state"`
-	PayTimes int64       `json:"payTimes"`
-	Ref      *ActionData `json:"ref"`
-	Targets  []int       `json:"targets"`
-	Score    int         `json:"score"`
-	Iszimo   bool        `json:"iszimo"`
+	setReady(userId int64)
+	hasBegan(roomId int32) bool
+	dissolveRequest(roomId int32, userId int64) *protos.Room
+	dissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
+	doDissolve(roomId int32)
+	huanSanZhang(userId int64, p1, p2, p3 int32)
+	dingQue(userId int64, que int32)
+	chuPai(userId int64, pai int32)
+	peng(userId int64)
+	gang(userId int64, pai int32)
+	hu(userId int64)
+	guo(userId int64)
 }
 
 //public method
 var (
-	kanzi  []int
+	kanzi  []int32
 	record = false
 )
 
-func debugRecord(pai int) {
+func debugRecord(pai int32) {
 	if record {
 		kanzi = append(kanzi, pai)
 	}
 }
 
-func checkTingPai(seatData *Seat, begin, end int) {
+func checkTingPai(seatData *protos.Seat, begin, end int32) {
 	for i := begin; i < end; i++ {
 		//如果这牌已经在和了，就不用检查了
 		if seatData.TingMap[i] != nil {
@@ -89,7 +44,7 @@ func checkTingPai(seatData *Seat, begin, end int) {
 		var ret = checkCanHu(seatData)
 		if ret {
 			//平胡 0番
-			seatData.TingMap[i] = &TingData{
+			seatData.TingMap[i] = &protos.TingData{
 				Pattern: "normal",
 				Fan:     0,
 			}
@@ -101,7 +56,7 @@ func checkTingPai(seatData *Seat, begin, end int) {
 	}
 }
 
-func checkCanHu(seatData *Seat) bool {
+func checkCanHu(seatData *protos.Seat) bool {
 	for k, c := range seatData.CountMap {
 		if c < 2 {
 			continue
@@ -125,10 +80,10 @@ func checkCanHu(seatData *Seat) bool {
 	return false
 }
 
-func checkSingle(seatData *Seat) bool {
+func checkSingle(seatData *protos.Seat) bool {
 	holds := seatData.Holds
-	selected := -1
-	c := 0
+	var selected int32 = -1
+	var c int32 = 0
 	for _, pai := range holds {
 		c = seatData.CountMap[pai]
 		if c != 0 {
@@ -172,7 +127,7 @@ func checkSingle(seatData *Seat) bool {
 	return matchSingle(seatData, selected)
 }
 
-func matchSingle(seatData *Seat, selected int) bool {
+func matchSingle(seatData *protos.Seat, selected int32) bool {
 	//分开匹配 A-2,A-1,A
 	matched := true
 	v := selected % 9
@@ -180,7 +135,7 @@ func matchSingle(seatData *Seat, selected int) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t = selected - 2 + i
+			var t int32 = selected - 2 + int32(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false
@@ -212,7 +167,7 @@ func matchSingle(seatData *Seat, selected int) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t = selected - 1 + i
+			var t int32 = selected - 1 + int32(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false
@@ -244,7 +199,7 @@ func matchSingle(seatData *Seat, selected int) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t = selected + i
+			var t int32 = selected + int32(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false

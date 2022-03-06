@@ -19,7 +19,7 @@ func GetUserByAccount(account string) (*model.TUser, error) {
 	return res, nil
 }
 
-func GetUserById(userId int) (*model.TUser, error) {
+func GetUserById(userId int64) (*model.TUser, error) {
 	res := &model.TUser{}
 	err := db.Where("userid = ?", userId).First(res).Error
 	if err != nil {
@@ -29,7 +29,7 @@ func GetUserById(userId int) (*model.TUser, error) {
 	return res, nil
 }
 
-func UpdateUser(userId int, data map[string]any) error {
+func UpdateUser(userId int64, data map[string]any) error {
 	return db.Table("t_users").Where("userid=?", userId).Updates(data).Error
 }
 
@@ -50,7 +50,7 @@ func GetAccount(account string) (*model.TAccount, error) {
 	return res, nil
 }
 
-func GetRoomById(roomId int) (*model.TRoom, error) {
+func GetRoomById(roomId int32) (*model.TRoom, error) {
 	res := &model.TRoom{}
 	err := db.Where("id = ?", roomId).First(res).Error
 	if err != nil {
@@ -67,15 +67,15 @@ func CreateRoom(data *model.TRoom) error {
 	return db.Create(data).Error
 }
 
-func DeleteRoom(roomId int) error {
+func DeleteRoom(roomId int32) error {
 	return db.Where("id=?", roomId).Delete(&model.TRoom{}).Error
 }
 
-func UpdateRoom(roomId int, data map[string]any) error {
+func UpdateRoom(roomId int32, data map[string]any) error {
 	return db.Table("t_rooms").Where("id=?", roomId).Updates(data).Error
 }
 
-func UpdateSeatInfo(roomId, seatIndex, userId int, icon, name string) error {
+func UpdateSeatInfo(roomId, seatIndex int32, userId int64, icon, name string) error {
 	colUserId := fmt.Sprintf("user_id%d", seatIndex)
 	colIcon := fmt.Sprintf("user_icon%d", seatIndex)
 	colUserName := fmt.Sprintf("user_name%d", seatIndex)
@@ -97,11 +97,11 @@ func CreateGame(data *model.TGame) error {
 	return db.Create(data).Error
 }
 
-func UpdateGame(uuid string, index int, data map[string]any) error {
+func UpdateGame(uuid string, index int32, data map[string]any) error {
 	return db.Table("t_games").Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
 }
 
-func CostGems(userId int, cost int) error {
+func CostGems(userId int64, cost int32) error {
 	sql := "UPDATE t_users SET gems = gems -? where userid = ?"
 	return db.Exec(sql, cost, userId).Error
 }
@@ -114,7 +114,7 @@ func GetGameArchive(uuid string) (*model.TGamesArchive, error) {
 	return res, nil
 }
 
-func GetGameArchiveDetail(uuid string, index int) (*model.TGamesArchive, error) {
+func GetGameArchiveDetail(uuid string, index int32) (*model.TGamesArchive, error) {
 	res := &model.TGamesArchive{}
 	err := db.Where("room_uuid = ? and game_index", uuid, index).First(res).Error
 	if err != nil {

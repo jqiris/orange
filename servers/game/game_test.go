@@ -7,15 +7,9 @@ import (
 )
 
 func TestStructToJson(t *testing.T) {
-	data := &Room{
-		Uuid:       "",
-		Id:         0,
-		NumOfGames: 0,
-		CreateTime: 0,
-		NextButton: 0,
-		Seats:      []*Seat{},
-		Conf:       RoomConf{},
-		Dr:         &DissolveData{},
+	data := &UserLocation{
+		RoomId:    0,
+		SeatIndex: 0,
 	}
 	bs, _ := json.Marshal(data)
 	fmt.Println(string(bs))
