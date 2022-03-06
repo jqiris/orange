@@ -203,3 +203,18 @@ message GameData{
 }
 
 
+message Dr {
+    uint32 endTime = 1;
+    repeated bool states = 2;
+}
+
+message Room{
+    string uuid = 1;
+    uint32 id = 2;
+    uint32 numOfGames = 3;
+    uint32 createTime = 4;
+    uint32 nextButton = 5;
+    repeated Seat seats = 6;
+    RoomConf conf = 7;
+    Dr dr = 8;
+}

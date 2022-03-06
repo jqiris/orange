@@ -1855,6 +1855,164 @@ func (x *GameData) GetBaseInfoJson() string {
 	return ""
 }
 
+type Dr struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EndTime uint32 `protobuf:"varint,1,opt,name=endTime,proto3" json:"endTime,omitempty"`
+	States  []bool `protobuf:"varint,2,rep,packed,name=states,proto3" json:"states,omitempty"`
+}
+
+func (x *Dr) Reset() {
+	*x = Dr{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Dr) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dr) ProtoMessage() {}
+
+func (x *Dr) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dr.ProtoReflect.Descriptor instead.
+func (*Dr) Descriptor() ([]byte, []int) {
+	return file_protos_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *Dr) GetEndTime() uint32 {
+	if x != nil {
+		return x.EndTime
+	}
+	return 0
+}
+
+func (x *Dr) GetStates() []bool {
+	if x != nil {
+		return x.States
+	}
+	return nil
+}
+
+type Room struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Uuid       string    `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Id         uint32    `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	NumOfGames uint32    `protobuf:"varint,3,opt,name=numOfGames,proto3" json:"numOfGames,omitempty"`
+	CreateTime uint32    `protobuf:"varint,4,opt,name=createTime,proto3" json:"createTime,omitempty"`
+	NextButton uint32    `protobuf:"varint,5,opt,name=nextButton,proto3" json:"nextButton,omitempty"`
+	Seats      []*Seat   `protobuf:"bytes,6,rep,name=seats,proto3" json:"seats,omitempty"`
+	Conf       *RoomConf `protobuf:"bytes,7,opt,name=conf,proto3" json:"conf,omitempty"`
+	Dr         *Dr       `protobuf:"bytes,8,opt,name=dr,proto3" json:"dr,omitempty"`
+}
+
+func (x *Room) Reset() {
+	*x = Room{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protos_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Room) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Room) ProtoMessage() {}
+
+func (x *Room) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Room.ProtoReflect.Descriptor instead.
+func (*Room) Descriptor() ([]byte, []int) {
+	return file_protos_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *Room) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+func (x *Room) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Room) GetNumOfGames() uint32 {
+	if x != nil {
+		return x.NumOfGames
+	}
+	return 0
+}
+
+func (x *Room) GetCreateTime() uint32 {
+	if x != nil {
+		return x.CreateTime
+	}
+	return 0
+}
+
+func (x *Room) GetNextButton() uint32 {
+	if x != nil {
+		return x.NextButton
+	}
+	return 0
+}
+
+func (x *Room) GetSeats() []*Seat {
+	if x != nil {
+		return x.Seats
+	}
+	return nil
+}
+
+func (x *Room) GetConf() *RoomConf {
+	if x != nil {
+		return x.Conf
+	}
+	return nil
+}
+
+func (x *Room) GetDr() *Dr {
+	if x != nil {
+		return x.Dr
+	}
+	return nil
+}
+
 var File_protos_proto protoreflect.FileDescriptor
 
 var file_protos_proto_rawDesc = []byte{
@@ -2131,13 +2289,32 @@ var file_protos_proto_rawDesc = []byte{
 	0x46, 0x61, 0x6e, 0x67, 0x47, 0x61, 0x6e, 0x67, 0x53, 0x65, 0x61, 0x74, 0x12, 0x22, 0x0a, 0x0c,
 	0x62, 0x61, 0x73, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x4a, 0x73, 0x6f, 0x6e, 0x18, 0x16, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x0c, 0x62, 0x61, 0x73, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x4a, 0x73, 0x6f, 0x6e,
-	0x2a, 0x56, 0x0a, 0x05, 0x4d, 0x73, 0x67, 0x49, 0x64, 0x12, 0x0b, 0x0a, 0x07, 0x4d, 0x73, 0x67,
-	0x43, 0x68, 0x61, 0x6e, 0x10, 0x00, 0x12, 0x0c, 0x0a, 0x08, 0x4d, 0x73, 0x67, 0x4c, 0x6f, 0x67,
-	0x69, 0x6e, 0x10, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x4d, 0x73, 0x67, 0x4c, 0x6f, 0x67, 0x6f, 0x75,
-	0x74, 0x10, 0x02, 0x12, 0x0e, 0x0a, 0x0a, 0x4d, 0x73, 0x67, 0x4f, 0x66, 0x66, 0x6c, 0x69, 0x6e,
-	0x65, 0x10, 0x03, 0x12, 0x13, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x4d, 0x6a, 0x52, 0x6f, 0x6f, 0x6d,
-	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x10, 0x04, 0x42, 0x0b, 0x5a, 0x09, 0x2e, 0x2e, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x36, 0x0a, 0x02, 0x44, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x64, 0x54, 0x69, 0x6d,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x65, 0x6e, 0x64, 0x54, 0x69, 0x6d, 0x65,
+	0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x08,
+	0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x65, 0x73, 0x22, 0xf0, 0x01, 0x0a, 0x04, 0x52, 0x6f, 0x6f,
+	0x6d, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x75, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x75, 0x75, 0x69, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x6e, 0x75, 0x6d, 0x4f, 0x66, 0x47, 0x61,
+	0x6d, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x6e, 0x75, 0x6d, 0x4f, 0x66,
+	0x47, 0x61, 0x6d, 0x65, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x54,
+	0x69, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x54, 0x69, 0x6d, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x6e, 0x65, 0x78, 0x74, 0x42, 0x75, 0x74,
+	0x74, 0x6f, 0x6e, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x6e, 0x65, 0x78, 0x74, 0x42,
+	0x75, 0x74, 0x74, 0x6f, 0x6e, 0x12, 0x22, 0x0a, 0x05, 0x73, 0x65, 0x61, 0x74, 0x73, 0x18, 0x06,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x53, 0x65,
+	0x61, 0x74, 0x52, 0x05, 0x73, 0x65, 0x61, 0x74, 0x73, 0x12, 0x24, 0x0a, 0x04, 0x63, 0x6f, 0x6e,
+	0x66, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73,
+	0x2e, 0x52, 0x6f, 0x6f, 0x6d, 0x43, 0x6f, 0x6e, 0x66, 0x52, 0x04, 0x63, 0x6f, 0x6e, 0x66, 0x12,
+	0x1a, 0x0a, 0x02, 0x64, 0x72, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0a, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x73, 0x2e, 0x44, 0x72, 0x52, 0x02, 0x64, 0x72, 0x2a, 0x56, 0x0a, 0x05, 0x4d,
+	0x73, 0x67, 0x49, 0x64, 0x12, 0x0b, 0x0a, 0x07, 0x4d, 0x73, 0x67, 0x43, 0x68, 0x61, 0x6e, 0x10,
+	0x00, 0x12, 0x0c, 0x0a, 0x08, 0x4d, 0x73, 0x67, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x10, 0x01, 0x12,
+	0x0d, 0x0a, 0x09, 0x4d, 0x73, 0x67, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74, 0x10, 0x02, 0x12, 0x0e,
+	0x0a, 0x0a, 0x4d, 0x73, 0x67, 0x4f, 0x66, 0x66, 0x6c, 0x69, 0x6e, 0x65, 0x10, 0x03, 0x12, 0x13,
+	0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x4d, 0x6a, 0x52, 0x6f, 0x6f, 0x6d, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x10, 0x04, 0x42, 0x0b, 0x5a, 0x09, 0x2e, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2153,7 +2330,7 @@ func file_protos_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_protos_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_protos_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_protos_proto_goTypes = []interface{}{
 	(MsgId)(0),                   // 0: protos.MsgId
 	(*MsgRequest)(nil),           // 1: protos.MsgRequest
@@ -2174,9 +2351,11 @@ var file_protos_proto_goTypes = []interface{}{
 	(*QiangGangData)(nil),        // 16: protos.QiangGangData
 	(*Seat)(nil),                 // 17: protos.Seat
 	(*GameData)(nil),             // 18: protos.GameData
-	nil,                          // 19: protos.ChessConfig.ChoicesEntry
-	nil,                          // 20: protos.Seat.CountMapEntry
-	nil,                          // 21: protos.Seat.TingMapEntry
+	(*Dr)(nil),                   // 19: protos.Dr
+	(*Room)(nil),                 // 20: protos.Room
+	nil,                          // 21: protos.ChessConfig.ChoicesEntry
+	nil,                          // 22: protos.Seat.CountMapEntry
+	nil,                          // 23: protos.Seat.TingMapEntry
 }
 var file_protos_proto_depIdxs = []int32{
 	0,  // 0: protos.MsgRequest.msg_id:type_name -> protos.MsgId
@@ -2187,24 +2366,27 @@ var file_protos_proto_depIdxs = []int32{
 	7,  // 5: protos.MsgResponse.login_response:type_name -> protos.LoginResponse
 	8,  // 6: protos.MsgResponse.logout_response:type_name -> protos.LogoutResponse
 	9,  // 7: protos.MsgResponse.mj_room_create_response:type_name -> protos.MjRoomCreateResponse
-	19, // 8: protos.ChessConfig.choices:type_name -> protos.ChessConfig.ChoicesEntry
+	21, // 8: protos.ChessConfig.choices:type_name -> protos.ChessConfig.ChoicesEntry
 	17, // 9: protos.ActionData.owner:type_name -> protos.Seat
 	15, // 10: protos.ActionData.ref:type_name -> protos.ActionData
 	17, // 11: protos.QiangGangData.turnSeat:type_name -> protos.Seat
 	17, // 12: protos.QiangGangData.seat:type_name -> protos.Seat
 	18, // 13: protos.Seat.game:type_name -> protos.GameData
-	20, // 14: protos.Seat.countMap:type_name -> protos.Seat.CountMapEntry
-	21, // 15: protos.Seat.tingMap:type_name -> protos.Seat.TingMapEntry
+	22, // 14: protos.Seat.countMap:type_name -> protos.Seat.CountMapEntry
+	23, // 15: protos.Seat.tingMap:type_name -> protos.Seat.TingMapEntry
 	15, // 16: protos.Seat.actions:type_name -> protos.ActionData
 	12, // 17: protos.GameData.conf:type_name -> protos.RoomConf
 	17, // 18: protos.GameData.gameSeats:type_name -> protos.Seat
 	16, // 19: protos.GameData.qiangGangContext:type_name -> protos.QiangGangData
-	14, // 20: protos.Seat.TingMapEntry.value:type_name -> protos.TingData
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	17, // 20: protos.Room.seats:type_name -> protos.Seat
+	12, // 21: protos.Room.conf:type_name -> protos.RoomConf
+	19, // 22: protos.Room.dr:type_name -> protos.Dr
+	14, // 23: protos.Seat.TingMapEntry.value:type_name -> protos.TingData
+	24, // [24:24] is the sub-list for method output_type
+	24, // [24:24] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_protos_proto_init() }
@@ -2429,6 +2611,30 @@ func file_protos_proto_init() {
 				return nil
 			}
 		}
+		file_protos_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Dr); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protos_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Room); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_protos_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*MsgRequest_LoginRequest)(nil),
@@ -2447,7 +2653,7 @@ func file_protos_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_protos_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
