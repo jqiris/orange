@@ -1280,7 +1280,7 @@ type Seat struct {
 	IsTianHu         bool                `protobuf:"varint,40,opt,name=isTianHu,proto3" json:"isTianHu,omitempty"`
 	IsDiHu           bool                `protobuf:"varint,41,opt,name=isDiHu,proto3" json:"isDiHu,omitempty"`
 	Qingyise         bool                `protobuf:"varint,42,opt,name=qingyise,proto3" json:"qingyise,omitempty"`
-	Actions          []*ActionData       `protobuf:"bytes,43,rep,name=actions,proto3" json:"actions,omitempty"`
+	Actions          []*ActionData       `protobuf:"bytes,43,rep,name=actions,proto3" json:"actions"`
 	Fan              int32               `protobuf:"varint,44,opt,name=fan,proto3" json:"fan,omitempty"`
 	LastFangGangSeat int32               `protobuf:"varint,45,opt,name=lastFangGangSeat,proto3" json:"lastFangGangSeat,omitempty"`
 	Numofgen         int32               `protobuf:"varint,46,opt,name=numofgen,proto3" json:"numofgen,omitempty"`
