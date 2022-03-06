@@ -22,44 +22,87 @@ var (
 )
 
 type RoomMgr struct {
-	userLocation  sync.Map //用户位置信息
-	rooms         sync.Map //房间map
-	creatingRooms sync.Map //创建标记
-	totalRooms    int      //房间总数
-
+	UserLocation  map[int]*UserLocation //用户位置信息
+	Rooms         map[int]*Room         //房间map
+	CreatingRooms map[int]bool          //创建标记
+	TotalRooms    int                   //房间总数
+	lockLocation  sync.RWMutex
+	lockRoom      sync.RWMutex
+	lockCreating  sync.RWMutex
 }
 
 func NewRoomMgr() *RoomMgr {
 	return &RoomMgr{
-		userLocation:  sync.Map{},
-		rooms:         sync.Map{},
-		creatingRooms: sync.Map{},
-		totalRooms:    0,
+		UserLocation:  make(map[int]*UserLocation),
+		Rooms:         make(map[int]*Room),
+		CreatingRooms: make(map[int]bool),
+		TotalRooms:    0,
 	}
 }
 func (m *RoomMgr) getCreatingRoom(roomId int) bool {
-	if v, ok := m.creatingRooms.Load(roomId); ok {
-		if loc, okv := v.(bool); okv {
-			return loc
-		}
+	m.lockCreating.RLock()
+	defer m.lockCreating.RUnlock()
+	if v, ok := m.CreatingRooms[roomId]; ok {
+		return v
 	}
 	return false
 }
+func (m *RoomMgr) saveCreatingRoom(roomId int, data bool) {
+	m.lockCreating.Lock()
+	defer m.lockCreating.Unlock()
+	m.CreatingRooms[roomId] = data
+}
+func (m *RoomMgr) delCreatingRoom(roomId int) {
+	m.lockCreating.Lock()
+	defer m.lockCreating.Unlock()
+	delete(m.CreatingRooms, roomId)
+}
+
 func (m *RoomMgr) getRoom(roomId int) *Room {
-	if v, ok := m.rooms.Load(roomId); ok {
-		if loc, okv := v.(*Room); okv {
-			return loc
-		}
+	m.lockRoom.RLock()
+	defer m.lockRoom.RUnlock()
+	if v, ok := m.Rooms[roomId]; ok {
+		return v
 	}
 	return nil
 }
+
+func (m *RoomMgr) saveRoom(roomId int, data *Room) {
+	m.lockRoom.Lock()
+	defer m.lockRoom.Unlock()
+	m.Rooms[roomId] = data
+}
+func (m *RoomMgr) delRoom(roomId int) {
+	m.lockRoom.Lock()
+	defer m.lockRoom.Unlock()
+	delete(m.Rooms, roomId)
+}
+
 func (m *RoomMgr) getLocation(userId int) *UserLocation {
-	if v, ok := m.userLocation.Load(userId); ok {
-		if loc, okv := v.(*UserLocation); okv {
-			return loc
-		}
+	m.lockLocation.RLock()
+	defer m.lockLocation.RUnlock()
+	if v, ok := m.UserLocation[userId]; ok {
+		return v
 	}
 	return nil
+}
+
+func (m *RoomMgr) getUserLocations() map[int]*UserLocation {
+	m.lockLocation.RLock()
+	defer m.lockLocation.RUnlock()
+	return m.UserLocation
+}
+
+func (m *RoomMgr) saveLocation(roomId int, data *UserLocation) {
+	m.lockLocation.Lock()
+	defer m.lockLocation.Unlock()
+	m.UserLocation[roomId] = data
+}
+
+func (m *RoomMgr) delLocation(roomId int) {
+	m.lockLocation.Lock()
+	defer m.lockLocation.Unlock()
+	delete(m.UserLocation, roomId)
 }
 
 func (m *RoomMgr) getUserSeat(userId int) int {
@@ -67,10 +110,6 @@ func (m *RoomMgr) getUserSeat(userId int) int {
 		return v.SeatIndex
 	}
 	return -1
-}
-
-func (m *RoomMgr) getUserLocations() sync.Map {
-	return m.userLocation
 }
 
 func (m *RoomMgr) createRoom(userId int, conf model.GameConf, gems int, serverId, serverIp string, port int) (errcode int, roomId int) {
@@ -106,9 +145,9 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, serverId, ip string,
 	if room != nil || m.getCreatingRoom(roomId) {
 		return m.fnCreate(userId, conf, serverId, ip, port)
 	} else {
-		m.creatingRooms.Store(roomId, true)
+		m.saveCreatingRoom(roomId, true)
 		if _, err := database.GetRoomById(roomId); err == nil {
-			m.creatingRooms.Delete(roomId)
+			m.delCreatingRoom(roomId)
 			return m.fnCreate(userId, conf, serverId, ip, port)
 		} else {
 			createTime := time.Now().Unix()
@@ -168,8 +207,8 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, serverId, ip string,
 				return 3, 0
 			} else {
 				roomInfo.Uuid = uuid
-				m.rooms.Store(roomId, roomInfo)
-				m.totalRooms++
+				m.saveRoom(roomId, roomInfo)
+				m.TotalRooms++
 				return 0, roomId
 			}
 		}
@@ -202,7 +241,7 @@ func (m *RoomMgr) enterRoom(roomId, userId int, userName string) int {
 			if seat.UserId <= 0 {
 				seat.UserId = userId
 				seat.Name = userName
-				m.userLocation.Store(userId, &UserLocation{
+				m.saveLocation(userId, &UserLocation{
 					RoomId:    roomId,
 					SeatIndex: i,
 				})
@@ -282,15 +321,15 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 		s.NumMingGang = 0
 		s.NumChaJiao = 0
 		if s.UserId > 0 {
-			m.userLocation.Store(s.UserId, &UserLocation{
+			m.saveLocation(s.UserId, &UserLocation{
 				RoomId:    roomId,
 				SeatIndex: i,
 			})
 		}
 		roomInfo.Seats[i] = s
 	}
-	m.rooms.Store(roomId, roomInfo)
-	m.totalRooms++
+	m.saveRoom(roomId, roomInfo)
+	m.TotalRooms++
 	return roomInfo, nil
 }
 
@@ -312,7 +351,7 @@ func (m *RoomMgr) setReady(userId int, value bool) {
 }
 
 func (m *RoomMgr) getTotallRooms() int {
-	return m.totalRooms
+	return m.TotalRooms
 }
 
 func (m *RoomMgr) destroy(roomId int) {
@@ -323,12 +362,12 @@ func (m *RoomMgr) destroy(roomId int) {
 	for _, seat := range roomInfo.Seats {
 		userId := seat.UserId
 		if userId > 0 {
-			m.userLocation.Delete(userId)
+			m.delLocation(userId)
 			database.UpdateUser(userId, map[string]any{"roomid": 0})
 		}
 	}
-	m.rooms.Delete(roomId)
-	m.totalRooms--
+	m.delRoom(roomId)
+	m.TotalRooms--
 	database.DeleteRoom(roomId)
 }
 
@@ -348,7 +387,7 @@ func (m *RoomMgr) exitRoom(userId int) {
 	roomId := location.RoomId
 	seatIndex := location.SeatIndex
 	room := m.getRoom(roomId)
-	m.userLocation.Delete(userId)
+	m.delLocation(userId)
 	if room == nil || seatIndex == -1 {
 		return
 	}

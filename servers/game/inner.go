@@ -65,13 +65,9 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 	}
 	locations := roomMgr.getUserLocations()
 	var arr []int
-	locations.Range(func(key, value any) bool {
-		if v, ok := value.(*UserLocation); ok {
-			arr = append(arr, key.(int))
-			arr = append(arr, v.RoomId)
-		}
-		return true
-	})
+	for userId, location := range locations {
+		arr = append(arr, userId, location.RoomId)
+	}
 	s.Success(c, map[string]any{"userroominfo": arr})
 }
 

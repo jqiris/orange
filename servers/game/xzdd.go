@@ -16,35 +16,58 @@ import (
 )
 
 type XzddMj struct {
-	games            sync.Map
-	gameSeatsOfUsers sync.Map
-	dissolvingList   []int
+	Games            map[int]*GameData
+	GameSeatsOfUsers map[int]*Seat
+	DissolvingList   []int
+	lockGame         sync.RWMutex
+	lockSeat         sync.RWMutex
 }
 
 func NewXzddMj() *XzddMj {
 	return &XzddMj{
-		games:            sync.Map{},
-		gameSeatsOfUsers: sync.Map{},
-		dissolvingList:   make([]int, 0),
+		Games:            make(map[int]*GameData),
+		GameSeatsOfUsers: make(map[int]*Seat),
+		DissolvingList:   make([]int, 0),
 	}
 }
 
 func (m *XzddMj) getGame(roomId int) *GameData {
-	if v, ok := m.games.Load(roomId); ok {
-		if game, okv := v.(*GameData); okv {
-			return game
-		}
+	m.lockGame.RLock()
+	defer m.lockGame.RUnlock()
+	if v, ok := m.Games[roomId]; ok {
+		return v
 	}
 	return nil
 }
+func (m *XzddMj) saveGame(roomId int, data *GameData) {
+	m.lockGame.Lock()
+	defer m.lockGame.Unlock()
+	m.Games[roomId] = data
+}
+func (m *XzddMj) delGame(roomId int) {
+	m.lockGame.Lock()
+	defer m.lockGame.Unlock()
+	delete(m.Games, roomId)
+}
 
 func (m *XzddMj) getSeat(userId int) *Seat {
-	if v, ok := m.gameSeatsOfUsers.Load(userId); ok {
-		if seat, okv := v.(*Seat); okv {
-			return seat
-		}
+	m.lockSeat.RLock()
+	defer m.lockSeat.RUnlock()
+	if v, ok := m.GameSeatsOfUsers[userId]; ok {
+		return v
 	}
 	return nil
+}
+func (m *XzddMj) saveSeat(userId int, data *Seat) {
+	m.lockSeat.Lock()
+	defer m.lockSeat.Unlock()
+	m.GameSeatsOfUsers[userId] = data
+}
+
+func (m *XzddMj) delSeat(userId int) {
+	m.lockSeat.Lock()
+	defer m.lockSeat.Unlock()
+	delete(m.GameSeatsOfUsers, userId)
 }
 
 func (m *XzddMj) String() string {
@@ -114,9 +137,9 @@ func (m *XzddMj) begin(roomId int) {
 		data.NumMingGang = 0
 		data.NumChaJiao = 0
 		game.GameSeats[i] = data
-		m.gameSeatsOfUsers.Store(data.UserId, data)
+		m.saveSeat(data.UserId, data)
 	}
-	m.games.Store(roomId, game)
+	m.saveGame(roomId, game)
 	m.shuffle(game)
 	m.deal(game)
 
@@ -325,7 +348,7 @@ func (m *XzddMj) dissolveRequest(roomId int, userId int) *Room {
 		States:  []bool{false, false, false, false},
 	}
 	dr.States[seatIndex] = true
-	m.dissolvingList = append(m.dissolvingList, roomId)
+	m.DissolvingList = append(m.DissolvingList, roomId)
 	return roomInfo
 }
 
@@ -345,9 +368,9 @@ func (m *XzddMj) dissolveAgree(roomId int, userId int, agree bool) *Room {
 		roomInfo.Dr.States[seatIndex] = true
 	} else {
 		roomInfo.Dr = nil
-		idx := tools.IndexOf(m.dissolvingList, roomId)
+		idx := tools.IndexOf(m.DissolvingList, roomId)
 		if idx != -1 {
-			m.dissolvingList = tools.SliceDel(m.dissolvingList, idx, 1)
+			m.DissolvingList = tools.SliceDel(m.DissolvingList, idx, 1)
 		}
 	}
 	return roomInfo
@@ -1143,9 +1166,9 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 			results = append(results, userRT)
 
 			dbresult[i] = sd.Score
-			m.gameSeatsOfUsers.Delete(sd.UserId)
+			m.delSeat(sd.UserId)
 		}
-		m.games.Delete(roomId)
+		m.delGame(roomId)
 		old := roomInfo.NextButton
 		if game.Yipaoduoxiang >= 0 {
 			roomInfo.NextButton = game.Yipaoduoxiang
