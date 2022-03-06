@@ -2,6 +2,7 @@ package game
 
 import (
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/googollee/go-socket.io/engineio"
@@ -21,7 +22,21 @@ var (
 	roomMgr  *RoomMgr
 	tokenMgr *TokenMgr
 	userMgr  *UserMgr
+	gameMgrs sync.Map
 )
+
+func RegGameMgr(typ string, gameMgr GameMgr) {
+	gameMgrs.Store(typ, gameMgr)
+}
+
+func GetGameMgr(typ string) GameMgr {
+	if v, ok := gameMgrs.Load(typ); ok {
+		if res, okv := v.(GameMgr); okv {
+			return res
+		}
+	}
+	return nil
+}
 
 type GameServer struct {
 	*base.ServerBase

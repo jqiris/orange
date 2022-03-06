@@ -350,7 +350,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 
 	//通知其他客户端
 	userMgr.broadcastInRoom("new_user_comes_push", userData, userId)
-	ctx.GameMgr = roomInfo.GameMgr
+	ctx.GameMgr = GetGameMgr(roomInfo.Conf.Type)
 	//玩家上限，强制设置为true
 	ctx.GameMgr.setReady(userId)
 	c.Emit("login_finished")

@@ -2000,3 +2000,7 @@ func (m *XzddMj) guo(userId int) {
 		m.doUserMoPai(game)
 	}
 }
+
+func init() {
+	RegGameMgr("xzdd", NewXzddMj())
+}

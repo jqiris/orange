@@ -172,11 +172,11 @@ func (m *RoomMgr) fnCreate(userId int, conf model.GameConf, serverId, ip string,
 					Creator:     userId,
 				},
 			}
-			if conf.Type == "xlch" {
-				roomInfo.GameMgr = NewXlchMj()
-			} else {
-				roomInfo.GameMgr = NewXzddMj()
-			}
+			// if conf.Type == "xlch" {
+			// 	roomInfo.GameMgr = NewXlchMj()
+			// } else {
+			// 	roomInfo.GameMgr = NewXzddMj()
+			// }
 			for i := 0; i < 4; i++ {
 				roomInfo.Seats[i] = &Seat{
 					UserId:      0,
@@ -286,11 +286,11 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*Room, error) {
 		Seats:      make([]*Seat, 4),
 		Conf:       cfg,
 	}
-	if cfg.Type == "xlch" {
-		roomInfo.GameMgr = NewXlchMj()
-	} else {
-		roomInfo.GameMgr = NewXzddMj()
-	}
+	// if cfg.Type == "xlch" {
+	// 	roomInfo.GameMgr = NewXlchMj()
+	// } else {
+	// 	roomInfo.GameMgr = NewXzddMj()
+	// }
 	roomId := dbdata.ID
 	for i := 0; i < 4; i++ {
 		s := &Seat{}

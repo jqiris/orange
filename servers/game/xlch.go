@@ -54,3 +54,7 @@ func (s *XlchMj) hu(userId int) {
 func (s *XlchMj) guo(userId int) {
 	panic("not implemented") // TODO: Implement
 }
+
+func init() {
+	RegGameMgr("xlch", NewXlchMj())
+}
