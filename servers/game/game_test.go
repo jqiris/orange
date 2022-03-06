@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/jqiris/orange/protos"
 )
 
 func TestStructToJson(t *testing.T) {
-	data := &UserLocation{
+	data := &protos.UserLocation{
 		RoomId:    0,
 		SeatIndex: 0,
 	}
