@@ -58,7 +58,7 @@ func (m *XzddMj) begin(roomId int) {
 	seats := roomInfo.Seats
 	game := &GameData{
 		Conf:          roomInfo.Conf,
-		RoomInfo:      roomInfo,
+		Uuid:          roomInfo.Uuid,
 		GameIndex:     roomInfo.NumOfGames,
 		Button:        roomInfo.NextButton,
 		Mahjongs:      make([]int, 108),
@@ -1186,7 +1186,7 @@ func (m *XzddMj) doGameOver(game *GameData, userId int, args ...bool) {
 
 func (m *XzddMj) storeGame(game *GameData) error {
 	return database.CreateGame(&model.TGame{
-		RoomUUID:   game.RoomInfo.Uuid,
+		RoomUUID:   game.Uuid,
 		GameIndex:  game.GameIndex,
 		BaseInfo:   game.BaseInfoJson,
 		CreateTime: time.Now().Unix(),

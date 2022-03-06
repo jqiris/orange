@@ -19,7 +19,6 @@ import (
 	_ "github.com/jqiris/orange/servers/game"
 	_ "github.com/jqiris/orange/servers/gate"
 	_ "github.com/jqiris/orange/servers/hall"
-	_ "github.com/jqiris/orange/servers/mahjong"
 	"github.com/spf13/viper"
 )
 

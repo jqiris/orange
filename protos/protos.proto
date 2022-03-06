@@ -1,6 +1,8 @@
 syntax = "proto3";
 package protos;
 option go_package = "../protos";
+
+
 enum MsgId{
     MsgChan = 0; //通道消息
     MsgLogin = 1; //登录
@@ -26,9 +28,10 @@ message MjRoomCreateRequest{
 }
 
 message LoginRequest {
-    int64 uid = 1; //用户ID
-    string nickname = 2;//用户昵称
-    string token = 3;//token key
+  string token = 1;
+  int32 roomid =2;
+  int64 time = 3;
+  string sign=4;//签名 
 }
 
 message LogoutRequest {
@@ -42,8 +45,8 @@ message OfflineRequest{
 
 //response
 message MsgResponse {
-    int32 code = 1;
-    string msg = 2;
+    int32 errcode = 1;
+    string errmsg = 2;
     oneof any{
         LoginResponse login_response = 3;
         LogoutResponse logout_response =4;
@@ -80,5 +83,123 @@ message ChessConfig {
   map<string, int32> choices = 2;//选择 
 }
 
+
+
+//base struct
+message RoomConf {
+    string type = 1;
+    uint32 zimo = 2;
+    bool jiangdui = 3;
+    bool hsz = 4;
+    uint32 dianganghua = 5;
+    bool menqing = 6;
+    bool tiandihu = 7;
+    uint32 baseScore = 8;
+    uint32 maxFan = 9;
+    uint32 maxGames = 10;
+    uint32 creator = 11;
+}
+
+message DissolveData{
+    int64 endTime = 1;
+    repeated bool states = 2;
+}
+
+message TingData{
+    uint32 fan = 1;
+    string pattern = 2;
+}
+
+message ActionData{
+    string type = 1;
+    Seat owner = 2;
+    string state = 3;
+    uint32 payTimes = 4;
+    ActionData ref = 5;
+    repeated uint32 targets = 6;
+    uint32 score = 7;
+    bool iszimo = 8;
+}
+
+message QiangGangData {
+    Seat turnSeat = 1;
+    Seat seat = 2;
+    uint32 pai = 3;
+    bool isValid = 4;
+}
+
+message Seat{
+    uint32 userid = 1;
+    uint32 score = 2;
+    string name = 3;
+    bool ready = 4;
+    uint32 seatindex = 5;
+    uint32 numZiMo = 6;
+    uint32 numJiePao = 7;
+    uint32 numDianPao = 8;
+    uint32 numAnGang = 9;
+    uint32 numMingGang = 10;
+    uint32 numChaJiao = 11;
+    string ip = 12;
+    bool online = 13;
+    GameData game = 14;
+    repeated uint32 holds = 15;
+    repeated uint32 folds = 16;
+    repeated uint32 angangs = 17;
+    repeated uint32 diang = 18;
+    repeated uint32 wangangs = 19;
+    repeated uint32 pengs = 20;
+    uint32 que = 21;
+    repeated uint32 huanpais = 22;
+    map<uint32,uint32> countMap = 23;
+    map<uint32,TingData> tingMap = 24;
+    string pattern = 25;
+    bool canGang = 26;
+    repeated uint32 gangPai = 27;
+    bool canPeng = 28;
+    bool canHu = 29;
+    bool canChuPai = 30;
+    uint32 guoHuFan = 31;
+    bool hued = 32;
+    bool iszimo = 33;
+    bool isGangHu = 34;
+    bool isMenQing = 35;
+    bool isZhongZhang = 36;
+    bool isJinGouHu = 37;
+    bool isQiangGangHu = 38;
+    bool isHaiDiHu = 39;
+    bool isTianHu = 40;
+    bool isDiHu = 41;
+    bool qingyise = 42;
+    repeated ActionData actions = 43;
+    uint32 fan = 44;
+    uint32 lastFangGangSeat = 45;
+    uint32 numofgen = 46;
+}
+
+message GameData{
+    RoomConf conf = 1;
+    string uuid = 2;
+    uint32 gameIndex = 3;
+    uint32 button = 4;
+    repeated uint32 mahjongs = 5;
+    uint32 currentIndex = 6;
+    repeated Seat gameSeats = 7;
+    uint32 numOfQue = 8;
+    uint32 turn = 9;
+    uint32 chuPai = 10;
+    string state = 11;
+    uint32 firstHupai = 12;
+    uint32 yipaoduoxiang = 13;
+    uint32 fangpaoshumu = 14;
+    repeated uint32 actionList = 15;
+    repeated uint32 hupaiList = 16;
+    uint32 chupaiCnt = 17;
+    uint32 huanpaiMethod = 18;
+    QiangGangData qiangGangContext = 19;
+    uint32 lastHuPaiSeat = 20;
+    uint32 lastFangGangSeat = 21;
+    string baseInfoJson = 22;
+}
 
 

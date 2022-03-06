@@ -16,28 +16,28 @@ type GameMgr interface {
 }
 
 type GameData struct {
-	Conf             RoomConf
-	RoomInfo         *Room
-	GameIndex        int
-	Button           int
-	Mahjongs         []int
-	CurrentIndex     int
-	GameSeats        []*Seat
-	NumOfQue         int
-	Turn             int
-	ChuPai           int
-	State            string
-	FirstHupai       int
-	Yipaoduoxiang    int
-	Fangpaoshumu     int
-	ActionList       []int
-	HupaiList        []int
-	ChupaiCnt        int
-	HuanpaiMethod    int
-	QiangGangContext *QiangGangData
-	LastHuPaiSeat    int
-	LastFangGangSeat int
-	BaseInfoJson     string
+	Conf             RoomConf       `json:"conf"`
+	Uuid             string         `json:"uuid"`
+	GameIndex        int            `json:"gameIndex"`
+	Button           int            `json:"button"`
+	Mahjongs         []int          `json:"mahjongs"`
+	CurrentIndex     int            `json:"currentIndex"`
+	GameSeats        []*Seat        `json:"gameSeats"`
+	NumOfQue         int            `json:"numOfQue"`
+	Turn             int            `json:"turn"`
+	ChuPai           int            `json:"chuPai"`
+	State            string         `json:"state"`
+	FirstHupai       int            `json:"firstHupai"`
+	Yipaoduoxiang    int            `json:"yipaoduoxiang"`
+	Fangpaoshumu     int            `json:"fangpaoshumu"`
+	ActionList       []int          `json:"actionList"`
+	HupaiList        []int          `json:"hupaiList"`
+	ChupaiCnt        int            `json:"chupaiCnt"`
+	HuanpaiMethod    int            `json:"huanpaiMethod"`
+	QiangGangContext *QiangGangData `json:"qiangGangContext"`
+	LastHuPaiSeat    int            `json:"lastHuPaiSeat"`
+	LastFangGangSeat int            `json:"lastFangGangSeat"`
+	BaseInfoJson     string         `json:"baseInfoJson"`
 }
 type TingData struct {
 	Fan     int    `json:"fan"`
@@ -53,13 +53,13 @@ type QiangGangData struct {
 
 type ActionData struct {
 	Type     string      `json:"type"`
-	Owner    *Seat       `json:"owner,omitempty"`
+	Owner    *Seat       `json:"owner"`
 	State    string      `json:"state"`
-	PayTimes int64       `json:"payTimes,omitempty"`
-	Ref      *ActionData `json:"ref,omitempty"`
-	Targets  []int       `json:"targets,omitempty"`
-	Score    int         `json:"score,omitempty"`
-	Iszimo   bool        `json:"iszimo,omitempty"`
+	PayTimes int64       `json:"payTimes"`
+	Ref      *ActionData `json:"ref"`
+	Targets  []int       `json:"targets"`
+	Score    int         `json:"score"`
+	Iszimo   bool        `json:"iszimo"`
 }
 
 //public method
