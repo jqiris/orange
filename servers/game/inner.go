@@ -51,25 +51,25 @@ func (s *GameServer) Success(c *gin.Context, data map[string]any) {
 	c.JSON(200, data)
 }
 
-//获取服务信息
-func (s *GameServer) GetServerInfo(c *gin.Context) {
-	serverId, sign := c.Query("serverid"), c.Query("sign")
-	if serverId != constant.SERVER_ID || len(sign) < 1 {
-		s.Error(c, "invalid parameters")
-		return
-	}
-	md5 := utils.Md5(serverId + constant.ROOM_PRI_KEY)
-	if md5 != sign {
-		s.Error(c, "sign check failed")
-		return
-	}
-	locations := roomMgr.getUserLocations()
-	var arr []int
-	for userId, location := range locations {
-		arr = append(arr, int(userId), int(location.RoomId))
-	}
-	s.Success(c, map[string]any{"userroominfo": arr})
-}
+// //获取服务信息
+// func (s *GameServer) GetServerInfo(c *gin.Context) {
+// 	serverId, sign := c.Query("serverid"), c.Query("sign")
+// 	if serverId != constant.SERVER_ID || len(sign) < 1 {
+// 		s.Error(c, "invalid parameters")
+// 		return
+// 	}
+// 	md5 := utils.Md5(serverId + constant.ROOM_PRI_KEY)
+// 	if md5 != sign {
+// 		s.Error(c, "sign check failed")
+// 		return
+// 	}
+// 	locations := roomMgr.getUserLocations()
+// 	var arr []int
+// 	for userId, location := range locations {
+// 		arr = append(arr, int(userId), int(location.RoomId))
+// 	}
+// 	s.Success(c, map[string]any{"userroominfo": arr})
+// }
 
 //创建房间
 func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {

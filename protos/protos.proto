@@ -201,13 +201,9 @@ message GameData{
     int32 lastHuPaiSeat = 20;
     int32 lastFangGangSeat = 21;
     string baseInfoJson = 22;
+    int32 roomId = 23;
 }
 
-
-message Dr {
-    int64 endTime = 1;
-    repeated bool states = 2;
-}
 
 message Room{
     string uuid = 1;
@@ -217,10 +213,10 @@ message Room{
     int32 nextButton = 5;
     repeated Seat seats = 6;
     RoomConf conf = 7;
-    Dr dr = 8;
+    DissolveData dr = 8;
 }
 
 message UserLocation{
-    int32 roomId = 1;
+    int32 roomid = 1;
     int32 seatIndex = 2;
 }

@@ -301,7 +301,7 @@ func DelLocation(userId int64) {
 
 func GetUserRoom(userId int64) int32 {
 	if v := GetLocation(userId); v != nil {
-		return v.RoomId
+		return v.Roomid
 	}
 	return 0
 }
