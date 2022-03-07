@@ -3,9 +3,8 @@ package account
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jqiris/kungfu/v2/base"
-	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
+	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
@@ -17,13 +16,13 @@ type Msg struct {
 }
 
 type AccountServer struct {
-	*base.ServerBase
+	*rpc.ServerBase
 }
 
 func AccountServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//server entity
 	server := &AccountServer{
-		ServerBase: base.NewServerBase(s),
+		ServerBase: rpc.NewServerBase(s),
 	}
 	//http handler
 	app := gin.Default()

@@ -9,9 +9,8 @@ import (
 	"github.com/googollee/go-socket.io/engineio/transport"
 	"github.com/googollee/go-socket.io/engineio/transport/polling"
 	"github.com/googollee/go-socket.io/engineio/transport/websocket"
-	"github.com/jqiris/kungfu/v2/base"
-	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
+	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
@@ -39,7 +38,7 @@ func GetGameMgr(typ string) GameMgr {
 }
 
 type GameServer struct {
-	*base.ServerBase
+	*rpc.ServerBase
 }
 
 func socketCreator() *plugin.ServerSocket {
@@ -65,7 +64,7 @@ func socketCreator() *plugin.ServerSocket {
 
 func GameServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	server := &GameServer{
-		ServerBase: base.NewServerBase(s),
+		ServerBase: rpc.NewServerBase(s),
 	}
 	//socket plugin
 	plug := socketCreator()

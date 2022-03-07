@@ -1,11 +1,10 @@
 package gate
 
 import (
-	"github.com/jqiris/kungfu/v2/base"
-	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/packet/nano"
+	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/tcpface"
 	"github.com/jqiris/kungfu/v2/treaty"
@@ -14,12 +13,12 @@ import (
 
 //前端负载器
 type GateServer struct {
-	*base.ServerBase
+	*rpc.ServerBase
 }
 
 func GateServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	server := &GateServer{
-		ServerBase: base.NewServerBase(s),
+		ServerBase: rpc.NewServerBase(s),
 	}
 	//reg plugin
 	plug := plugin.NewServerConnector()

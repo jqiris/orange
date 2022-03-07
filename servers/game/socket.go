@@ -6,8 +6,8 @@ import (
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
-	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/logger"
+	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/protos"

@@ -3,22 +3,21 @@ package hall
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jqiris/kungfu/v2/base"
-	"github.com/jqiris/kungfu/v2/base/plugin"
 	"github.com/jqiris/kungfu/v2/launch"
+	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
 )
 
 type HallServer struct {
-	*base.ServerBase
+	*rpc.ServerBase
 }
 
 func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 
 	server := &HallServer{
-		ServerBase: base.NewServerBase(s),
+		ServerBase: rpc.NewServerBase(s),
 	}
 	//http handler
 	app := gin.Default()
