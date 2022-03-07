@@ -11,3 +11,14 @@ const (
 const (
 	StoreUserMember = "storeUserMember"
 )
+
+//分布式数据存储
+const (
+	StoreCreatingRooms = "storeCreatingRooms"
+	StoreRooms         = "storeRooms"
+	StoreGames         = "storeGames"
+	StoreUserSeats     = "storeUserSeats"
+	StoreTotalRooms    = "storeTotalRooms"
+	StoreUserLocations = "storeUserLocations"
+	StoreLock          = "lock"
+)
