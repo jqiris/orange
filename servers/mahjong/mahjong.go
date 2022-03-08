@@ -33,10 +33,10 @@ func init() {
 
 type GameMahjong interface {
 	SetReady(userId int64)
-	HasBegan(roomId int32) bool
-	DissolveRequest(roomId int32, userId int64) *protos.MjRoom
-	DissolveAgree(roomId int32, userId int64, agree bool) *protos.MjRoom
-	DoDissolve(roomId int32)
+	HasBegan(roomId string) bool
+	DissolveRequest(roomId string, userId int64) *protos.MjRoom
+	DissolveAgree(roomId string, userId int64, agree bool) *protos.MjRoom
+	DoDissolve(roomId string)
 	HuanSanZhang(userId int64, p1, p2, p3 int32)
 	DingQue(userId int64, que int32)
 	ChuPai(userId int64, pai int32)

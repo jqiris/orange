@@ -10,6 +10,13 @@ import (
 var (
 	db *gorm.DB
 )
+var (
+	MjActionArchivePrefix = "mahjong_action_"
+)
+
+func TableMjActionArchive(gameType string) string {
+	return MjActionArchivePrefix + gameType + "s"
+}
 
 func InitDatabase(data map[string]any) {
 	var err error

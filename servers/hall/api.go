@@ -55,7 +55,7 @@ func (h *ServerHall) Login(c *gin.Context) {
 	}
 	ret := map[string]any{
 		"account": data.Account,
-		"userid":  data.Userid,
+		"userid":  data.UserID,
 		"name":    data.Name,
 		"lv":      data.Lv,
 		"exp":     data.Exp,
@@ -64,11 +64,14 @@ func (h *ServerHall) Login(c *gin.Context) {
 		"ip":      ip,
 		"sex":     data.Sex,
 	}
-	if data.Roomid > 0 {
-		if _, err := database.GetRoomById(data.Roomid); err == nil {
-			ret["roomid"] = data.Roomid
+	if len(data.RoomID) > 0 {
+		if _, err := database.GetMjRoomById(data.RoomID); err == nil {
+			ret["roomid"] = data.RoomID
 		} else if database.ErrRecordNotFound(err) {
-			database.UpdateUser(data.Userid, map[string]interface{}{"roomid": 0})
+			err = database.UpdateUser(data.UserID, map[string]interface{}{"roomid": ""})
+			if err != nil {
+				logger.Error(err)
+			}
 		} else {
 			logger.Error(err)
 		}
@@ -83,22 +86,23 @@ func (h *ServerHall) CreateUser(c *gin.Context) {
 		return
 	}
 	name := c.Query("name")
-	var coins, gems int32 = 1000, 21
-
+	coins, gems := 1000, 21
+	nowTime := time.Now()
 	if _, err := database.GetUserByAccount(account); err == nil {
 		h.Error(c, "account have already exist.")
+		return
 	}
-	err := database.CreateUser(&model.TUser{
-		Account: account,
-		Name:    tools.Stringify(name),
-		Sex:     0,
-		Headimg: "null",
-		Lv:      0,
-		Exp:     0,
-		Coins:   coins,
-		Gems:    gems,
-		Roomid:  0,
-		History: "",
+	err := database.CreateUser(&model.UserMember{
+		Account:   account,
+		Name:      tools.Stringify(name),
+		Sex:       0,
+		Headimg:   "null",
+		Lv:        0,
+		Exp:       0,
+		Coins:     coins,
+		Gems:      gems,
+		RegTime:   nowTime,
+		LoginTime: nowTime,
 	})
 	if err != nil {
 		logger.Error(err)
@@ -121,14 +125,14 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		h.Error(c, "system error")
 		return
 	}
-	if data.Roomid > 0 {
+	if len(data.RoomID) > 0 {
 		h.Error(c, "user is playing in room now.", -1)
 		return
 	}
-	userId, name := data.Userid, data.Name
+	userId, name := data.UserID, data.Name
 	reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))
 	reqCreate := &protos.InnerCreateRoomReq{
-		Userid: int64(userId),
+		UserId: userId,
 		Gems:   int64(data.Gems),
 		Conf:   conf,
 		Sign:   reqCreateSign,
@@ -138,7 +142,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		h.Error(c, respCreate.Errmsg, int(respCreate.Errcode))
 		return
 	}
-	roomId := respCreate.GetCreateRoom().Roomid
+	roomId := respCreate.GetCreateRoom().RoomId
 	serverId := respCreate.GetCreateRoom().ServerId
 	server := discover.GetServerById(serverId)
 	if server == nil {
@@ -147,9 +151,9 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 	}
 	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
 	reqEnter := &protos.InnerEnterRoomReq{
-		Userid: int64(userId),
+		UserId: int64(userId),
 		Name:   name,
-		Roomid: roomId,
+		RoomId: roomId,
 		Sign:   reqEnterSign,
 	}
 	respEnter := mahjong.EnterPrivateRoom(h.Rpc, reqEnter, server)
@@ -180,8 +184,8 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
-	roomId := utils.StringToInt32(c.Query("roomid"))
-	if roomId < 1 {
+	roomId := c.Query("roomid")
+	if len(roomId) < 1 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
 	}
@@ -191,15 +195,15 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 		h.Error(c, "system error", -1)
 		return
 	}
-	userId, name := data.Userid, data.Name
+	userId, name := data.UserID, data.Name
 
-	room, err := database.GetRoomById(roomId)
+	room, err := database.GetMjRoomById(roomId)
 	if err != nil {
 		logger.Error(err)
 		h.Error(c, "enter room failed.", -2)
 		return
 	}
-	serverId := room.ServerId
+	serverId := room.ServerID
 	server := discover.GetServerById(serverId)
 	if server == nil {
 		h.Error(c, constant.ErrNotFoundMahjongServer)
@@ -207,9 +211,9 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 	}
 	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
 	reqEnter := &protos.InnerEnterRoomReq{
-		Userid: int64(userId),
+		UserId: userId,
 		Name:   name,
-		Roomid: int32(roomId),
+		RoomId: roomId,
 		Sign:   reqEnterSign,
 	}
 	respEnter := mahjong.EnterPrivateRoom(h.Rpc, reqEnter, server)
@@ -258,12 +262,13 @@ func (h *ServerHall) GetGamesOfRoom(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
+	gameType := c.Query("game_type")
 	uuid := c.Query("uuid")
-	if len(uuid) == 0 {
+	if len(uuid) == 0 || len(gameType) < 1 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
 	}
-	data, err := database.GetGameArchive(uuid)
+	data, err := database.GetMjActionArchive(gameType, uuid)
 	if err != nil {
 		logger.Error(err)
 		h.Error(c, "system error", -1)
@@ -278,12 +283,12 @@ func (h *ServerHall) GetDetailOfGame(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
-	uuid, index := c.Query("uuid"), utils.StringToInt32(c.Query("index"))
-	if len(uuid) == 0 || index < 0 {
+	gameType, uuid, index := c.Query("game_type"), c.Query("uuid"), utils.StringToInt32(c.Query("index"))
+	if len(gameType) == 0 || len(uuid) == 0 || index < 0 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
 	}
-	data, err := database.GetGameArchiveDetail(uuid, index)
+	data, err := database.GetMjActionArchiveDetail(gameType, uuid, index)
 	if err != nil {
 		logger.Error(err)
 		h.Error(c, "system error", -1)

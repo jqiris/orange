@@ -84,7 +84,6 @@ type TGamesArchive struct {
 	Result        string `gorm:"column:result;type:char(255)" json:"result"`
 }
 
-//{"difen":0,"zimo":0,"jiangdui":true,"huansanzhang":false,"zuidafanshu":1,"jushuxuanze":0,"dianganghua":0,"menqing":false,"tiandihu":false,"type":"xzdd"}
 type GameConf struct {
 	Difen        int32  `json:"difen"`
 	Zimo         int32  `json:"zimo"`

@@ -17,22 +17,22 @@ import (
 )
 
 type XzddMj struct {
-	Games            map[int32]*protos.MjGameData
+	Games            map[string]*protos.MjGameData
 	GameSeatsOfUsers map[int64]*protos.MjSeat
-	DissolvingList   []int32
+	DissolvingList   []string
 	lockGame         sync.RWMutex
 	lockSeat         sync.RWMutex
 }
 
 func NewXzddMj() *XzddMj {
 	return &XzddMj{
-		Games:            make(map[int32]*protos.MjGameData),
+		Games:            make(map[string]*protos.MjGameData),
 		GameSeatsOfUsers: make(map[int64]*protos.MjSeat),
-		DissolvingList:   make([]int32, 0),
+		DissolvingList:   make([]string, 0),
 	}
 }
 
-func (m *XzddMj) getGame(roomId int32) *protos.MjGameData {
+func (m *XzddMj) getGame(roomId string) *protos.MjGameData {
 	m.lockGame.RLock()
 	defer m.lockGame.RUnlock()
 	if v, ok := m.Games[roomId]; ok {
@@ -40,12 +40,12 @@ func (m *XzddMj) getGame(roomId int32) *protos.MjGameData {
 	}
 	return nil
 }
-func (m *XzddMj) saveGame(roomId int32, data *protos.MjGameData) {
+func (m *XzddMj) saveGame(roomId string, data *protos.MjGameData) {
 	m.lockGame.Lock()
 	defer m.lockGame.Unlock()
 	m.Games[roomId] = data
 }
-func (m *XzddMj) delGame(roomId int32) {
+func (m *XzddMj) delGame(roomId string) {
 	m.lockGame.Lock()
 	defer m.lockGame.Unlock()
 	delete(m.Games, roomId)
@@ -74,7 +74,7 @@ func (m *XzddMj) delSeat(userId int64) {
 func (m *XzddMj) String() string {
 	return "四川麻将血战到底"
 }
-func (m *XzddMj) begin(roomId int32) {
+func (m *XzddMj) begin(roomId string) {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return
@@ -231,7 +231,7 @@ func (m *XzddMj) shuffle(game *protos.MjGameData) {
 
 func (m *XzddMj) SetReady(userId int64) {
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	roomInfo := roomMgr.getRoom(roomId)
@@ -320,7 +320,7 @@ func (m *XzddMj) hasOperations(seatData *protos.MjSeat) bool {
 	return false
 }
 
-func (m *XzddMj) HasBegan(roomId int32) bool {
+func (m *XzddMj) HasBegan(roomId string) bool {
 	game := m.getGame(roomId)
 	if game != nil {
 		return true
@@ -332,7 +332,7 @@ func (m *XzddMj) HasBegan(roomId int32) bool {
 	return false
 }
 
-func (m *XzddMj) DissolveRequest(roomId int32, userId int64) *protos.MjRoom {
+func (m *XzddMj) DissolveRequest(roomId string, userId int64) *protos.MjRoom {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -353,7 +353,7 @@ func (m *XzddMj) DissolveRequest(roomId int32, userId int64) *protos.MjRoom {
 	return roomInfo
 }
 
-func (m *XzddMj) DissolveAgree(roomId int32, userId int64, agree bool) *protos.MjRoom {
+func (m *XzddMj) DissolveAgree(roomId string, userId int64, agree bool) *protos.MjRoom {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -377,7 +377,7 @@ func (m *XzddMj) DissolveAgree(roomId int32, userId int64, agree bool) *protos.M
 	return roomInfo
 }
 
-func (m *XzddMj) DoDissolve(roomId int32) {
+func (m *XzddMj) DoDissolve(roomId string) {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return
@@ -1085,7 +1085,7 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 		forceEnd = args[0]
 	}
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	roomInfo := roomMgr.getRoom(roomId)
@@ -1117,7 +1117,10 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 				}
 				userMgr.kickAllInRoom(roomId)
 				roomMgr.destroy(roomId)
-				database.ArchiveGames(roomInfo.Uuid)
+				err := database.ArchiveMjActions(roomInfo.GameType, roomInfo.Uuid)
+				if err != nil {
+					logger.Error(err)
+				}
 			})
 		}
 	}
@@ -1179,7 +1182,10 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 			roomInfo.NextButton = (game.Turn + 1) % 4
 		}
 		if old != roomInfo.NextButton {
-			database.UpdateRoom(roomId, map[string]any{"next_button": roomInfo.NextButton})
+			err := database.UpdateMjRoom(roomId, map[string]any{"next_button": roomInfo.NextButton})
+			if err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 	if forceEnd || game == nil {
@@ -1189,11 +1195,17 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 		if err != nil {
 			logger.Error(err)
 		}
-		database.UpdateGame(roomInfo.Uuid, game.GameIndex, map[string]any{
+		err = database.UpdateMjAction(roomInfo.Uuid, game.GameIndex, map[string]any{
 			"result":         tools.Stringify(dbresult),
 			"action_records": tools.Stringify(game.ActionList),
 		})
-		database.UpdateRoom(roomId, map[string]any{"num_of_turns": roomInfo.NumOfGames})
+		if err != nil {
+			logger.Error(err)
+		}
+		err = database.UpdateMjRoom(roomId, map[string]any{"num_of_turns": roomInfo.NumOfGames})
+		if err != nil {
+			logger.Error(err)
+		}
 		if roomInfo.NumOfGames == 1 {
 			var cost int32 = 2
 			if roomInfo.Conf.MaxGames == 8 {
@@ -1209,7 +1221,7 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 }
 
 func (m *XzddMj) storeGame(game *protos.MjGameData) error {
-	return database.CreateGame(&model.TGame{
+	return database.CreateMjAction(&model.MahjongAction{
 		RoomUUID:   game.Uuid,
 		GameIndex:  game.GameIndex,
 		BaseInfo:   game.BaseInfoJson,
@@ -1544,7 +1556,7 @@ func (m *XzddMj) storeHistory(roomInfo *protos.MjRoom) {
 	seats := roomInfo.Seats
 	var history = map[string]any{
 		"uuid": roomInfo.Uuid,
-		"id":   roomInfo.Id,
+		"id":   roomInfo.RoomId,
 		"time": roomInfo.CreateTime,
 	}
 	nseats := make([]map[string]any, len(seats))

@@ -1,13 +1,14 @@
 package tools
 
 import (
+	"constraints"
 	"encoding/base64"
 	"encoding/json"
 
 	"github.com/jqiris/kungfu/v2/logger"
 )
 
-func IndexOf(arr []int32, val int32) int {
+func IndexOf[T constraints.Ordered](arr []T, val T) int {
 	for k, v := range arr {
 		if v == val {
 			return k
@@ -16,7 +17,7 @@ func IndexOf(arr []int32, val int32) int {
 	return -1
 }
 
-func SliceDel(arr []int32, index, num int) []int32 {
+func SliceDel[T constraints.Ordered](arr []T, index, num int) []T {
 	arrLen := len(arr)
 	if index < 0 || index >= arrLen {
 		return arr
@@ -28,13 +29,14 @@ func SliceDel(arr []int32, index, num int) []int32 {
 	return append(arr[:index], arr[index+num:]...)
 }
 
-func SlicePop(arr []int32) ([]int32, int32) {
+func SlicePop[T constraints.Ordered](arr []T) ([]T, T) {
 	arrLen := len(arr)
 	if arrLen == 0 {
-		return arr, -1
+		return arr, nil
 	}
 	return arr[:arrLen-1], arr[arrLen-1]
 }
+
 func GetBase64Val(val string) string {
 	if bs, err := base64.StdEncoding.DecodeString(val); err == nil {
 		return string(bs)

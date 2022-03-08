@@ -1,6 +1,7 @@
 package mahjong
 
 import (
+	"github.com/jqiris/kungfu/v2/logger"
 	"sync"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -34,7 +35,7 @@ func (m *UserMgr) broadcastInRoom(event string, data any, sender int64, args ...
 		includingSender = args[0]
 	}
 	roomId := roomMgr.getUserRoom(sender)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	roomInfo := roomMgr.getRoom(roomId)
@@ -73,8 +74,8 @@ func (m *UserMgr) get(userId int64) socketio.Conn {
 	return nil
 }
 
-func (m *UserMgr) kickAllInRoom(roomId int32) {
-	if roomId < 1 {
+func (m *UserMgr) kickAllInRoom(roomId string) {
+	if len(roomId) < 1 {
 		return
 	}
 	roomInfo := roomMgr.getRoom(roomId)
@@ -87,7 +88,10 @@ func (m *UserMgr) kickAllInRoom(roomId int32) {
 			socket := m.get(rs.Userid)
 			if socket != nil {
 				m.del(rs.Userid)
-				socket.Close()
+				err := socket.Close()
+				if err != nil {
+					logger.Error(err)
+				}
 			}
 		}
 	}

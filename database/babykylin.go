@@ -9,8 +9,8 @@ import (
 	"github.com/jqiris/orange/tools"
 )
 
-func GetUserByAccount(account string) (*model.TUser, error) {
-	res := &model.TUser{}
+func GetUserByAccount(account string) (*model.UserMember, error) {
+	res := &model.UserMember{}
 	err := db.Where("account = ?", account).First(res).Error
 	if err != nil {
 		return nil, err
@@ -19,8 +19,8 @@ func GetUserByAccount(account string) (*model.TUser, error) {
 	return res, nil
 }
 
-func GetUserById(userId int64) (*model.TUser, error) {
-	res := &model.TUser{}
+func GetUserById(userId int64) (*model.UserMember, error) {
+	res := &model.UserMember{}
 	err := db.Where("userid = ?", userId).First(res).Error
 	if err != nil {
 		return nil, err
@@ -30,10 +30,10 @@ func GetUserById(userId int64) (*model.TUser, error) {
 }
 
 func UpdateUser(userId int64, data map[string]any) error {
-	return db.Table("t_users").Where("userid=?", userId).Updates(data).Error
+	return db.Model(&model.UserMember{}).Where("userid=?", userId).Updates(data).Error
 }
 
-func CreateUser(data *model.TUser) error {
+func CreateUser(data *model.UserMember) error {
 	return db.Create(data).Error
 }
 
@@ -50,9 +50,9 @@ func GetAccount(account string) (*model.TAccount, error) {
 	return res, nil
 }
 
-func GetRoomById(roomId int32) (*model.TRoom, error) {
-	res := &model.TRoom{}
-	err := db.Where("id = ?", roomId).First(res).Error
+func GetMjRoomById(roomId string) (*model.MahjongRoom, error) {
+	res := &model.MahjongRoom{}
+	err := db.Where("room_id = ?", roomId).First(res).Error
 	if err != nil {
 		return nil, err
 	}
@@ -63,19 +63,19 @@ func GetRoomById(roomId int32) (*model.TRoom, error) {
 	return res, nil
 }
 
-func CreateRoom(data *model.TRoom) error {
+func CreateMjRoom(data *model.MahjongRoom) error {
 	return db.Create(data).Error
 }
 
-func DeleteRoom(roomId int32) error {
-	return db.Where("id=?", roomId).Delete(&model.TRoom{}).Error
+func DeleteMjRoom(roomId string) error {
+	return db.Where("room_id=?", roomId).Delete(&model.MahjongRoom{}).Error
 }
 
-func UpdateRoom(roomId int32, data map[string]any) error {
-	return db.Table("t_rooms").Where("id=?", roomId).Updates(data).Error
+func UpdateMjRoom(roomId string, data map[string]any) error {
+	return db.Model(&model.MahjongRoom{}).Where("id=?", roomId).Updates(data).Error
 }
 
-func UpdateSeatInfo(roomId, seatIndex int32, userId int64, icon, name string) error {
+func UpdateMjSeatInfo(roomId string, seatIndex int32, userId int64, icon, name string) error {
 	colUserId := fmt.Sprintf("user_id%d", seatIndex)
 	colIcon := fmt.Sprintf("user_icon%d", seatIndex)
 	colUserName := fmt.Sprintf("user_name%d", seatIndex)
@@ -85,46 +85,49 @@ func UpdateSeatInfo(roomId, seatIndex int32, userId int64, icon, name string) er
 		colIcon:     icon,
 		colUserName: name,
 	}
-	return db.Table("t_rooms").Where("id = ?", roomId).Updates(data).Error
+	return db.Model(&model.MahjongRoom{}).Where("room_id = ?", roomId).Updates(data).Error
 }
 
-func ArchiveGames(uuid string) error {
-	sql := "INSERT INTO t_games_archive(SELECT * FROM t_games WHERE room_uuid = ?)"
+func ArchiveMjActions(gameType, uuid string) error {
+	t := TableMjActionArchive(gameType)
+	sql := "INSERT INTO " + t + "(SELECT * FROM mahjong_actions WHERE room_uuid = ?)"
 	return db.Exec(sql, uuid).Error
 }
 
-func CreateGame(data *model.TGame) error {
+func CreateMjAction(data *model.MahjongAction) error {
 	return db.Create(data).Error
 }
 
-func UpdateGame(uuid string, index int32, data map[string]any) error {
-	return db.Table("t_games").Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
+func UpdateMjAction(uuid string, index int32, data map[string]any) error {
+	return db.Model(&model.MahjongAction{}).Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
 }
 
 func CostGems(userId int64, cost int32) error {
-	sql := "UPDATE t_users SET gems = gems -? where userid = ?"
+	sql := "UPDATE user_members SET gems = gems -? where user_id = ?"
 	return db.Exec(sql, cost, userId).Error
 }
-func GetGameArchive(uuid string) (*model.TGamesArchive, error) {
-	res := &model.TGamesArchive{}
-	err := db.Where("room_uuid = ?", uuid).First(res).Error
+func GetMjActionArchive(gameType, uuid string) ([]*model.MahjongAction, error) {
+	var res []*model.MahjongAction
+	t := TableMjActionArchive(gameType)
+	err := db.Table(t).Where("room_uuid = ?", uuid).Find(res).Error
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func GetGameArchiveDetail(uuid string, index int32) (*model.TGamesArchive, error) {
-	res := &model.TGamesArchive{}
-	err := db.Where("room_uuid = ? and game_index", uuid, index).First(res).Error
+func GetMjActionArchiveDetail(gameType, uuid string, index int32) (*model.MahjongAction, error) {
+	res := &model.MahjongAction{}
+	t := TableMjActionArchive(gameType)
+	err := db.Table(t).Where("room_uuid = ? and game_index = ?", uuid, index).First(res).Error
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func GetMessage(typ, version string) (*model.TMessage, error) {
-	res := &model.TMessage{}
+func GetMessage(typ, version string) (*model.GameNotice, error) {
+	res := &model.GameNotice{}
 	do := db.Where("type=?", typ)
 	if len(version) > 0 && version != constant.Null {
 		do = do.Where("version = ?", version)

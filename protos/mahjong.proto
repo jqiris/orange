@@ -128,11 +128,12 @@ message MjDr {
 
 message MjRoom{
     string uuid = 1;
-    int32 id = 2;
-    int32 numOfGames = 3;
-    int64 createTime = 4;
-    int32 nextButton = 5;
-    repeated MjSeat seats = 6;
-    MjRoomConf conf = 7;
-    MjDr dr = 8;
+    string room_id = 2;
+    string game_type = 3;
+    int32 numOfGames = 4;
+    int64 createTime = 5;
+    int32 nextButton = 6;
+    repeated MjSeat seats = 7;
+    MjRoomConf conf = 8;
+    MjDr dr = 9;
 }
