@@ -2,33 +2,6 @@ package mahjong
 
 import "github.com/jqiris/orange/protos"
 
-type GameMahjong interface {
-	SetReady(userId int64)
-	HasBegan(roomId int32) bool
-	DissolveRequest(roomId int32, userId int64) *protos.Room
-	DissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
-	DoDissolve(roomId int32)
-	HuanSanZhang(userId int64, p1, p2, p3 int32)
-	DingQue(userId int64, que int32)
-	ChuPai(userId int64, pai int32)
-	Peng(userId int64)
-	Gang(userId int64, pai int32)
-	Hu(userId int64)
-	Guo(userId int64)
-}
-
-//public method
-var (
-	kanzi  []int32
-	record = false
-)
-
-func debugRecord(pai int32) {
-	if record {
-		kanzi = append(kanzi, pai)
-	}
-}
-
 func checkTingPai(seatData *protos.Seat, begin, end int32) {
 	for i := begin; i < end; i++ {
 		//如果这牌已经在和了，就不用检查了
@@ -99,9 +72,6 @@ func checkSingle(seatData *protos.Seat) bool {
 	if c == 3 {
 		//直接作为一坎
 		seatData.CountMap[selected] = 0
-		debugRecord(selected)
-		debugRecord(selected)
-		debugRecord(selected)
 		var ret = checkSingle(seatData)
 		//立即恢复对数据的修改
 		seatData.CountMap[selected] = c
@@ -111,9 +81,6 @@ func checkSingle(seatData *protos.Seat) bool {
 	} else if c == 4 {
 		//直接作为一坎
 		seatData.CountMap[selected] = 1
-		debugRecord(selected)
-		debugRecord(selected)
-		debugRecord(selected)
 		var ret = checkSingle(seatData)
 		//立即恢复对数据的修改
 		seatData.CountMap[selected] = c
@@ -154,9 +121,6 @@ func matchSingle(seatData *protos.Seat, selected int32) bool {
 		seatData.CountMap[selected-1]++
 		seatData.CountMap[selected]++
 		if ret == true {
-			debugRecord(selected - 2)
-			debugRecord(selected - 1)
-			debugRecord(selected)
 			return true
 		}
 	}
@@ -186,9 +150,6 @@ func matchSingle(seatData *protos.Seat, selected int32) bool {
 		seatData.CountMap[selected]++
 		seatData.CountMap[selected+1]++
 		if ret == true {
-			debugRecord(selected - 1)
-			debugRecord(selected)
-			debugRecord(selected + 1)
 			return true
 		}
 	}
@@ -218,9 +179,6 @@ func matchSingle(seatData *protos.Seat, selected int32) bool {
 		seatData.CountMap[selected+1]++
 		seatData.CountMap[selected+2]++
 		if ret == true {
-			debugRecord(selected)
-			debugRecord(selected + 1)
-			debugRecord(selected + 2)
 			return true
 		}
 	}

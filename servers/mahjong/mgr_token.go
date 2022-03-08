@@ -31,7 +31,7 @@ func (m *TokenMgr) createToken(userId, lifeTime int64) string {
 		m.delToken(token)
 	}
 	nowTime := time.Now().Unix()
-	token := utils.Md5(fmt.Sprintf("%v%v%v", userId, constant.TOKEN_KEY, nowTime))
+	token := utils.Md5(fmt.Sprintf("%v%v%v", userId, constant.TokenKey, nowTime))
 	m.tokens[token] = TokenData{
 		UserId:   userId,
 		Time:     nowTime,

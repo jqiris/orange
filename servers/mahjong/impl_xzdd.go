@@ -224,8 +224,8 @@ func (m *XzddMj) shuffle(game *protos.GameData) {
 	mjLen := len(mahjongs)
 	for i := 0; i < mjLen; i++ {
 		lastIndex := mjLen - i - 1
-		index := int32(math.Floor(float64(rand.Intn(100)*lastIndex) / 100))
-		mahjongs[index], mahjongs[lastIndex] = mahjongs[lastIndex], mahjongs[index]
+		randIndex := int32(math.Floor(float64(rand.Intn(100)*lastIndex) / 100))
+		mahjongs[randIndex], mahjongs[lastIndex] = mahjongs[lastIndex], mahjongs[randIndex]
 	}
 }
 
@@ -619,7 +619,7 @@ func (m *XzddMj) ChuPai(userId int64, pai int32) {
 	seatData.Holds = tools.SliceDel(seatData.Holds, index, 1)
 	seatData.CountMap[pai]--
 	game.ChuPai = pai
-	m.recordGameAction(game, game.Turn, constant.ACTION_CHUPAI, pai)
+	m.recordGameAction(game, game.Turn, constant.ActionChupai, pai)
 	m.checkCanTingPai(game, seatData)
 	userMgr.broadcastInRoom("game_chupai_notify_push", map[string]any{
 		"userId": seatData.Userid,
@@ -860,7 +860,7 @@ func (m *XzddMj) Peng(userId int64) {
 	}
 	seatData.Pengs = append(seatData.Pengs, pai)
 	game.ChuPai = -1
-	m.recordGameAction(game, seatData.Seatindex, constant.ACTION_PENG, pai)
+	m.recordGameAction(game, seatData.Seatindex, constant.ActionPeng, pai)
 	//广播通知其它玩家
 	userMgr.broadcastInRoom("peng_notify_push", map[string]any{"userid": seatData.Userid, "pai": pai}, seatData.Userid, true)
 	//碰的玩家打牌
@@ -1008,7 +1008,7 @@ func (m *XzddMj) doGang(game *protos.GameData, turnSeat, seatData *protos.Seat, 
 		seatData.CountMap[pai]--
 	}
 
-	m.recordGameAction(game, seatData.Seatindex, constant.ACTION_GANG, pai)
+	m.recordGameAction(game, seatData.Seatindex, constant.ActionGang, pai)
 
 	//记录下玩家的杠牌
 	if gangtype == "angang" {
@@ -1059,7 +1059,7 @@ func (m *XzddMj) doUserMoPai(game *protos.GameData) {
 		userMgr.broadcastInRoom("mj_count_push", numOfMJ, turnSeat.Userid, true)
 	}
 
-	m.recordGameAction(game, game.Turn, constant.ACTION_MOPAI, pai)
+	m.recordGameAction(game, game.Turn, constant.ActionMopai, pai)
 
 	//通知前端新摸的牌
 	userMgr.sendMsg(turnSeat.Userid, "game_mopai_push", pai)
@@ -1790,7 +1790,7 @@ func (m *XzddMj) Hu(userId int64) {
 		notify = hupai
 		var ac = m.recordUserAction(game, seatData, "qiangganghu", gangSeat.Seatindex)
 		ac.Iszimo = false
-		m.recordGameAction(game, seatIndex, constant.ACTION_HU, hupai)
+		m.recordGameAction(game, seatIndex, constant.ActionHu, hupai)
 		seatData.IsQiangGangHu = true
 		game.QiangGangContext.IsValid = false
 
@@ -1813,8 +1813,8 @@ func (m *XzddMj) Hu(userId int64) {
 				var ac = m.recordUserAction(game, seatData, "ganghua")
 				ac.Iszimo = true
 			} else {
-				var diangganghua_zimo = game.Conf.Dianganghua == 1
-				if diangganghua_zimo {
+				var diangganghuaZimo = game.Conf.Dianganghua == 1
+				if diangganghuaZimo {
 					var ac = m.recordUserAction(game, seatData, "dianganghua")
 					ac.Iszimo = true
 				} else {
@@ -1828,7 +1828,7 @@ func (m *XzddMj) Hu(userId int64) {
 		}
 
 		isZimo = true
-		m.recordGameAction(game, seatIndex, constant.ACTION_ZIMO, hupai)
+		m.recordGameAction(game, seatIndex, constant.ActionZimo, hupai)
 	} else {
 		notify = game.ChuPai
 		//将牌添加到玩家的手牌列表，供前端显示
@@ -1869,7 +1869,7 @@ func (m *XzddMj) Hu(userId int64) {
 		fs := game.GameSeats[game.Turn]
 		m.recordUserAction(game, fs, "fangpao", seatIndex)
 
-		m.recordGameAction(game, seatIndex, constant.ACTION_HU, hupai)
+		m.recordGameAction(game, seatIndex, constant.ActionHu, hupai)
 
 		game.Fangpaoshumu++
 

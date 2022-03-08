@@ -15,13 +15,13 @@ type Msg struct {
 	ErrMsg  string `json:"errmsg"`
 }
 
-type AccountServer struct {
+type ServerAccount struct {
 	*rpc.ServerBase
 }
 
-func AccountServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+func ServerAccountCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//server entity
-	server := &AccountServer{
+	server := &ServerAccount{
 		ServerBase: rpc.NewServerBase(s),
 	}
 	//http handler
@@ -35,11 +35,11 @@ func AccountServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator(constant.AccountServer, AccountServerCreator)
+	launch.RegisterCreator(constant.AccountServer, ServerAccountCreator)
 }
 
-//router
-func (s *AccountServer) Router(app *gin.Engine) {
+// Router router
+func (s *ServerAccount) Router(app *gin.Engine) {
 	app.GET("/register", s.Register)
 	app.GET("/get_version", s.GetVersion)
 	app.GET("/get_serverinfo", s.GetServerinfo)

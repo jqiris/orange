@@ -7,13 +7,13 @@ import (
 	"github.com/jqiris/orange/constant"
 )
 
-//异步数据库操作服务,同步服务请直接用database库
-type DbServer struct {
+// ServerDb 异步数据库操作服务,同步服务请直接用database库
+type ServerDb struct {
 	*rpc.ServerBase
 }
 
-func DbServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
-	server := &DbServer{
+func ServerDbCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+	server := &ServerDb{
 		ServerBase: rpc.NewServerBase(s),
 	}
 	//reg inner handler
@@ -22,5 +22,5 @@ func DbServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator(constant.DbServer, DbServerCreator)
+	launch.RegisterCreator(constant.DbServer, ServerDbCreator)
 }

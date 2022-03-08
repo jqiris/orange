@@ -31,7 +31,7 @@ type LoginData struct {
 	Sign   string `json:"sign"`
 }
 
-func (s *GameServer) SocketRouter(sc *plugin.ServerSocket) {
+func (s *ServerMahjong) SocketRouter(sc *plugin.ServerSocket) {
 	sc.OnConnect(s.OnConnect)                         //连接
 	sc.OnDisconnect(s.OnDisconnect)                   //断开连接
 	sc.OnEvent("login", s.Login)                      //登录
@@ -56,16 +56,16 @@ func (s *GameServer) SocketRouter(sc *plugin.ServerSocket) {
 	sc.OnError(s.OnError)                             //发生错误报错
 }
 
-func (s *GameServer) OnError(c socketio.Conn, err error) {
+func (s *ServerMahjong) OnError(c socketio.Conn, err error) {
 	logger.Errorf("OnError,conn:%+v,err:%v", c, err)
 }
 
-func (s *GameServer) OnConnect(c socketio.Conn) error {
+func (s *ServerMahjong) OnConnect(c socketio.Conn) error {
 	logger.Infof("Connect:%v", c.Context())
 	return nil
 }
 
-func (s *GameServer) OnDisconnect(c socketio.Conn, reason string) {
+func (s *ServerMahjong) OnDisconnect(c socketio.Conn, reason string) {
 	logger.Warnf("Disconnect:%v,reason:%v", c.Context(), reason)
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
@@ -89,7 +89,7 @@ func (s *GameServer) OnDisconnect(c socketio.Conn, reason string) {
 	userMgr.del(userId)
 	ctx.UserId = 0
 }
-func (s *GameServer) DissolveReject(c socketio.Conn) {
+func (s *ServerMahjong) DissolveReject(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -105,7 +105,7 @@ func (s *GameServer) DissolveReject(c socketio.Conn) {
 	}
 }
 
-func (s *GameServer) DissolveAgree(c socketio.Conn) {
+func (s *ServerMahjong) DissolveAgree(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -139,7 +139,7 @@ func (s *GameServer) DissolveAgree(c socketio.Conn) {
 	}
 }
 
-func (s *GameServer) DissolveRequest(c socketio.Conn) {
+func (s *ServerMahjong) DissolveRequest(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -164,7 +164,7 @@ func (s *GameServer) DissolveRequest(c socketio.Conn) {
 	}
 }
 
-func (s *GameServer) Dispress(c socketio.Conn) {
+func (s *ServerMahjong) Dispress(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -189,7 +189,7 @@ func (s *GameServer) Dispress(c socketio.Conn) {
 	c.Close()
 }
 
-func (s *GameServer) Exit(c socketio.Conn) {
+func (s *ServerMahjong) Exit(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -214,7 +214,7 @@ func (s *GameServer) Exit(c socketio.Conn) {
 	c.Close()
 }
 
-func (s *GameServer) Emoji(c socketio.Conn, msg string) {
+func (s *ServerMahjong) Emoji(c socketio.Conn, msg string) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -225,7 +225,7 @@ func (s *GameServer) Emoji(c socketio.Conn, msg string) {
 	}, ctx.UserId, true)
 }
 
-func (s *GameServer) VoiceMsg(c socketio.Conn, msg string) {
+func (s *ServerMahjong) VoiceMsg(c socketio.Conn, msg string) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -236,7 +236,7 @@ func (s *GameServer) VoiceMsg(c socketio.Conn, msg string) {
 	}, ctx.UserId, true)
 }
 
-func (s *GameServer) QuickChat(c socketio.Conn, chatId int) {
+func (s *ServerMahjong) QuickChat(c socketio.Conn, chatId int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -246,7 +246,7 @@ func (s *GameServer) QuickChat(c socketio.Conn, chatId int) {
 		"content": chatId,
 	}, ctx.UserId, true)
 }
-func (s *GameServer) Chat(c socketio.Conn, msg string) {
+func (s *ServerMahjong) Chat(c socketio.Conn, msg string) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -257,7 +257,7 @@ func (s *GameServer) Chat(c socketio.Conn, msg string) {
 	}, ctx.UserId, true)
 }
 
-func (s *GameServer) IsLogined(c socketio.Conn) bool {
+func (s *ServerMahjong) IsLogined(c socketio.Conn) bool {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return false
@@ -265,14 +265,14 @@ func (s *GameServer) IsLogined(c socketio.Conn) bool {
 	return ctx.UserId > 0
 }
 
-func (s *GameServer) GetSocketCtx(c socketio.Conn) *SocketCtx {
+func (s *ServerMahjong) GetSocketCtx(c socketio.Conn) *SocketCtx {
 	if v, ok := c.Context().(*SocketCtx); ok {
 		return v
 	}
 	return nil
 }
 
-func (s *GameServer) Login(c socketio.Conn, msg string) {
+func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 	logger.Infof("Login:%v", msg)
 	var data LoginData
 	err := json.Unmarshal([]byte(msg), &data)
@@ -289,7 +289,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	roomId := data.Roomid
 	rtime := data.Time
 	sign := data.Sign
-	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, rtime, constant.ROOM_PRI_KEY))
+	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, rtime, constant.RoomPriKey))
 	if md5 != sign {
 		c.Emit("login_result", Msg{Errcode: 2, Errmsg: "login failed invalid sign"})
 		return
@@ -367,15 +367,15 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	}
 }
 
-func (s *GameServer) Ready(c socketio.Conn) {
+func (s *ServerMahjong) Ready(c socketio.Conn) {
 	if v := s.GetSocketCtx(c); v != nil {
 		v.GameMgr.SetReady(v.UserId)
 		userMgr.broadcastInRoom("user_ready_push", map[string]any{"userid": v.UserId, "ready": true}, v.UserId, true)
 	}
 }
 
-//换牌
-func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
+// Huanpai 换牌
+func (s *ServerMahjong) Huanpai(c socketio.Conn, msg string) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -394,8 +394,8 @@ func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
 	ctx.GameMgr.HuanSanZhang(ctx.UserId, p1, p2, p3)
 }
 
-//定缺
-func (s *GameServer) Dingque(c socketio.Conn, que int32) {
+// Dingque 定缺
+func (s *ServerMahjong) Dingque(c socketio.Conn, que int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -403,8 +403,8 @@ func (s *GameServer) Dingque(c socketio.Conn, que int32) {
 	ctx.GameMgr.DingQue(ctx.UserId, que)
 }
 
-//出牌
-func (s *GameServer) Chupai(c socketio.Conn, pai int32) {
+// Chupai 出牌
+func (s *ServerMahjong) Chupai(c socketio.Conn, pai int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -412,8 +412,8 @@ func (s *GameServer) Chupai(c socketio.Conn, pai int32) {
 	ctx.GameMgr.ChuPai(ctx.UserId, pai)
 }
 
-//碰
-func (s *GameServer) Peng(c socketio.Conn) {
+// Peng 碰
+func (s *ServerMahjong) Peng(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -421,8 +421,8 @@ func (s *GameServer) Peng(c socketio.Conn) {
 	ctx.GameMgr.Peng(ctx.UserId)
 }
 
-//杠
-func (s *GameServer) Gang(c socketio.Conn, pai int32) {
+// Gang 杠
+func (s *ServerMahjong) Gang(c socketio.Conn, pai int32) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -433,8 +433,8 @@ func (s *GameServer) Gang(c socketio.Conn, pai int32) {
 	ctx.GameMgr.Gang(ctx.UserId, pai)
 }
 
-//胡
-func (s *GameServer) Hu(c socketio.Conn) {
+// Hu 胡
+func (s *ServerMahjong) Hu(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -442,8 +442,8 @@ func (s *GameServer) Hu(c socketio.Conn) {
 	ctx.GameMgr.Hu(ctx.UserId)
 }
 
-//过
-func (s *GameServer) Guo(c socketio.Conn) {
+// Guo 过
+func (s *ServerMahjong) Guo(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -451,8 +451,8 @@ func (s *GameServer) Guo(c socketio.Conn) {
 	ctx.GameMgr.Guo(ctx.UserId)
 }
 
-//心跳
-func (s *GameServer) GamePing(c socketio.Conn) {
+// GamePing 心跳
+func (s *ServerMahjong) GamePing(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return

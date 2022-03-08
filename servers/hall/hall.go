@@ -10,13 +10,13 @@ import (
 	"github.com/jqiris/orange/constant"
 )
 
-type HallServer struct {
+type ServerHall struct {
 	*rpc.ServerBase
 }
 
-func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+func ServerHallCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 
-	server := &HallServer{
+	server := &ServerHall{
 		ServerBase: rpc.NewServerBase(s),
 	}
 	//http handler
@@ -30,11 +30,11 @@ func HallServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator(constant.HallServer, HallServerCreator)
+	launch.RegisterCreator(constant.HallServer, ServerHallCreator)
 }
 
-//router
-func (h *HallServer) Router(app *gin.Engine) {
+// Router router
+func (h *ServerHall) Router(app *gin.Engine) {
 	app.GET("/login", h.Login)
 	app.GET("/create_user", h.CreateUser)
 	app.GET("/create_private_room", h.CreatePrivateRoom)

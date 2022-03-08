@@ -17,7 +17,7 @@ import (
 	"github.com/jqiris/orange/tools"
 )
 
-func (h *HallServer) Error(c *gin.Context, msg string, args ...int) {
+func (h *ServerHall) Error(c *gin.Context, msg string, args ...int) {
 	errcode := 1
 	if len(args) > 0 {
 		errcode = args[0]
@@ -25,7 +25,7 @@ func (h *HallServer) Error(c *gin.Context, msg string, args ...int) {
 	c.JSON(200, map[string]any{"errcode": errcode, "errmsg": msg})
 }
 
-func (h *HallServer) Success(c *gin.Context, data map[string]any) {
+func (h *ServerHall) Success(c *gin.Context, data map[string]any) {
 	if data == nil {
 		data = make(map[string]any)
 	}
@@ -33,11 +33,11 @@ func (h *HallServer) Success(c *gin.Context, data map[string]any) {
 	data["errmsg"] = "ok"
 	c.JSON(200, data)
 }
-func (h *HallServer) checkAccount(account, sign string) bool {
+func (h *ServerHall) checkAccount(account, sign string) bool {
 	return len(account) > 0 && len(sign) > 0
 }
 
-func (h *HallServer) Login(c *gin.Context) {
+func (h *ServerHall) Login(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -76,7 +76,7 @@ func (h *HallServer) Login(c *gin.Context) {
 	h.Success(c, ret)
 }
 
-func (h *HallServer) CreateUser(c *gin.Context) {
+func (h *ServerHall) CreateUser(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -108,7 +108,7 @@ func (h *HallServer) CreateUser(c *gin.Context) {
 	h.Success(c, nil)
 }
 
-func (h *HallServer) CreatePrivateRoom(c *gin.Context) {
+func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -126,7 +126,7 @@ func (h *HallServer) CreatePrivateRoom(c *gin.Context) {
 		return
 	}
 	userId, name := data.Userid, data.Name
-	reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.ROOM_PRI_KEY))
+	reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))
 	reqCreate := &protos.InnerCreateRoomReq{
 		Userid: int64(userId),
 		Gems:   int64(data.Gems),
@@ -142,10 +142,10 @@ func (h *HallServer) CreatePrivateRoom(c *gin.Context) {
 	serverId := respCreate.GetCreateRoom().ServerId
 	server := discover.GetServerById(serverId)
 	if server == nil {
-		h.Error(c, constant.ErrNotFoundGameServer)
+		h.Error(c, constant.ErrNotFoundMahjongServer)
 		return
 	}
-	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.ROOM_PRI_KEY))
+	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
 	reqEnter := &protos.InnerEnterRoomReq{
 		Userid: int64(userId),
 		Name:   name,
@@ -170,11 +170,11 @@ func (h *HallServer) CreatePrivateRoom(c *gin.Context) {
 		"token":  token,
 		"time":   nowTime,
 	}
-	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.ROOM_PRI_KEY))
+	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
 	h.Success(c, resp)
 }
 
-func (h *HallServer) EnterPrivateRoom(c *gin.Context) {
+func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -202,10 +202,10 @@ func (h *HallServer) EnterPrivateRoom(c *gin.Context) {
 	serverId := room.ServerId
 	server := discover.GetServerById(serverId)
 	if server == nil {
-		h.Error(c, constant.ErrNotFoundGameServer)
+		h.Error(c, constant.ErrNotFoundMahjongServer)
 		return
 	}
-	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.ROOM_PRI_KEY))
+	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
 	reqEnter := &protos.InnerEnterRoomReq{
 		Userid: int64(userId),
 		Name:   name,
@@ -230,11 +230,11 @@ func (h *HallServer) EnterPrivateRoom(c *gin.Context) {
 		"token":  token,
 		"time":   nowTime,
 	}
-	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.ROOM_PRI_KEY))
+	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
 	h.Success(c, resp)
 }
 
-func (h *HallServer) GetHistoryList(c *gin.Context) {
+func (h *ServerHall) GetHistoryList(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -252,7 +252,7 @@ func (h *HallServer) GetHistoryList(c *gin.Context) {
 	h.Success(c, resp)
 }
 
-func (h *HallServer) GetGamesOfRoom(c *gin.Context) {
+func (h *ServerHall) GetGamesOfRoom(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -272,7 +272,7 @@ func (h *HallServer) GetGamesOfRoom(c *gin.Context) {
 	h.Success(c, map[string]any{"data": data})
 }
 
-func (h *HallServer) GetDetailOfGame(c *gin.Context) {
+func (h *ServerHall) GetDetailOfGame(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -292,7 +292,7 @@ func (h *HallServer) GetDetailOfGame(c *gin.Context) {
 	h.Success(c, map[string]any{"data": data})
 }
 
-func (h *HallServer) GetUserStatus(c *gin.Context) {
+func (h *ServerHall) GetUserStatus(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")
@@ -307,7 +307,7 @@ func (h *HallServer) GetUserStatus(c *gin.Context) {
 	h.Success(c, map[string]any{"gems": data.Gems})
 }
 
-func (h *HallServer) GetMessage(c *gin.Context) {
+func (h *ServerHall) GetMessage(c *gin.Context) {
 	account, sign := c.Query("account"), c.Query("sign")
 	if !h.checkAccount(account, sign) {
 		h.Error(c, "unknown error")

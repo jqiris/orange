@@ -24,6 +24,21 @@ var (
 	gameMgrs sync.Map
 )
 
+type GameMahjong interface {
+	SetReady(userId int64)
+	HasBegan(roomId int32) bool
+	DissolveRequest(roomId int32, userId int64) *protos.Room
+	DissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
+	DoDissolve(roomId int32)
+	HuanSanZhang(userId int64, p1, p2, p3 int32)
+	DingQue(userId int64, que int32)
+	ChuPai(userId int64, pai int32)
+	Peng(userId int64)
+	Gang(userId int64, pai int32)
+	Hu(userId int64)
+	Guo(userId int64)
+}
+
 func RegGameMgr(typ string, gameMgr GameMahjong) {
 	gameMgrs.Store(typ, gameMgr)
 }
@@ -37,7 +52,7 @@ func GetGameMgr(typ string) GameMahjong {
 	return nil
 }
 
-type GameServer struct {
+type ServerMahjong struct {
 	*rpc.ServerBase
 }
 
@@ -62,8 +77,8 @@ func socketCreator() *plugin.ServerSocket {
 	return sc
 }
 
-func GameServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
-	server := &GameServer{
+func ServerMahjongCreator(s *treaty.Server) (rpc.ServerEntity, error) {
+	server := &ServerMahjong{
 		ServerBase: rpc.NewServerBase(s),
 	}
 	//socket plugin
@@ -78,7 +93,7 @@ func GameServerCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 }
 
 func init() {
-	launch.RegisterCreator(constant.GameServer, GameServerCreator)
+	launch.RegisterCreator(constant.MahjongServer, ServerMahjongCreator)
 
 	//inti mgr
 	roomMgr = NewRoomMgr()

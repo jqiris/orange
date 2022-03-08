@@ -74,14 +74,6 @@
                 "server_name": "mahjong",
                 "server_ip": "127.0.0.1",
                 "client_port": 8588,
-                "is_launch": false
-            },
-            "game_1001": {
-                "server_id": "game_1001",
-                "server_type": "game",
-                "server_name": "game",
-                "server_ip": "127.0.0.1",
-                "client_port": 9003,
                 "is_launch": true
             }
         },

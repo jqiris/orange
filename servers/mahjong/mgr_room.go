@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	DI_FEN      = []int32{1, 2, 5}
-	MAX_FAN     = []int32{3, 4, 5}
-	JU_SHU      = []int32{4, 8}
-	JU_SHU_COST = []int32{2, 3}
+	DiFen     = []int32{1, 2, 5}
+	MaxFan    = []int32{3, 4, 5}
+	JuShu     = []int32{4, 8}
+	JuShuCost = []int32{2, 3}
 )
 
 type RoomMgr struct {
@@ -119,19 +119,19 @@ func (m *RoomMgr) createRoom(userId int64, conf model.GameConf, gems int32, serv
 		return
 	}
 
-	if conf.Difen < 0 || int(conf.Difen) > len(DI_FEN) {
+	if conf.Difen < 0 || int(conf.Difen) > len(DiFen) {
 		return
 	}
 	if conf.Zimo < 0 || conf.Zimo > 2 {
 		return
 	}
-	if conf.Zuidafanshu < 0 || int(conf.Zuidafanshu) > len(MAX_FAN) {
+	if conf.Zuidafanshu < 0 || int(conf.Zuidafanshu) > len(MaxFan) {
 		return
 	}
-	if conf.Jushuxuanze < 0 || int(conf.Jushuxuanze) > len(JU_SHU) {
+	if conf.Jushuxuanze < 0 || int(conf.Jushuxuanze) > len(JuShu) {
 		return
 	}
-	cost := JU_SHU_COST[conf.Jushuxuanze]
+	cost := JuShuCost[conf.Jushuxuanze]
 	if cost > gems {
 		errcode = 2222
 		return
@@ -167,9 +167,9 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 					Dianganghua: conf.Dianganghua,
 					Menqing:     conf.Menqing,
 					Tiandihu:    conf.Tiandihu,
-					BaseScore:   DI_FEN[conf.Difen],
-					MaxFan:      MAX_FAN[conf.Zuidafanshu],
-					MaxGames:    JU_SHU[conf.Jushuxuanze],
+					BaseScore:   DiFen[conf.Difen],
+					MaxFan:      MaxFan[conf.Zuidafanshu],
+					MaxGames:    JuShu[conf.Jushuxuanze],
 					Creator:     userId,
 				},
 			}
