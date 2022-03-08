@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/utils"
 	"github.com/jqiris/orange/database"
-	"github.com/jqiris/orange/memdb"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
 )
@@ -23,90 +23,87 @@ var (
 )
 
 type RoomMgr struct {
-	// UserLocation  map[int64]*protos.UserLocation //用户位置信息
-	// Rooms         map[int32]*protos.Room         //房间map
-	// CreatingRooms map[int32]bool                 //创建标记
-	// TotalRooms    int32                          //房间总数
-	// lockLocation  sync.RWMutex
-	// lockRoom      sync.RWMutex
-	// lockCreating  sync.RWMutex
+	UserLocation  map[int64]*protos.UserLocation //用户位置信息
+	Rooms         map[int32]*protos.Room         //房间map
+	CreatingRooms map[int32]bool                 //创建标记
+	TotalRooms    int32                          //房间总数
+	lockLocation  sync.RWMutex
+	lockRoom      sync.RWMutex
+	lockCreating  sync.RWMutex
 }
 
 func NewRoomMgr() *RoomMgr {
 	return &RoomMgr{
-		// UserLocation:  make(map[int64]*protos.UserLocation),
-		// Rooms:         make(map[int32]*protos.Room),
-		// CreatingRooms: make(map[int32]bool),
-		// TotalRooms:    0,
+		UserLocation:  make(map[int64]*protos.UserLocation),
+		Rooms:         make(map[int32]*protos.Room),
+		CreatingRooms: make(map[int32]bool),
+		TotalRooms:    0,
 	}
 }
 func (m *RoomMgr) getCreatingRoom(roomId int32) bool {
-	// m.lockCreating.RLock()
-	// defer m.lockCreating.RUnlock()
-	return memdb.GetCreatingRoom(roomId)
+	m.lockCreating.RLock()
+	defer m.lockCreating.RUnlock()
+	if v, ok := m.CreatingRooms[roomId]; ok {
+		return v
+	}
+	return false
 }
 func (m *RoomMgr) saveCreatingRoom(roomId int32, data bool) {
-	// m.lockCreating.Lock()
-	// defer m.lockCreating.Unlock()
-	// m.CreatingRooms[roomId] = data
-	memdb.SaveCreatingRoom(roomId, data)
+	m.lockCreating.Lock()
+	defer m.lockCreating.Unlock()
+	m.CreatingRooms[roomId] = data
 }
 func (m *RoomMgr) delCreatingRoom(roomId int32) {
-	// m.lockCreating.Lock()
-	// defer m.lockCreating.Unlock()
-	// delete(m.CreatingRooms, roomId)
-	memdb.DelCreatingRoom(roomId)
+	m.lockCreating.Lock()
+	defer m.lockCreating.Unlock()
+	delete(m.CreatingRooms, roomId)
 }
 
 func (m *RoomMgr) getRoom(roomId int32) *protos.Room {
-	// m.lockRoom.RLock()
-	// defer m.lockRoom.RUnlock()
-	// if v, ok := m.Rooms[roomId]; ok {
-	// 	return v
-	// }
-	return memdb.GetRoom(roomId)
+	m.lockRoom.RLock()
+	defer m.lockRoom.RUnlock()
+	if v, ok := m.Rooms[roomId]; ok {
+		return v
+	}
+	return nil
 }
 
 func (m *RoomMgr) saveRoom(roomId int32, data *protos.Room) {
-	// m.lockRoom.Lock()
-	// defer m.lockRoom.Unlock()
-	// m.Rooms[roomId] = data
-	memdb.SaveRoom(roomId, data)
+	m.lockRoom.Lock()
+	defer m.lockRoom.Unlock()
+	m.Rooms[roomId] = data
 }
 func (m *RoomMgr) delRoom(roomId int32) {
-	// m.lockRoom.Lock()
-	// defer m.lockRoom.Unlock()
-	// delete(m.Rooms, roomId)
-	memdb.DelRoom(roomId)
+	m.lockRoom.Lock()
+	defer m.lockRoom.Unlock()
+	delete(m.Rooms, roomId)
 }
 
 func (m *RoomMgr) getLocation(userId int64) *protos.UserLocation {
-	// m.lockLocation.RLock()
-	// defer m.lockLocation.RUnlock()
-	// if v, ok := m.UserLocation[userId]; ok {
-	// 	return v
-	// }
-	return memdb.GetLocation(userId)
+	m.lockLocation.RLock()
+	defer m.lockLocation.RUnlock()
+	if v, ok := m.UserLocation[userId]; ok {
+		return v
+	}
+	return nil
 }
 
-// func (m *RoomMgr) getUserLocations() map[int64]*protos.UserLocation {
-// 	m.lockLocation.RLock()
-// 	defer m.lockLocation.RUnlock()
-// 	return m.UserLocation
-// }
+func (m *RoomMgr) getUserLocations() map[int64]*protos.UserLocation {
+	m.lockLocation.RLock()
+	defer m.lockLocation.RUnlock()
+	return m.UserLocation
+}
 
 func (m *RoomMgr) saveLocation(userId int64, data *protos.UserLocation) {
-	// m.lockLocation.Lock()
-	// defer m.lockLocation.Unlock()
-	// m.UserLocation[userId] = data
-	memdb.SaveLocation(userId, data)
+	m.lockLocation.Lock()
+	defer m.lockLocation.Unlock()
+	m.UserLocation[userId] = data
 }
 
 func (m *RoomMgr) delLocation(userId int64) {
-	// m.lockLocation.Lock()
-	// defer m.lockLocation.Unlock()
-	// delete(m.UserLocation, userId)
-	memdb.DelLocation(userId)
+	m.lockLocation.Lock()
+	defer m.lockLocation.Unlock()
+	delete(m.UserLocation, userId)
 }
 
 func (m *RoomMgr) getUserSeat(userId int64) int32 {
@@ -212,7 +209,7 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 			} else {
 				roomInfo.Uuid = uuid
 				m.saveRoom(roomId, roomInfo)
-				memdb.IncrTotalRooms()
+				m.TotalRooms++
 				return 0, roomId
 			}
 		}
@@ -230,7 +227,7 @@ func (m *RoomMgr) generateRoomId() int32 {
 
 func (m *RoomMgr) getUserRoom(userId int64) int32 {
 	if v := m.getLocation(userId); v != nil {
-		return v.Roomid
+		return v.RoomId
 	}
 	return 0
 }
@@ -246,7 +243,7 @@ func (m *RoomMgr) enterRoom(roomId int32, userId int64, userName string) int32 {
 				seat.Userid = userId
 				seat.Name = userName
 				m.saveLocation(userId, &protos.UserLocation{
-					Roomid:    roomId,
+					RoomId:    roomId,
 					SeatIndex: int32(i),
 				})
 				err := database.UpdateSeatInfo(roomId, int32(i), seat.Userid, "", seat.Name)
@@ -326,14 +323,14 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.Room, error)
 		s.NumChaJiao = 0
 		if s.Userid > 0 {
 			m.saveLocation(s.Userid, &protos.UserLocation{
-				Roomid:    roomId,
+				RoomId:    roomId,
 				SeatIndex: int32(i),
 			})
 		}
 		roomInfo.Seats[i] = s
 	}
 	m.saveRoom(roomId, roomInfo)
-	memdb.IncrTotalRooms()
+	m.TotalRooms++
 	return roomInfo, nil
 }
 
@@ -352,11 +349,10 @@ func (m *RoomMgr) setReady(userId int64, value bool) {
 	}
 	s := room.Seats[seatIndex]
 	s.Ready = value
-	m.saveRoom(roomId, room)
 }
 
 func (m *RoomMgr) getTotallRooms() int32 {
-	return int32(memdb.GetTotalRooms())
+	return m.TotalRooms
 }
 
 func (m *RoomMgr) destroy(roomId int32) {
@@ -372,7 +368,7 @@ func (m *RoomMgr) destroy(roomId int32) {
 		}
 	}
 	m.delRoom(roomId)
-	memdb.DecrTotalRooms()
+	m.TotalRooms--
 	database.DeleteRoom(roomId)
 }
 
@@ -389,7 +385,7 @@ func (m *RoomMgr) exitRoom(userId int64) {
 	if location == nil {
 		return
 	}
-	roomId := location.Roomid
+	roomId := location.RoomId
 	seatIndex := location.SeatIndex
 	room := m.getRoom(roomId)
 	m.delLocation(userId)
@@ -405,7 +401,6 @@ func (m *RoomMgr) exitRoom(userId int64) {
 			numOfPlayers++
 		}
 	}
-	m.saveRoom(roomId, room)
 	database.UpdateUser(userId, map[string]any{"roomid": 0})
 	if numOfPlayers == 0 {
 		m.destroy(roomId)

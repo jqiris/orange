@@ -5,74 +5,70 @@ import (
 	"encoding/json"
 	"math"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/database"
-	"github.com/jqiris/orange/memdb"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
 	"github.com/jqiris/orange/tools"
 )
 
 type XzddMj struct {
-	// Games            map[int32]*protos.GameData
-	// GameSeatsOfUsers map[int64]*protos.Seat
-	DissolvingList []int32
-	// lockGame       sync.RWMutex
-	// lockSeat       sync.RWMutex
+	Games            map[int32]*protos.GameData
+	GameSeatsOfUsers map[int64]*protos.Seat
+	DissolvingList   []int32
+	lockGame         sync.RWMutex
+	lockSeat         sync.RWMutex
 }
 
 func NewXzddMj() *XzddMj {
 	return &XzddMj{
-		// Games:            make(map[int32]*protos.GameData),
-		// GameSeatsOfUsers: make(map[int64]*protos.Seat),
-		DissolvingList: make([]int32, 0),
+		Games:            make(map[int32]*protos.GameData),
+		GameSeatsOfUsers: make(map[int64]*protos.Seat),
+		DissolvingList:   make([]int32, 0),
 	}
 }
 
 func (m *XzddMj) getGame(roomId int32) *protos.GameData {
-	// m.lockGame.RLock()
-	// defer m.lockGame.RUnlock()
-	// if v, ok := m.Games[roomId]; ok {
-	// 	return v
-	// }
-	return memdb.GetGame(roomId)
+	m.lockGame.RLock()
+	defer m.lockGame.RUnlock()
+	if v, ok := m.Games[roomId]; ok {
+		return v
+	}
+	return nil
 }
 func (m *XzddMj) saveGame(roomId int32, data *protos.GameData) {
-	// m.lockGame.Lock()
-	// defer m.lockGame.Unlock()
-	// m.Games[roomId] = data
-	memdb.SaveGame(roomId, data)
+	m.lockGame.Lock()
+	defer m.lockGame.Unlock()
+	m.Games[roomId] = data
 }
 func (m *XzddMj) delGame(roomId int32) {
-	// m.lockGame.Lock()
-	// defer m.lockGame.Unlock()
-	// delete(m.Games, roomId)
-	memdb.DelGame(roomId)
+	m.lockGame.Lock()
+	defer m.lockGame.Unlock()
+	delete(m.Games, roomId)
 }
 
 func (m *XzddMj) getSeat(userId int64) *protos.Seat {
-	// m.lockSeat.RLock()
-	// defer m.lockSeat.RUnlock()
-	// if v, ok := m.GameSeatsOfUsers[userId]; ok {
-	// 	return v
-	// }
-	return memdb.GetSeat(userId)
+	m.lockSeat.RLock()
+	defer m.lockSeat.RUnlock()
+	if v, ok := m.GameSeatsOfUsers[userId]; ok {
+		return v
+	}
+	return nil
 }
 func (m *XzddMj) saveSeat(userId int64, data *protos.Seat) {
-	// m.lockSeat.Lock()
-	// defer m.lockSeat.Unlock()
-	// m.GameSeatsOfUsers[userId] = data
-	memdb.SaveSeat(userId, data)
+	m.lockSeat.Lock()
+	defer m.lockSeat.Unlock()
+	m.GameSeatsOfUsers[userId] = data
 }
 
 func (m *XzddMj) delSeat(userId int64) {
-	// m.lockSeat.Lock()
-	// defer m.lockSeat.Unlock()
-	// delete(m.GameSeatsOfUsers, userId)
-	memdb.DelSeat(userId)
+	m.lockSeat.Lock()
+	defer m.lockSeat.Unlock()
+	delete(m.GameSeatsOfUsers, userId)
 }
 
 func (m *XzddMj) String() string {
@@ -102,7 +98,6 @@ func (m *XzddMj) begin(roomId int32) {
 		ActionList:    []int32{},
 		HupaiList:     []int32{},
 		ChupaiCnt:     0,
-		RoomId:        roomId,
 	}
 	roomInfo.NumOfGames++
 
@@ -145,9 +140,9 @@ func (m *XzddMj) begin(roomId int32) {
 		game.GameSeats[i] = data
 		m.saveSeat(data.Userid, data)
 	}
+	m.saveGame(roomId, game)
 	m.shuffle(game)
 	m.deal(game)
-	m.saveGame(roomId, game)
 
 	numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
 	huansanzhang := roomInfo.Conf.Hsz
@@ -354,8 +349,6 @@ func (m *XzddMj) dissolveRequest(roomId int32, userId int64) *protos.Room {
 		States:  []bool{false, false, false, false},
 	}
 	dr.States[seatIndex] = true
-	roomInfo.Dr = dr
-	memdb.SaveRoom(roomId, roomInfo)
 	m.DissolvingList = append(m.DissolvingList, roomId)
 	return roomInfo
 }
@@ -381,7 +374,6 @@ func (m *XzddMj) dissolveAgree(roomId int32, userId int64, agree bool) *protos.R
 			m.DissolvingList = tools.SliceDel(m.DissolvingList, idx, 1)
 		}
 	}
-	memdb.SaveRoom(roomId, roomInfo)
 	return roomInfo
 }
 
@@ -400,7 +392,6 @@ func (m *XzddMj) huanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
 		logger.Error("can't find user game data.")
 		return
 	}
-	defer m.saveSeat(userId, seatData)
 	game := seatData.Game
 	if game.State != "huanpai" {
 		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
@@ -461,7 +452,7 @@ func (m *XzddMj) huanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
 			return
 		}
 	}
-	defer m.saveGame(game.RoomId, game)
+
 	//换牌函数
 	var fn = func(s1 *protos.Seat, huanjin []int32) {
 		for i := 0; i < len(huanjin); i++ {
@@ -470,6 +461,7 @@ func (m *XzddMj) huanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
 			s1.CountMap[p]++
 		}
 	}
+
 	//开始换牌
 	var f = rand.Intn(100)
 	var s = game.GameSeats
@@ -535,9 +527,7 @@ func (m *XzddMj) dingQue(userId int64, que int32) {
 		logger.Error("can't find user game data.")
 		return
 	}
-	defer m.saveSeat(userId, seatData)
 	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
 	if game.State != "dingque" {
 		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
 		return
@@ -557,7 +547,6 @@ func (m *XzddMj) dingQue(userId int64, que int32) {
 }
 
 func (m *XzddMj) doDingQue(game *protos.GameData, seatData *protos.Seat) {
-	defer m.saveGame(game.RoomId, game)
 	m.constructGameBaseInfo(game)
 	arr := []int32{1, 1, 1, 1}
 	for i, gs := range game.GameSeats {
@@ -601,9 +590,8 @@ func (m *XzddMj) chuPai(userId int64, pai int32) {
 		logger.Error("can't find the user game data")
 		return
 	}
-	defer m.saveSeat(userId, seatData)
+	// logger.Infof("chuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
 	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
 	if game.Turn != seatData.Seatindex {
 		logger.Error("not your turn")
 		return
@@ -813,9 +801,7 @@ func (m *XzddMj) peng(userId int64) {
 		logger.Error("can't find user game data.")
 		return
 	}
-	defer m.saveSeat(userId, seatData)
 	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
 	//如果是他出的牌，则忽略
 	if game.Turn == seatData.Seatindex {
 		logger.Error("it's your turn.")
@@ -927,9 +913,7 @@ func (m *XzddMj) gang(userId int64, pai int32) {
 		return
 	}
 	seatIndex := seatData.Seatindex
-	defer m.saveSeat(userId, seatData)
 	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
 
 	//如果没有杠的机会，则不能再杠
 	if seatData.CanGang == false {
@@ -1108,7 +1092,6 @@ func (m *XzddMj) doGameOver(game *protos.GameData, userId int64, args ...bool) {
 	if roomInfo == nil {
 		return
 	}
-	defer memdb.SaveRoom(roomId, roomInfo)
 	var results []map[string]any
 	dbresult := []int32{0, 0, 0, 0}
 	fnNoticeResult := func(isEnd bool) {
@@ -1778,9 +1761,7 @@ func (m *XzddMj) hu(userId int64) {
 		return
 	}
 	var seatIndex = seatData.Seatindex
-	defer m.saveSeat(userId, seatData)
-	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
+	var game = seatData.Game
 
 	//如果他不能和牌，那和个啥啊
 	if seatData.CanHu == false {
@@ -1975,9 +1956,7 @@ func (m *XzddMj) guo(userId int64) {
 		return
 	}
 	seatIndex := seatData.Seatindex
-	defer m.saveSeat(userId, seatData)
 	game := seatData.Game
-	defer m.saveGame(game.RoomId, game)
 	if !m.hasOperations(seatData) {
 		logger.Error("no need guo.")
 		return
