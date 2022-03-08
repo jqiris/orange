@@ -173,11 +173,6 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 					Creator:     userId,
 				},
 			}
-			// if conf.Type == "xlch" {
-			// 	roomInfo.GameMahjong = NewXlchMj()
-			// } else {
-			// 	roomInfo.GameMahjong = NewXzddMj()
-			// }
 			for i := 0; i < 4; i++ {
 				roomInfo.Seats[i] = &protos.MjSeat{
 					Userid:      0,
@@ -287,11 +282,6 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.MjRoom, erro
 		Seats:      make([]*protos.MjSeat, 4),
 		Conf:       cfg,
 	}
-	// if cfg.Type == "xlch" {
-	// 	roomInfo.GameMahjong = NewXlchMj()
-	// } else {
-	// 	roomInfo.GameMahjong = NewXzddMj()
-	// }
 	roomId := dbdata.ID
 	for i := 0; i < 4; i++ {
 		s := &protos.MjSeat{}
@@ -364,12 +354,18 @@ func (m *RoomMgr) destroy(roomId int32) {
 		userId := seat.Userid
 		if userId > 0 {
 			m.delLocation(userId)
-			database.UpdateUser(userId, map[string]any{"roomid": 0})
+			err := database.UpdateUser(userId, map[string]any{"roomid": 0})
+			if err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 	m.delRoom(roomId)
 	m.TotalRooms--
-	database.DeleteRoom(roomId)
+	err := database.DeleteRoom(roomId)
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func (m *RoomMgr) isCreator(roomId int32, userId int64) bool {
@@ -401,7 +397,10 @@ func (m *RoomMgr) exitRoom(userId int64) {
 			numOfPlayers++
 		}
 	}
-	database.UpdateUser(userId, map[string]any{"roomid": 0})
+	err := database.UpdateUser(userId, map[string]any{"roomid": 0})
+	if err != nil {
+		logger.Error(err)
+	}
 	if numOfPlayers == 0 {
 		m.destroy(roomId)
 	}
