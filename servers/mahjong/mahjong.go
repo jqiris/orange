@@ -24,11 +24,18 @@ var (
 	gameMgrs sync.Map
 )
 
+func init() {
+	//inti mgr
+	roomMgr = NewRoomMgr()
+	tokenMgr = NewTokenMgr()
+	userMgr = NewUserMgr()
+}
+
 type GameMahjong interface {
 	SetReady(userId int64)
 	HasBegan(roomId int32) bool
-	DissolveRequest(roomId int32, userId int64) *protos.Room
-	DissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
+	DissolveRequest(roomId int32, userId int64) *protos.MjRoom
+	DissolveAgree(roomId int32, userId int64, agree bool) *protos.MjRoom
 	DoDissolve(roomId int32)
 	HuanSanZhang(userId int64, p1, p2, p3 int32)
 	DingQue(userId int64, que int32)
@@ -94,9 +101,4 @@ func ServerMahjongCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 
 func init() {
 	launch.RegisterCreator(constant.MahjongServer, ServerMahjongCreator)
-
-	//inti mgr
-	roomMgr = NewRoomMgr()
-	tokenMgr = NewTokenMgr()
-	userMgr = NewUserMgr()
 }

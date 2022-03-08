@@ -315,15 +315,15 @@ func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 	}
 	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
-	var userData *protos.Seat
-	var seats []*protos.Seat
+	var userData *protos.MjSeat
+	var seats []*protos.MjSeat
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
 		online := false
 		if rs.Userid > 0 {
 			online = userMgr.isOnline(rs.Userid)
 		}
-		seat := &protos.Seat{
+		seat := &protos.MjSeat{
 			Userid:    rs.Userid,
 			Score:     rs.Score,
 			Name:      rs.Name,

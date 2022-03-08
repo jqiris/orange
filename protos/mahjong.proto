@@ -1,0 +1,138 @@
+syntax = "proto3";
+package protos;
+option go_package = "../protos";
+
+//base struct
+message MjRoomConf {
+    string type = 1;
+    int32 zimo = 2;
+    bool jiangdui = 3;
+    bool hsz = 4;
+    int32 dianganghua = 5;
+    bool menqing = 6;
+    bool tiandihu = 7;
+    int32 baseScore = 8;
+    int32 maxFan = 9;
+    int32 maxGames = 10;
+    int64 creator = 11;
+}
+
+message MjDissolveData{
+    int64 endTime = 1;
+    repeated bool states = 2;
+}
+
+message MjTingData{
+    int32 fan = 1;
+    string pattern = 2;
+}
+
+message MjActionData{
+    string type = 1;
+    MjSeat owner = 2;
+    string state = 3;
+    int32 payTimes = 4;
+    MjActionData ref = 5;
+    repeated int32 targets = 6;
+    int32 score = 7;
+    bool iszimo = 8;
+}
+
+message MjQiangGangData {
+    MjSeat turnSeat = 1;
+    MjSeat seatData = 2;
+    int32 pai = 3;
+    bool isValid = 4;
+}
+
+message MjSeat{
+    int64 userid = 1;
+    int32 score = 2;
+    string name = 3;
+    bool ready = 4;
+    int32 seatindex = 5;
+    int32 numZiMo = 6;
+    int32 numJiePao = 7;
+    int32 numDianPao = 8;
+    int32 numAnGang = 9;
+    int32 numMingGang = 10;
+    int32 numChaJiao = 11;
+    string ip = 12;
+    bool online = 13;
+    MjGameData game = 14;
+    repeated int32 holds = 15;
+    repeated int32 folds = 16;
+    repeated int32 angangs = 17;
+    repeated int32 diang = 18;
+    repeated int32 wangangs = 19;
+    repeated int32 pengs = 20;
+    int32 que = 21;
+    repeated int32 huanpais = 22;
+    map<int32,int32> countMap = 23;
+    map<int32,MjTingData> tingMap = 24;
+    string pattern = 25;
+    bool canGang = 26;
+    repeated int32 gangPai = 27;
+    bool canPeng = 28;
+    bool canHu = 29;
+    bool canChuPai = 30;
+    int32 guoHuFan = 31;
+    bool hued = 32;
+    bool iszimo = 33;
+    bool isGangHu = 34;
+    bool isMenQing = 35;
+    bool isZhongZhang = 36;
+    bool isJinGouHu = 37;
+    bool isQiangGangHu = 38;
+    bool isHaiDiHu = 39;
+    bool isTianHu = 40;
+    bool isDiHu = 41;
+    bool qingyise = 42;
+    repeated MjActionData actions = 43;
+    int32 fan = 44;
+    int32 lastFangGangSeat = 45;
+    int32 numofgen = 46;
+    repeated int32 diangangs = 47;
+}
+
+message MjGameData{
+    MjRoomConf conf = 1;
+    string uuid = 2;
+    int32 gameIndex = 3;
+    int32 button = 4;
+    repeated int32 mahjongs = 5;
+    int32 currentIndex = 6;
+    repeated MjSeat gameSeats = 7;
+    int32 numOfQue = 8;
+    int32 turn = 9;
+    int32 chuPai = 10;
+    string state = 11;
+    int32 firstHupai = 12;
+    int32 yipaoduoxiang = 13;
+    int32 fangpaoshumu = 14;
+    repeated int32 actionList = 15;
+    repeated int32 hupaiList = 16;
+    int32 chupaiCnt = 17;
+    int32 huanpaiMethod = 18;
+    MjQiangGangData qiangGangContext = 19;
+    int32 lastHuPaiSeat = 20;
+    int32 lastFangGangSeat = 21;
+    string baseInfoJson = 22;
+}
+
+
+message MjDr {
+    int64 endTime = 1;
+    repeated bool states = 2;
+}
+
+message MjRoom{
+    string uuid = 1;
+    int32 id = 2;
+    int32 numOfGames = 3;
+    int64 createTime = 4;
+    int32 nextButton = 5;
+    repeated MjSeat seats = 6;
+    MjRoomConf conf = 7;
+    MjDr dr = 8;
+}

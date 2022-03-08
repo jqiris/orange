@@ -24,7 +24,7 @@ var (
 
 type RoomMgr struct {
 	UserLocation  map[int64]*protos.UserLocation //用户位置信息
-	Rooms         map[int32]*protos.Room         //房间map
+	Rooms         map[int32]*protos.MjRoom       //房间map
 	CreatingRooms map[int32]bool                 //创建标记
 	TotalRooms    int32                          //房间总数
 	lockLocation  sync.RWMutex
@@ -35,7 +35,7 @@ type RoomMgr struct {
 func NewRoomMgr() *RoomMgr {
 	return &RoomMgr{
 		UserLocation:  make(map[int64]*protos.UserLocation),
-		Rooms:         make(map[int32]*protos.Room),
+		Rooms:         make(map[int32]*protos.MjRoom),
 		CreatingRooms: make(map[int32]bool),
 		TotalRooms:    0,
 	}
@@ -59,7 +59,7 @@ func (m *RoomMgr) delCreatingRoom(roomId int32) {
 	delete(m.CreatingRooms, roomId)
 }
 
-func (m *RoomMgr) getRoom(roomId int32) *protos.Room {
+func (m *RoomMgr) getRoom(roomId int32) *protos.MjRoom {
 	m.lockRoom.RLock()
 	defer m.lockRoom.RUnlock()
 	if v, ok := m.Rooms[roomId]; ok {
@@ -68,7 +68,7 @@ func (m *RoomMgr) getRoom(roomId int32) *protos.Room {
 	return nil
 }
 
-func (m *RoomMgr) saveRoom(roomId int32, data *protos.Room) {
+func (m *RoomMgr) saveRoom(roomId int32, data *protos.MjRoom) {
 	m.lockRoom.Lock()
 	defer m.lockRoom.Unlock()
 	m.Rooms[roomId] = data
@@ -152,14 +152,14 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 			return m.fnCreate(userId, conf, serverId, ip, port)
 		} else {
 			createTime := time.Now().Unix()
-			roomInfo := &protos.Room{
+			roomInfo := &protos.MjRoom{
 				Uuid:       "",
 				Id:         roomId,
 				NumOfGames: 0,
 				CreateTime: createTime,
 				NextButton: 0,
-				Seats:      make([]*protos.Seat, 4),
-				Conf: &protos.RoomConf{
+				Seats:      make([]*protos.MjSeat, 4),
+				Conf: &protos.MjRoomConf{
 					Type:        conf.Type,
 					Zimo:        conf.Zimo,
 					Jiangdui:    conf.Jiangdui,
@@ -179,7 +179,7 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 			// 	roomInfo.GameMahjong = NewXzddMj()
 			// }
 			for i := 0; i < 4; i++ {
-				roomInfo.Seats[i] = &protos.Seat{
+				roomInfo.Seats[i] = &protos.MjSeat{
 					Userid:      0,
 					Score:       0,
 					Name:        "",
@@ -233,7 +233,7 @@ func (m *RoomMgr) getUserRoom(userId int64) int32 {
 }
 
 func (m *RoomMgr) enterRoom(roomId int32, userId int64, userName string) int32 {
-	fnTakeSeat := func(room *protos.Room) int32 {
+	fnTakeSeat := func(room *protos.MjRoom) int32 {
 		if m.getUserRoom(userId) == roomId {
 			return 0 //已存在
 		}
@@ -273,18 +273,18 @@ func (m *RoomMgr) enterRoom(roomId int32, userId int64, userName string) int32 {
 	}
 }
 
-func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.Room, error) {
-	var cfg *protos.RoomConf
+func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.MjRoom, error) {
+	var cfg *protos.MjRoomConf
 	if err := json.Unmarshal([]byte(dbdata.BaseInfo), &cfg); err != nil {
 		return nil, err
 	}
-	roomInfo := &protos.Room{
+	roomInfo := &protos.MjRoom{
 		Uuid:       dbdata.UUID,
 		Id:         dbdata.ID,
 		NumOfGames: dbdata.NumOfTurns,
 		CreateTime: dbdata.CreateTime,
 		NextButton: dbdata.NextButton,
-		Seats:      make([]*protos.Seat, 4),
+		Seats:      make([]*protos.MjSeat, 4),
 		Conf:       cfg,
 	}
 	// if cfg.Type == "xlch" {
@@ -294,7 +294,7 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.Room, error)
 	// }
 	roomId := dbdata.ID
 	for i := 0; i < 4; i++ {
-		s := &protos.Seat{}
+		s := &protos.MjSeat{}
 		switch i {
 		case 0:
 			s.Userid = dbdata.UserID0
