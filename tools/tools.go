@@ -32,7 +32,7 @@ func SliceDel[T constraints.Ordered](arr []T, index, num int) []T {
 func SlicePop[T constraints.Ordered](arr []T) ([]T, T) {
 	arrLen := len(arr)
 	if arrLen == 0 {
-		return arr, nil
+		return arr, T(0)
 	}
 	return arr[:arrLen-1], arr[arrLen-1]
 }

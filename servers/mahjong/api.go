@@ -26,7 +26,7 @@ type SocketCtx struct {
 
 type LoginData struct {
 	Token  string `json:"token"`
-	Roomid int32  `json:"roomid"`
+	Roomid string `json:"roomid"`
 	Time   int64  `json:"time"`
 	Sign   string `json:"sign"`
 }
@@ -96,7 +96,7 @@ func (s *ServerMahjong) DissolveReject(c socketio.Conn) {
 	}
 	userId := ctx.UserId
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	ret := ctx.GameMgr.DissolveAgree(roomId, userId, false)
@@ -112,7 +112,7 @@ func (s *ServerMahjong) DissolveAgree(c socketio.Conn) {
 	}
 	userId := ctx.UserId
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	ret := ctx.GameMgr.DissolveAgree(roomId, userId, true)
@@ -146,7 +146,7 @@ func (s *ServerMahjong) DissolveRequest(c socketio.Conn) {
 	}
 	userId := ctx.UserId
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	if ctx.GameMgr.HasBegan(roomId) == false {
@@ -171,7 +171,7 @@ func (s *ServerMahjong) Dispress(c socketio.Conn) {
 	}
 	userId := ctx.UserId
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	//如果游戏已经开始，则不可以
@@ -196,7 +196,7 @@ func (s *ServerMahjong) Exit(c socketio.Conn) {
 	}
 	userId := ctx.UserId
 	roomId := roomMgr.getUserRoom(userId)
-	if roomId < 1 {
+	if len(roomId) < 1 {
 		return
 	}
 	if ctx.GameMgr.HasBegan(roomId) {
@@ -341,7 +341,7 @@ func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 		Errcode: 0,
 		Errmsg:  "ok",
 		Data: map[string]any{
-			"roomid":     roomInfo.Id,
+			"roomid":     roomInfo.RoomId,
 			"conf":       roomInfo.Conf,
 			"numofgames": roomInfo.NumOfGames,
 			"seats":      seats,

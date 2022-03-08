@@ -3,6 +3,7 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
@@ -19,7 +20,7 @@ var (
 // CreatePrivateRoom 外部调用
 func CreatePrivateRoom(s rpc.ServerRpc, req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: constant.StatusOk}
-	uid := int(req.Userid)
+	uid := int(req.UserId)
 	server := s.Find(constant.MahjongServer, uid)
 	if server == nil {
 		resp.Errcode = constant.StatusError
@@ -64,7 +65,7 @@ func (s *ServerMahjong) Success(c *gin.Context, data map[string]any) {
 // CreateRoom 创建房间
 func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
-	userId, gems, sign, conf := int64(req.Userid), int32(req.Gems), req.Sign, req.Conf
+	userId, gems, sign, conf := int64(req.UserId), int32(req.Gems), req.Sign, req.Conf
 	if userId < 1 || len(sign) < 1 || len(conf) < 1 {
 		resp.Errmsg = "Invalid parameters"
 		return resp
@@ -82,7 +83,7 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 	}
 	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int32(s.Server.ClientPort)
 	errcode, roomId := roomMgr.createRoom(userId, cfg, gems, serverId, ip, port)
-	if errcode != 0 || roomId < 1 {
+	if errcode != 0 || len(roomId) < 1 {
 		resp.Errmsg = "create failed"
 		return resp
 	}
@@ -90,7 +91,7 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 	resp.Errmsg = "ok"
 	resp.Any = &protos.InnerMsgResp_CreateRoom{
 		CreateRoom: &protos.InnerCreateRoomResp{
-			Roomid:   int32(roomId),
+			RoomId:   roomId,
 			ServerId: s.Server.ServerId,
 		},
 	}
@@ -100,8 +101,8 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 // EnterRoom 进入房间
 func (s *ServerMahjong) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
-	userId, roomId, name, sign := int64(req.Userid), int32(req.Roomid), req.Name, req.Sign
-	if userId < 1 || roomId < 1 || len(sign) < 1 {
+	userId, roomId, name, sign := int64(req.UserId), req.RoomId, req.Name, req.Sign
+	if userId < 1 || len(roomId) < 1 || len(sign) < 1 {
 		resp.Errmsg = "Invalid parameters"
 		return resp
 	}

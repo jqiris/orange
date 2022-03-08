@@ -3,8 +3,9 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jqiris/orange/tools"
 	"testing"
+
+	"github.com/jqiris/orange/tools"
 
 	"github.com/jqiris/orange/protos"
 )
@@ -19,7 +20,7 @@ func TestStructToJson(t *testing.T) {
 }
 
 func TestSlicePop(t *testing.T) {
-	var a []int32
+	var a []string
 	b, i := tools.SlicePop(a)
 	fmt.Println(b, i)
 }
