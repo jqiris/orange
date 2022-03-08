@@ -24,13 +24,13 @@ var (
 	gameMgrs sync.Map
 )
 
-func RegGameMgr(typ string, gameMgr GameMgr) {
+func RegGameMgr(typ string, gameMgr GameMahjong) {
 	gameMgrs.Store(typ, gameMgr)
 }
 
-func GetGameMgr(typ string) GameMgr {
+func GetGameMgr(typ string) GameMahjong {
 	if v, ok := gameMgrs.Load(typ); ok {
-		if res, okv := v.(GameMgr); okv {
+		if res, okv := v.(GameMahjong); okv {
 			return res
 		}
 	}

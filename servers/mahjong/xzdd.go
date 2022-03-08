@@ -229,7 +229,7 @@ func (m *XzddMj) shuffle(game *protos.GameData) {
 	}
 }
 
-func (m *XzddMj) setReady(userId int64) {
+func (m *XzddMj) SetReady(userId int64) {
 	roomId := roomMgr.getUserRoom(userId)
 	if roomId < 1 {
 		return
@@ -259,7 +259,7 @@ func (m *XzddMj) setReady(userId int64) {
 			"numofmj":       numOfMJ,
 			"button":        game.Button,
 			"turn":          game.Turn,
-			"chuPai":        game.ChuPai,
+			"ChuPai":        game.ChuPai,
 			"huanpaimethod": game.HuanpaiMethod,
 		}
 		var seats []*protos.Seat
@@ -320,7 +320,7 @@ func (m *XzddMj) hasOperations(seatData *protos.Seat) bool {
 	return false
 }
 
-func (m *XzddMj) hasBegan(roomId int32) bool {
+func (m *XzddMj) HasBegan(roomId int32) bool {
 	game := m.getGame(roomId)
 	if game != nil {
 		return true
@@ -332,7 +332,7 @@ func (m *XzddMj) hasBegan(roomId int32) bool {
 	return false
 }
 
-func (m *XzddMj) dissolveRequest(roomId int32, userId int64) *protos.Room {
+func (m *XzddMj) DissolveRequest(roomId int32, userId int64) *protos.Room {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -353,7 +353,7 @@ func (m *XzddMj) dissolveRequest(roomId int32, userId int64) *protos.Room {
 	return roomInfo
 }
 
-func (m *XzddMj) dissolveAgree(roomId int32, userId int64, agree bool) *protos.Room {
+func (m *XzddMj) DissolveAgree(roomId int32, userId int64, agree bool) *protos.Room {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -377,7 +377,7 @@ func (m *XzddMj) dissolveAgree(roomId int32, userId int64, agree bool) *protos.R
 	return roomInfo
 }
 
-func (m *XzddMj) doDissolve(roomId int32) {
+func (m *XzddMj) DoDissolve(roomId int32) {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return
@@ -386,7 +386,7 @@ func (m *XzddMj) doDissolve(roomId int32) {
 	go m.doGameOver(game, roomInfo.Seats[0].Userid, true)
 }
 
-func (m *XzddMj) huanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
+func (m *XzddMj) HuanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -394,7 +394,7 @@ func (m *XzddMj) huanSanZhang(userId int64, p1 int32, p2 int32, p3 int32) {
 	}
 	game := seatData.Game
 	if game.State != "huanpai" {
-		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
+		logger.Errorf("can't recv DingQue when game.state == %v", game.State)
 		return
 	}
 	if len(seatData.Huanpais) > 0 {
@@ -521,7 +521,7 @@ func (m *XzddMj) constructGameBaseInfo(game *protos.GameData) {
 	game.BaseInfoJson = string(bs)
 }
 
-func (m *XzddMj) dingQue(userId int64, que int32) {
+func (m *XzddMj) DingQue(userId int64, que int32) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -529,7 +529,7 @@ func (m *XzddMj) dingQue(userId int64, que int32) {
 	}
 	game := seatData.Game
 	if game.State != "dingque" {
-		logger.Errorf("can't recv dingQue when game.state == %v", game.State)
+		logger.Errorf("can't recv DingQue when game.state == %v", game.State)
 		return
 	}
 	if seatData.Que < 0 {
@@ -584,13 +584,13 @@ func (m *XzddMj) doDingQue(game *protos.GameData, seatData *protos.Seat) {
 	// logger.Infof("doDingQue,seat:%+v,turn:%+v", game.GameSeats[game.Turn], game.Turn)
 }
 
-func (m *XzddMj) chuPai(userId int64, pai int32) {
+func (m *XzddMj) ChuPai(userId int64, pai int32) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find the user game data")
 		return
 	}
-	// logger.Infof("chuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
+	// logger.Infof("ChuPai userId: %d, pai: %d,seatData:%+v", userId, pai, seatData)
 	game := seatData.Game
 	if game.Turn != seatData.Seatindex {
 		logger.Error("not your turn")
@@ -605,7 +605,7 @@ func (m *XzddMj) chuPai(userId int64, pai int32) {
 		return
 	}
 	if m.hasOperations(seatData) {
-		logger.Error("plz guo before you chupai")
+		logger.Error("plz Guo before you chupai")
 		return
 	}
 	index := tools.IndexOf(seatData.Holds, pai)
@@ -794,8 +794,8 @@ func (m *XzddMj) recordGameAction(game *protos.GameData, si, action, pai int32) 
 	}
 }
 
-func (m *XzddMj) peng(userId int64) {
-	logger.Infof("peng,userId:%v", userId)
+func (m *XzddMj) Peng(userId int64) {
+	logger.Infof("Peng,userId:%v", userId)
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -810,7 +810,7 @@ func (m *XzddMj) peng(userId int64) {
 
 	//如果没有碰的机会，则不能再碰
 	if seatData.CanPeng == false {
-		logger.Error("seatData.peng == false")
+		logger.Error("seatData.Peng == false")
 		return
 	}
 
@@ -868,7 +868,7 @@ func (m *XzddMj) peng(userId int64) {
 	//广播通知玩家出牌方
 	seatData.CanChuPai = true
 	userMgr.broadcastInRoom("game_chupai_push", seatData.Userid, seatData.Userid, true)
-	logger.Infof("peng end,userId:%v", userId)
+	logger.Infof("Peng end,userId:%v", userId)
 }
 
 func (m *XzddMj) moveToNextUser(game *protos.GameData, nextSeat int32) {
@@ -906,7 +906,7 @@ func (m *XzddMj) clearAllOptions(game *protos.GameData, seatData *protos.Seat) {
 	}
 }
 
-func (m *XzddMj) gang(userId int64, pai int32) {
+func (m *XzddMj) Gang(userId int64, pai int32) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -917,7 +917,7 @@ func (m *XzddMj) gang(userId int64, pai int32) {
 
 	//如果没有杠的机会，则不能再杠
 	if seatData.CanGang == false {
-		logger.Error("seatData.gang == false")
+		logger.Error("seatData.Gang == false")
 		return
 	}
 
@@ -1754,7 +1754,7 @@ func (m *XzddMj) checkCanHu(game *protos.GameData, seatData *protos.Seat, target
 	}
 }
 
-func (m *XzddMj) hu(userId int64) {
+func (m *XzddMj) Hu(userId int64) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -1949,7 +1949,7 @@ func (m *XzddMj) hu(userId int64) {
 	m.doUserMoPai(game)
 }
 
-func (m *XzddMj) guo(userId int64) {
+func (m *XzddMj) Guo(userId int64) {
 	seatData := m.getSeat(userId)
 	if seatData == nil {
 		logger.Error("can't find user game data.")
@@ -1958,7 +1958,7 @@ func (m *XzddMj) guo(userId int64) {
 	seatIndex := seatData.Seatindex
 	game := seatData.Game
 	if !m.hasOperations(seatData) {
-		logger.Error("no need guo.")
+		logger.Error("no need Guo.")
 		return
 	}
 

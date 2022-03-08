@@ -21,7 +21,7 @@ type Msg struct {
 
 type SocketCtx struct {
 	UserId  int64
-	GameMgr GameMgr
+	GameMgr GameMahjong
 }
 
 type LoginData struct {
@@ -42,7 +42,7 @@ func (s *GameServer) SocketRouter(sc *plugin.ServerSocket) {
 	sc.OnEvent("peng", s.Peng)                        //碰
 	sc.OnEvent("gang", s.Gang)                        //杠
 	sc.OnEvent("hu", s.Hu)                            //胡
-	sc.OnEvent("guo", s.Guo)                          //过
+	sc.OnEvent("Guo", s.Guo)                          //过
 	sc.OnEvent("game_ping", s.GamePing)               //心跳
 	sc.OnEvent("chat", s.Chat)                        //聊天
 	sc.OnEvent("quick_chat", s.QuickChat)             //快速聊天
@@ -99,7 +99,7 @@ func (s *GameServer) DissolveReject(c socketio.Conn) {
 	if roomId < 1 {
 		return
 	}
-	ret := ctx.GameMgr.dissolveAgree(roomId, userId, false)
+	ret := ctx.GameMgr.DissolveAgree(roomId, userId, false)
 	if ret != nil {
 		userMgr.broadcastInRoom("dissolve_cancel_push", nil, userId, true)
 	}
@@ -115,7 +115,7 @@ func (s *GameServer) DissolveAgree(c socketio.Conn) {
 	if roomId < 1 {
 		return
 	}
-	ret := ctx.GameMgr.dissolveAgree(roomId, userId, true)
+	ret := ctx.GameMgr.DissolveAgree(roomId, userId, true)
 	if ret != nil {
 		dr := ret.Dr
 		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
@@ -134,7 +134,7 @@ func (s *GameServer) DissolveAgree(c socketio.Conn) {
 		}
 
 		if doAllAgree {
-			ctx.GameMgr.doDissolve(roomId)
+			ctx.GameMgr.DoDissolve(roomId)
 		}
 	}
 }
@@ -149,10 +149,10 @@ func (s *GameServer) DissolveRequest(c socketio.Conn) {
 	if roomId < 1 {
 		return
 	}
-	if ctx.GameMgr.hasBegan(roomId) == false {
+	if ctx.GameMgr.HasBegan(roomId) == false {
 		return
 	}
-	ret := ctx.GameMgr.dissolveRequest(roomId, userId)
+	ret := ctx.GameMgr.DissolveRequest(roomId, userId)
 	if ret != nil {
 		dr := ret.Dr
 		remainingTime := (dr.EndTime - time.Now().UnixMilli()) / 1000
@@ -175,7 +175,7 @@ func (s *GameServer) Dispress(c socketio.Conn) {
 		return
 	}
 	//如果游戏已经开始，则不可以
-	if ctx.GameMgr.hasBegan(roomId) {
+	if ctx.GameMgr.HasBegan(roomId) {
 		return
 	}
 
@@ -199,7 +199,7 @@ func (s *GameServer) Exit(c socketio.Conn) {
 	if roomId < 1 {
 		return
 	}
-	if ctx.GameMgr.hasBegan(roomId) {
+	if ctx.GameMgr.HasBegan(roomId) {
 		return
 	}
 	//如果是房主，则只能走解散房间
@@ -353,7 +353,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 	userMgr.broadcastInRoom("new_user_comes_push", userData, userId)
 	ctx.GameMgr = GetGameMgr(roomInfo.Conf.Type)
 	//玩家上限，强制设置为true
-	ctx.GameMgr.setReady(userId)
+	ctx.GameMgr.SetReady(userId)
 	c.Emit("login_finished")
 
 	if roomInfo.Dr != nil {
@@ -369,7 +369,7 @@ func (s *GameServer) Login(c socketio.Conn, msg string) {
 
 func (s *GameServer) Ready(c socketio.Conn) {
 	if v := s.GetSocketCtx(c); v != nil {
-		v.GameMgr.setReady(v.UserId)
+		v.GameMgr.SetReady(v.UserId)
 		userMgr.broadcastInRoom("user_ready_push", map[string]any{"userid": v.UserId, "ready": true}, v.UserId, true)
 	}
 }
@@ -391,7 +391,7 @@ func (s *GameServer) Huanpai(c socketio.Conn, msg string) {
 		logger.Errorf("data err:%+v", data)
 		return
 	}
-	ctx.GameMgr.huanSanZhang(ctx.UserId, p1, p2, p3)
+	ctx.GameMgr.HuanSanZhang(ctx.UserId, p1, p2, p3)
 }
 
 //定缺
@@ -400,7 +400,7 @@ func (s *GameServer) Dingque(c socketio.Conn, que int32) {
 	if ctx == nil {
 		return
 	}
-	ctx.GameMgr.dingQue(ctx.UserId, que)
+	ctx.GameMgr.DingQue(ctx.UserId, que)
 }
 
 //出牌
@@ -409,7 +409,7 @@ func (s *GameServer) Chupai(c socketio.Conn, pai int32) {
 	if ctx == nil {
 		return
 	}
-	ctx.GameMgr.chuPai(ctx.UserId, pai)
+	ctx.GameMgr.ChuPai(ctx.UserId, pai)
 }
 
 //碰
@@ -418,7 +418,7 @@ func (s *GameServer) Peng(c socketio.Conn) {
 	if ctx == nil {
 		return
 	}
-	ctx.GameMgr.peng(ctx.UserId)
+	ctx.GameMgr.Peng(ctx.UserId)
 }
 
 //杠
@@ -430,7 +430,7 @@ func (s *GameServer) Gang(c socketio.Conn, pai int32) {
 	if pai < 0 {
 		return
 	}
-	ctx.GameMgr.gang(ctx.UserId, pai)
+	ctx.GameMgr.Gang(ctx.UserId, pai)
 }
 
 //胡
@@ -439,7 +439,7 @@ func (s *GameServer) Hu(c socketio.Conn) {
 	if ctx == nil {
 		return
 	}
-	ctx.GameMgr.hu(ctx.UserId)
+	ctx.GameMgr.Hu(ctx.UserId)
 }
 
 //过
@@ -448,7 +448,7 @@ func (s *GameServer) Guo(c socketio.Conn) {
 	if ctx == nil {
 		return
 	}
-	ctx.GameMgr.guo(ctx.UserId)
+	ctx.GameMgr.Guo(ctx.UserId)
 }
 
 //心跳

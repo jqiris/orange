@@ -174,9 +174,9 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 				},
 			}
 			// if conf.Type == "xlch" {
-			// 	roomInfo.GameMgr = NewXlchMj()
+			// 	roomInfo.GameMahjong = NewXlchMj()
 			// } else {
-			// 	roomInfo.GameMgr = NewXzddMj()
+			// 	roomInfo.GameMahjong = NewXzddMj()
 			// }
 			for i := 0; i < 4; i++ {
 				roomInfo.Seats[i] = &protos.Seat{
@@ -288,9 +288,9 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.TRoom) (*protos.Room, error)
 		Conf:       cfg,
 	}
 	// if cfg.Type == "xlch" {
-	// 	roomInfo.GameMgr = NewXlchMj()
+	// 	roomInfo.GameMahjong = NewXlchMj()
 	// } else {
-	// 	roomInfo.GameMgr = NewXzddMj()
+	// 	roomInfo.GameMahjong = NewXzddMj()
 	// }
 	roomId := dbdata.ID
 	for i := 0; i < 4; i++ {

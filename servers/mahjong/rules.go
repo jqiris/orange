@@ -2,19 +2,19 @@ package mahjong
 
 import "github.com/jqiris/orange/protos"
 
-type GameMgr interface {
-	setReady(userId int64)
-	hasBegan(roomId int32) bool
-	dissolveRequest(roomId int32, userId int64) *protos.Room
-	dissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
-	doDissolve(roomId int32)
-	huanSanZhang(userId int64, p1, p2, p3 int32)
-	dingQue(userId int64, que int32)
-	chuPai(userId int64, pai int32)
-	peng(userId int64)
-	gang(userId int64, pai int32)
-	hu(userId int64)
-	guo(userId int64)
+type GameMahjong interface {
+	SetReady(userId int64)
+	HasBegan(roomId int32) bool
+	DissolveRequest(roomId int32, userId int64) *protos.Room
+	DissolveAgree(roomId int32, userId int64, agree bool) *protos.Room
+	DoDissolve(roomId int32)
+	HuanSanZhang(userId int64, p1, p2, p3 int32)
+	DingQue(userId int64, que int32)
+	ChuPai(userId int64, pai int32)
+	Peng(userId int64)
+	Gang(userId int64, pai int32)
+	Hu(userId int64)
+	Guo(userId int64)
 }
 
 //public method
