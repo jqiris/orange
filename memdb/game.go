@@ -78,7 +78,7 @@ func GetRoom(roomId int32) *protos.Room {
 	}
 	defer stores.Unlock(mutex, ctx)
 	field := utils.Int32ToString(roomId)
-	var res *protos.Room
+	res := &protos.Room{}
 	err = stores.HGet(key, field, res)
 	if err != nil {
 		logger.Error(err)
@@ -126,7 +126,7 @@ func GetGame(roomId int32) *protos.GameData {
 	}
 	defer stores.Unlock(mutex, ctx)
 	field := utils.Int32ToString(roomId)
-	var res *protos.GameData
+	res := &protos.GameData{}
 	err = stores.HGet(key, field, res)
 	if err != nil {
 		logger.Error(err)
@@ -174,7 +174,7 @@ func GetSeat(userId int64) *protos.Seat {
 	}
 	defer stores.Unlock(mutex, ctx)
 	field := utils.Int64ToString(userId)
-	var res *protos.Seat
+	res := &protos.Seat{}
 	err = stores.HGet(key, field, res)
 	if err != nil {
 		logger.Error(err)
@@ -260,7 +260,7 @@ func GetLocation(userId int64) *protos.UserLocation {
 	}
 	defer stores.Unlock(mutex, ctx)
 	field := utils.Int64ToString(userId)
-	var res *protos.UserLocation
+	res := &protos.UserLocation{}
 	err = stores.HGet(key, field, res)
 	if err != nil {
 		logger.Error(err)
