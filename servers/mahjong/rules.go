@@ -1,4 +1,4 @@
-package game
+package mahjong
 
 import "github.com/jqiris/orange/protos"
 

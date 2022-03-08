@@ -1,4 +1,4 @@
-package game
+package mahjong
 
 import (
 	"encoding/json"
@@ -51,7 +51,7 @@ func (s *GameServer) Success(c *gin.Context, data map[string]any) {
 	c.JSON(200, data)
 }
 
-//获取服务信息
+// GetServerInfo 获取服务信息
 func (s *GameServer) GetServerInfo(c *gin.Context) {
 	serverId, sign := c.Query("serverid"), c.Query("sign")
 	if serverId != constant.SERVER_ID || len(sign) < 1 {
@@ -71,7 +71,7 @@ func (s *GameServer) GetServerInfo(c *gin.Context) {
 	s.Success(c, map[string]any{"userroominfo": arr})
 }
 
-//创建房间
+// CreateRoom 创建房间
 func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
 	userId, gems, sign, conf := int64(req.Userid), int32(req.Gems), req.Sign, req.Conf
@@ -107,7 +107,7 @@ func (s *GameServer) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsg
 	return resp
 }
 
-//进入房间
+// EnterRoom 进入房间
 func (s *GameServer) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
 	userId, roomId, name, sign := int64(req.Userid), int32(req.Roomid), req.Name, req.Sign
@@ -145,7 +145,7 @@ func (s *GameServer) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMsgRe
 	return resp
 }
 
-//房间是否运行
+// IsRoomRuning 房间是否运行
 func (s *GameServer) IsRoomRuning(c *gin.Context) {
 	roomId, sign := utils.StringToInt(c.Query("roomid")), c.Query("sign")
 	if roomId < 1 || len(sign) < 1 {
