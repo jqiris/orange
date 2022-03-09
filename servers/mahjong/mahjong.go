@@ -63,6 +63,7 @@ func GetGameMgr(typ string) GameMahjong {
 type ServerMahjong struct {
 	*rpc.ServerBase
 	totalConn *atomic.Int64
+	runServer *treaty.Server
 }
 
 func socketCreator() *plugin.ServerSocket {
@@ -90,6 +91,7 @@ func ServerMahjongCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	server := &ServerMahjong{
 		ServerBase: rpc.NewServerBase(s),
 		totalConn:  atomic.NewInt64(0),
+		runServer:  s,
 	}
 	//socket plugin
 	plug := socketCreator()

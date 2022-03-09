@@ -132,8 +132,17 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		return
 	}
 	if len(data.RoomID) > 0 {
-		h.Error(c, "user is playing in room now.", -1)
-		return
+		room, err := database.GetMjRoomById(data.RoomID)
+		if err != nil && database.ErrRecordNotFound(err) {
+			if err = database.UpdateUser(data.UserID, map[string]any{"room_id": ""}); err != nil {
+				logger.Error(err)
+			}
+		} else {
+			logger.Error(err, room)
+			h.Error(c, "user is playing in room now.", -1)
+			return
+		}
+
 	}
 	userId, name := data.UserID, data.Name
 	reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))

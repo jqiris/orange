@@ -33,7 +33,6 @@ func init() {
 	launch.RegisterCreator(constant.HallServer, ServerHallCreator)
 }
 
-// Router router
 func (h *ServerHall) Router(app *gin.Engine) {
 	app.GET("/login", h.Login)
 	app.GET("/create_user", h.CreateUser)

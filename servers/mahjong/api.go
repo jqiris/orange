@@ -66,14 +66,14 @@ func (s *ServerMahjong) recordConn(server *treaty.Server, isIncr bool) {
 	if isIncr { //增加
 		s.totalConn.Inc()
 		//增加服务器负载
-		err := discover.IncrServerLoad(server)
+		err := discover.IncrServerLoad(s.runServer)
 		if err != nil {
 			logger.Error(err)
 		}
 	} else { //减少
 		s.totalConn.Dec()
 		//减小服务器负载
-		err := discover.DecrServerLoad(server)
+		err := discover.DecrServerLoad(s.runServer)
 		if err != nil {
 			logger.Error(err)
 		}

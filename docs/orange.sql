@@ -78,7 +78,7 @@ INSERT INTO `mahjong_actions` VALUES ('1646793756416112', '0', '', '{\"button\":
 DROP TABLE IF EXISTS `mahjong_room_xzdds`;
 CREATE TABLE `mahjong_room_xzdds` (
   `uuid` char(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `room_id` char(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '房间号',
+  `room_id` char(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '房间号',
   `game_type` char(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '游戏类型 xzdd-血战到底',
   `server_id` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '服务器id',
   `landlord` int NOT NULL DEFAULT '0' COMMENT '房主',
