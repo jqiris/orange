@@ -349,6 +349,7 @@ func (m *XzddMj) DissolveRequest(roomId string, userId int64) *protos.MjRoom {
 		States:  []bool{false, false, false, false},
 	}
 	dr.States[seatIndex] = true
+	roomInfo.Dr = dr
 	m.DissolvingList = append(m.DissolvingList, roomId)
 	return roomInfo
 }
@@ -559,8 +560,11 @@ func (m *XzddMj) doDingQue(game *protos.MjGameData, seatData *protos.MjSeat) {
 	for _, gs := range game.GameSeats {
 		var duoyu int32 = -1
 		if len(gs.Holds) == 14 {
-			gs.Holds, duoyu = tools.SlicePop(gs.Holds)
-			gs.CountMap[duoyu] -= 1
+			isPop := false
+			isPop, gs.Holds, duoyu = tools.SlicePop(gs.Holds)
+			if isPop {
+				gs.CountMap[duoyu] -= 1
+			}
 		}
 		m.checkCanTingPai(game, gs)
 		if duoyu >= 0 {
@@ -1591,7 +1595,10 @@ func (m *XzddMj) storeSingleHistory(userId int64, history map[string]any) {
 		res = res[1:]
 	}
 	res = append(res, history)
-	database.UpdateUser(userId, map[string]any{"history": tools.Stringify(res)})
+	err = database.UpdateUser(userId, map[string]any{"history": tools.Stringify(res)})
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func (m *XzddMj) chaJiao(game *protos.MjGameData) {

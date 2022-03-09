@@ -46,4 +46,5 @@ func (s *ServerAccount) Router(app *gin.Engine) {
 	app.GET("/guest", s.Guest)
 	app.GET("/auth", s.Auth)
 	app.GET("/base_info", s.BaseInfo)
+	app.GET("/image", s.Image)
 }

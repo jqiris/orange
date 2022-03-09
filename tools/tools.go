@@ -29,12 +29,12 @@ func SliceDel[T constraints.Ordered](arr []T, index, num int) []T {
 	return append(arr[:index], arr[index+num:]...)
 }
 
-func SlicePop[T constraints.Ordered](arr []T) ([]T, T) {
+func SlicePop[T constraints.Ordered](arr []T) (bool, []T, T) {
 	arrLen := len(arr)
 	if arrLen == 0 {
-		return arr, T(0)
+		return false, arr, *new(T)
 	}
-	return arr[:arrLen-1], arr[arrLen-1]
+	return true, arr[:arrLen-1], arr[arrLen-1]
 }
 
 func GetBase64Val(val string) string {

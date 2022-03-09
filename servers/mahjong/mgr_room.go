@@ -18,7 +18,7 @@ import (
 var (
 	DiFen     = []int32{1, 2, 5}
 	MaxFan    = []int32{3, 4, 5}
-	JuShu     = []int32{4, 8}
+	JuShu     = []int32{2, 8}
 	JuShuCost = []int32{2, 3}
 )
 
@@ -355,7 +355,7 @@ func (m *RoomMgr) destroy(roomId string) {
 		userId := seat.Userid
 		if userId > 0 {
 			m.delLocation(userId)
-			err := database.UpdateUser(userId, map[string]any{"roomid": 0})
+			err := database.UpdateUser(userId, map[string]any{"room_id": ""})
 			if err != nil {
 				logger.Error(err)
 			}
@@ -398,7 +398,7 @@ func (m *RoomMgr) exitRoom(userId int64) {
 			numOfPlayers++
 		}
 	}
-	err := database.UpdateUser(userId, map[string]any{"roomid": 0})
+	err := database.UpdateUser(userId, map[string]any{"room_id": ""})
 	if err != nil {
 		logger.Error(err)
 	}

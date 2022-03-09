@@ -42,7 +42,7 @@ func (s *ServerMahjong) SocketRouter(sc *plugin.ServerSocket) {
 	sc.OnEvent("peng", s.Peng)                        //碰
 	sc.OnEvent("gang", s.Gang)                        //杠
 	sc.OnEvent("hu", s.Hu)                            //胡
-	sc.OnEvent("Guo", s.Guo)                          //过
+	sc.OnEvent("guo", s.Guo)                          //过
 	sc.OnEvent("game_ping", s.GamePing)               //心跳
 	sc.OnEvent("chat", s.Chat)                        //聊天
 	sc.OnEvent("quick_chat", s.QuickChat)             //快速聊天

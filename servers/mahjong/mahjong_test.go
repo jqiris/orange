@@ -20,7 +20,7 @@ func TestStructToJson(t *testing.T) {
 }
 
 func TestSlicePop(t *testing.T) {
-	var a []string
-	b, i := tools.SlicePop(a)
-	fmt.Println(b, i)
+	var a []int32
+	isPop, b, i := tools.SlicePop(a)
+	fmt.Println(isPop, b, i)
 }

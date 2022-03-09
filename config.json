@@ -105,9 +105,9 @@
         "port": 3306,
         "username": "root",
         "password": "123456",
-        "database": "db_babykylin",
+        "database": "orange",
         "showSql": true
     },
-    "version": "20161227"
-
+    "version": "20161227",
+    "image_path": "./assets/images"
 }

@@ -120,12 +120,6 @@ message MjGameData{
     string baseInfoJson = 22;
 }
 
-
-message MjDr {
-    int64 endTime = 1;
-    repeated bool states = 2;
-}
-
 message MjRoom{
     string uuid = 1;
     string room_id = 2;
@@ -135,5 +129,5 @@ message MjRoom{
     int32 nextButton = 6;
     repeated MjSeat seats = 7;
     MjRoomConf conf = 8;
-    MjDr dr = 9;
+    MjDissolveData dr = 9;
 }

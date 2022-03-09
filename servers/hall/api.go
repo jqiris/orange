@@ -14,7 +14,6 @@ import (
 	"github.com/jqiris/orange/database"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
-	"github.com/jqiris/orange/tools"
 )
 
 func (h *ServerHall) Error(c *gin.Context, msg string, args ...int) {
@@ -68,7 +67,7 @@ func (h *ServerHall) Login(c *gin.Context) {
 		if _, err := database.GetMjRoomById(data.RoomID); err == nil {
 			ret["roomid"] = data.RoomID
 		} else if database.ErrRecordNotFound(err) {
-			err = database.UpdateUser(data.UserID, map[string]interface{}{"roomid": ""})
+			err = database.UpdateUser(data.UserID, map[string]interface{}{"room_id": ""})
 			if err != nil {
 				logger.Error(err)
 			}
@@ -94,7 +93,7 @@ func (h *ServerHall) CreateUser(c *gin.Context) {
 	}
 	err := database.CreateUser(&model.UserMember{
 		Account:   account,
-		Name:      tools.Stringify(name),
+		Name:      name,
 		Sex:       0,
 		Headimg:   "null",
 		Lv:        0,
@@ -161,7 +160,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		h.Error(c, respEnter.Errmsg, int(respEnter.Errcode))
 		return
 	}
-	err = database.UpdateUser(userId, map[string]any{"roomid": roomId})
+	err = database.UpdateUser(userId, map[string]any{"room_id": roomId})
 	if err != nil {
 		logger.Error(err)
 	}
@@ -221,7 +220,7 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 		h.Error(c, respEnter.Errmsg, int(respEnter.Errcode))
 		return
 	}
-	err = database.UpdateUser(userId, map[string]any{"roomid": roomId})
+	err = database.UpdateUser(userId, map[string]any{"room_id": roomId})
 	if err != nil {
 		logger.Error(err)
 	}
@@ -323,7 +322,7 @@ func (h *ServerHall) GetMessage(c *gin.Context) {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
 	}
-	data, err := database.GetMessage(typ, version)
+	data, err := database.GetGameNotice(typ, version)
 	if err != nil {
 		logger.Error(err)
 		h.Error(c, "get message failed")

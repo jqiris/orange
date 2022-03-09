@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/base64"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/logger"
@@ -103,4 +104,10 @@ func (s *ServerAccount) BaseInfo(c *gin.Context) {
 		"headimgurl": user.Headimg,
 	}
 	c.JSON(200, resp)
+}
+
+func (s *ServerAccount) Image(c *gin.Context) {
+	imageName := c.Query("url")
+	filePath := path.Join(viper.GetString("image_path"), imageName)
+	c.File(filePath)
 }
