@@ -1,6 +1,7 @@
 package mahjong
 
 import (
+	"go.uber.org/atomic"
 	"net/http"
 	"sync"
 	"time"
@@ -61,6 +62,7 @@ func GetGameMgr(typ string) GameMahjong {
 
 type ServerMahjong struct {
 	*rpc.ServerBase
+	totalConn *atomic.Int64
 }
 
 func socketCreator() *plugin.ServerSocket {
@@ -87,6 +89,7 @@ func socketCreator() *plugin.ServerSocket {
 func ServerMahjongCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	server := &ServerMahjong{
 		ServerBase: rpc.NewServerBase(s),
+		totalConn:  atomic.NewInt64(0),
 	}
 	//socket plugin
 	plug := socketCreator()
@@ -96,6 +99,7 @@ func ServerMahjongCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//reg inner handler
 	server.Register(int32(protos.InnerMsgId_InnerMsgCreateRoom), server.CreateRoom)
 	server.Register(int32(protos.InnerMsgId_InnerMsgEnterRoom), server.EnterRoom)
+	server.Register(int32(protos.InnerMsgId_InnerMsgMaintain), server.ServerMaintain)
 	return server, nil
 }
 

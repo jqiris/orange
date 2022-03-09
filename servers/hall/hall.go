@@ -44,4 +44,5 @@ func (h *ServerHall) Router(app *gin.Engine) {
 	app.GET("/get_detail_of_game", h.GetDetailOfGame)
 	app.GET("/get_user_status", h.GetUserStatus)
 	app.GET("/get_message", h.GetMessage)
+	app.POST("/maintain", h.Maintain) //服务器维护
 }

@@ -18,6 +18,7 @@ const (
 const (
 	AccountPriKey = "^&*#$%()@"
 	RoomPriKey    = "~!@#$(*&^%$&"
+	MaintainKey   = "*#$%()@^&"
 	HallAddr      = "127.0.0.1:9001"
 	TokenKey      = "!@#$%^&"
 	Null          = "null"

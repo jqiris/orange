@@ -88,12 +88,6 @@ func (m *RoomMgr) getLocation(userId int64) *protos.UserLocation {
 	return nil
 }
 
-func (m *RoomMgr) getUserLocations() map[int64]*protos.UserLocation {
-	m.lockLocation.RLock()
-	defer m.lockLocation.RUnlock()
-	return m.UserLocation
-}
-
 func (m *RoomMgr) saveLocation(userId int64, data *protos.UserLocation) {
 	m.lockLocation.Lock()
 	defer m.lockLocation.Unlock()

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jqiris/kungfu/v2/discover"
+	"github.com/jqiris/kungfu/v2/treaty"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -61,18 +62,33 @@ func (s *ServerMahjong) OnError(c socketio.Conn, err error) {
 	logger.Errorf("OnError,conn:%+v,err:%v", c, err)
 }
 
-func (s *ServerMahjong) OnConnect(c socketio.Conn) error {
-	logger.Infof("Connect:%v", c.Context())
-	//增加服务器负载
-	err := discover.IncrLoad(s.Server)
-	if err != nil {
-		logger.Error(err)
+func (s *ServerMahjong) recordConn(server *treaty.Server, isIncr bool) {
+	if isIncr { //增加
+		s.totalConn.Inc()
+		//增加服务器负载
+		err := discover.IncrServerLoad(server)
+		if err != nil {
+			logger.Error(err)
+		}
+	} else { //减少
+		s.totalConn.Dec()
+		//减小服务器负载
+		err := discover.DecrServerLoad(server)
+		if err != nil {
+			logger.Error(err)
+		}
 	}
+}
+
+func (s *ServerMahjong) OnConnect(c socketio.Conn) error {
+	s.recordConn(s.Server, true)
+	logger.Infof("Connect:%v,nowConnNum:%v", c.Context(), s.totalConn.Load())
 	return nil
 }
 
 func (s *ServerMahjong) OnDisconnect(c socketio.Conn, reason string) {
-	logger.Warnf("Disconnect:%v,reason:%v", c.Context(), reason)
+	s.recordConn(s.Server, false)
+	logger.Warnf("Disconnect:%v,reason:%v,nowConnNum:%v", c.Context(), reason, s.totalConn.Load())
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -80,25 +96,19 @@ func (s *ServerMahjong) OnDisconnect(c socketio.Conn, reason string) {
 	userId := ctx.UserId
 	//如果是旧链接断开，则不需要处理。
 	if userMgr.get(userId) != c {
+		logger.Infof("old connect disconnect")
 		return
 	}
-
 	var data = map[string]any{
 		"userid": userId,
 		"online": false,
 	}
-
 	//通知房间内其它玩家
 	userMgr.broadcastInRoom("user_state_push", data, userId)
-
 	//清除玩家的在线信息
 	userMgr.del(userId)
 	ctx.UserId = 0
-	//减小服务器负载
-	err := discover.DecrLoad(s.Server)
-	if err != nil {
-		logger.Error(err)
-	}
+
 }
 func (s *ServerMahjong) DissolveReject(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)

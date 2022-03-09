@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jqiris/kungfu/v2/discover"
+	"github.com/jqiris/kungfu/v2/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/rpc"
@@ -65,6 +66,10 @@ func (s *ServerMahjong) Success(c *gin.Context, data map[string]any) {
 // CreateRoom 创建房间
 func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: 1, Errmsg: "服务器忙"}
+	if s.Server.Maintained {
+		logger.Errorf("服务器在维护状态,无法创建房间,serverId:%v,req:%+v", s.Server.ServerId, req)
+		return resp
+	}
 	userId, gems, sign, conf := int64(req.UserId), int32(req.Gems), req.Sign, req.Conf
 	if userId < 1 || len(sign) < 1 || len(conf) < 1 {
 		resp.Errmsg = "Invalid parameters"
@@ -134,4 +139,31 @@ func (s *ServerMahjong) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMs
 		},
 	}
 	return resp
+}
+
+func (s *ServerMahjong) ServerMaintain(req *protos.InnerMaintainReq) {
+	logger.Warnf("ServerMaintain notice:%+v", req)
+	serverId, reqState := req.ServerId, req.ReqState
+	server := s.Server
+	if serverId != server.ServerId {
+		logger.Errorf("maintain server not current server,current:%v,req:%v", server.ServerId, serverId)
+		return
+	}
+	if reqState == 1 && !server.Maintained { //进入维护
+		//删除服务负载量
+		server.Maintained = true
+		err := discover.Register(server)
+		if err != nil {
+			logger.Error(err)
+		}
+		logger.Warnf("服务器:%v,进入维护状态", serverId)
+	} else if reqState == 2 && server.Maintained { //解除维护
+		//设置服务负载量
+		server.Maintained = false
+		err := discover.Register(server)
+		if err != nil {
+			logger.Error(err)
+		}
+		logger.Warnf("服务器:%v,解除维护状态", serverId)
+	}
 }

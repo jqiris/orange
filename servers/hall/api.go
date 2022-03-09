@@ -1,7 +1,9 @@
 package hall
 
 import (
+	"errors"
 	"fmt"
+	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/orange/servers/mahjong"
 	"strings"
 	"time"
@@ -155,7 +157,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 	}
 	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
 	reqEnter := &protos.InnerEnterRoomReq{
-		UserId: int64(userId),
+		UserId: userId,
 		Name:   name,
 		RoomId: roomId,
 		Sign:   reqEnterSign,
@@ -334,4 +336,40 @@ func (h *ServerHall) GetMessage(c *gin.Context) {
 		return
 	}
 	h.Success(c, map[string]any{"msg": data.Msg, "version": data.Version})
+}
+
+func (h *ServerHall) Maintain(c *gin.Context) {
+	serverId, reqState, sign := c.PostForm("serverId"), utils.StringToInt32(c.PostForm("reqState")), c.PostForm("sign")
+	md5 := utils.Md5(fmt.Sprintf("%v-%v-%v", serverId, reqState, constant.MaintainKey))
+	if md5 != sign {
+		logger.Errorf("maintain sign is wrong, ip:%v", c.ClientIP())
+		h.Success(c, nil)
+		return
+	}
+	if reqState != 1 && reqState != 2 {
+		h.Error(c, "invalid req state")
+		return
+	}
+	if err := h.serverMaintain(serverId, reqState); err != nil {
+		h.Error(c, err.Error())
+		return
+	}
+	h.Success(c, nil)
+}
+
+func (h *ServerHall) serverMaintain(serverId string, reqState int32) error {
+	//广播通知服务器进行维护
+	server := discover.GetServerById(serverId, false) //不过滤维护状态
+	if server == nil {
+		return errors.New("server not found")
+	}
+	req := rpc.NewReqBuilder(server)
+	err := h.Rpc.Publish(req.SetMsgId(int32(protos.InnerMsgId_InnerMsgMaintain)).SetReq(&protos.InnerMaintainReq{
+		ServerId: serverId,
+		ReqState: reqState,
+	}).Build())
+	if err != nil {
+		return err
+	}
+	return nil
 }
