@@ -3,6 +3,7 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jqiris/kungfu/v2/discover"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -62,6 +63,11 @@ func (s *ServerMahjong) OnError(c socketio.Conn, err error) {
 
 func (s *ServerMahjong) OnConnect(c socketio.Conn) error {
 	logger.Infof("Connect:%v", c.Context())
+	//增加服务器负载
+	err := discover.IncrLoad(s.Server)
+	if err != nil {
+		logger.Error(err)
+	}
 	return nil
 }
 
@@ -88,6 +94,11 @@ func (s *ServerMahjong) OnDisconnect(c socketio.Conn, reason string) {
 	//清除玩家的在线信息
 	userMgr.del(userId)
 	ctx.UserId = 0
+	//减小服务器负载
+	err := discover.DecrLoad(s.Server)
+	if err != nil {
+		logger.Error(err)
+	}
 }
 func (s *ServerMahjong) DissolveReject(c socketio.Conn) {
 	ctx := s.GetSocketCtx(c)
@@ -186,7 +197,7 @@ func (s *ServerMahjong) Dispress(c socketio.Conn) {
 	userMgr.broadcastInRoom("dispress_push", nil, userId, true)
 	userMgr.kickAllInRoom(roomId)
 	roomMgr.destroy(roomId)
-	c.Close()
+	s.close(c)
 }
 
 func (s *ServerMahjong) Exit(c socketio.Conn) {
@@ -211,7 +222,18 @@ func (s *ServerMahjong) Exit(c socketio.Conn) {
 	roomMgr.exitRoom(userId)
 	userMgr.del(userId)
 	c.Emit("exit_result")
-	c.Close()
+	s.close(c)
+}
+
+func (s *ServerMahjong) close(c socketio.Conn) {
+	go func() {
+		time.AfterFunc(2*time.Second, func() {
+			err := c.Close()
+			if err != nil {
+				logger.Error(err)
+			}
+		})
+	}()
 }
 
 func (s *ServerMahjong) Emoji(c socketio.Conn, msg string) {

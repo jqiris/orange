@@ -3,6 +3,7 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jqiris/kungfu/v2/discover"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/rpc"
@@ -20,8 +21,7 @@ var (
 // CreatePrivateRoom 外部调用
 func CreatePrivateRoom(s rpc.ServerRpc, req *protos.InnerCreateRoomReq) *protos.InnerMsgResp {
 	resp := &protos.InnerMsgResp{Errcode: constant.StatusOk}
-	uid := int(req.UserId)
-	server := s.Find(constant.MahjongServer, uid)
+	server := discover.GetServerByTypeLoad(constant.MahjongServer) //根据最小负载选择服务器
 	if server == nil {
 		resp.Errcode = constant.StatusError
 		resp.Errmsg = constant.ErrNotFoundMahjongServer

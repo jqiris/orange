@@ -189,11 +189,14 @@ cc.Class({
         });
 
         cc.vv.net.addHandler("exit_result", function(data) {
+            console.log("exit_result", data);
             self.roomId = null;
             self.turn = -1;
             self.dingque = -1;
             self.isDingQueing = false;
             self.seats = null;
+            cc.director.loadScene('hall');
+            cc.vv.wc.hide();
         });
 
         cc.vv.net.addHandler("exit_notify_push", function(data) {

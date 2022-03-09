@@ -21,7 +21,7 @@ cc.Class({
         var self = this;
         var try_time = 0;
         var fnTestServerOn = function() {
-            cc.vv.net.test(function(ret) {
+            cc.vv.net.ping(function(ret) {
                 if (ret) {
                     try_time = 0;
                     cc.vv.gameNetMgr.reset();
@@ -43,6 +43,7 @@ cc.Class({
                     try_time = 0
                     cc.vv.gameNetMgr.roomId = null;
                     cc.director.loadScene('hall');
+                    cc.vv.wc.hide();
                 }
             });
         }

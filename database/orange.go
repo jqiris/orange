@@ -101,6 +101,10 @@ func ArchiveMjActions(gameType, uuid string) error {
 	return db.Exec(sql, uuid).Error
 }
 
+func DeleteMjActions(uuid string) error {
+	return db.Model(&model.MahjongAction{}).Where("room_uuid = ?", uuid).Error
+}
+
 func CreateMjAction(data *model.MahjongAction) error {
 	return db.Create(data).Error
 }

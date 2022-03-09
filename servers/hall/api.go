@@ -67,13 +67,18 @@ func (h *ServerHall) Login(c *gin.Context) {
 		if _, err := database.GetMjRoomById(data.RoomID); err == nil {
 			ret["roomid"] = data.RoomID
 		} else if database.ErrRecordNotFound(err) {
-			err = database.UpdateUser(data.UserID, map[string]interface{}{"room_id": ""})
+			err = database.UpdateUser(data.UserID, map[string]any{"room_id": ""})
 			if err != nil {
 				logger.Error(err)
 			}
 		} else {
 			logger.Error(err)
 		}
+	}
+	//更新用户登录时间
+	err = database.UpdateUser(data.UserID, map[string]any{"login_time": time.Now()})
+	if err != nil {
+		logger.Error(err)
 	}
 	h.Success(c, ret)
 }

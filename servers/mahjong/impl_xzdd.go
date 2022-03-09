@@ -1124,6 +1124,11 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 				err := database.ArchiveMjActions(roomInfo.GameType, roomInfo.Uuid)
 				if err != nil {
 					logger.Error(err)
+				} else {
+					err = database.DeleteMjActions(roomInfo.Uuid)
+					if err != nil {
+						logger.Error(err)
+					}
 				}
 			})
 		}
@@ -1227,6 +1232,7 @@ func (m *XzddMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 func (m *XzddMj) storeGame(game *protos.MjGameData) error {
 	return database.CreateMjAction(&model.MahjongAction{
 		RoomUUID:   game.Uuid,
+		GameType:   game.Conf.Type,
 		GameIndex:  game.GameIndex,
 		BaseInfo:   game.BaseInfoJson,
 		CreateTime: time.Now().Unix(),

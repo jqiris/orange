@@ -136,6 +136,7 @@ var Global = cc.Class({
                 this.fnDisconnect();
                 this.fnDisconnect = null;
             }
+
         },
 
         test: function(fnResult) {
