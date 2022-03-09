@@ -12,12 +12,16 @@ var (
 )
 var (
 	MjActionArchivePrefix = "mahjong_action_"
+	MjRoomArchivePrefix   = "mahjong_room_"
 )
 
 func TableMjActionArchive(gameType string) string {
 	return MjActionArchivePrefix + gameType + "s"
 }
 
+func TableMjRoomArchive(gameType string) string {
+	return MjRoomArchivePrefix + gameType + "s"
+}
 func InitDatabase(data map[string]any) {
 	var err error
 	dsn := fmt.Sprintf(

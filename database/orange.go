@@ -68,6 +68,12 @@ func CreateMjRoom(data *model.MahjongRoom) error {
 	return db.Create(data).Error
 }
 
+func ArchiveMjRoom(gameType, roomId string) error {
+	t := TableMjRoomArchive(gameType)
+	sql := "INSERT INTO " + t + "(SELECT * FROM mahjong_rooms WHERE room_id = ?)"
+	return db.Exec(sql, roomId).Error
+}
+
 func DeleteMjRoom(roomId string) error {
 	return db.Where("room_id=?", roomId).Delete(&model.MahjongRoom{}).Error
 }

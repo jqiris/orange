@@ -198,6 +198,7 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 				BaseInfo:   string(bs),
 				CreateTime: createTime,
 				ServerID:   serverId,
+				Landlord:   userId,
 			}); err != nil {
 				logger.Error(err)
 				return 3, ""
@@ -363,9 +364,14 @@ func (m *RoomMgr) destroy(roomId string) {
 	}
 	m.delRoom(roomId)
 	m.TotalRooms--
-	err := database.DeleteMjRoom(roomId)
+	err := database.ArchiveMjRoom(roomInfo.GameType, roomId)
 	if err != nil {
 		logger.Error(err)
+	} else {
+		err = database.DeleteMjRoom(roomId)
+		if err != nil {
+			logger.Error(err)
+		}
 	}
 }
 
