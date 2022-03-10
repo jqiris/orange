@@ -153,6 +153,7 @@ func (s *ServerMahjong) ServerMaintain(req *protos.InnerMaintainReq) {
 	if reqState == 1 && !server.Maintained { //进入维护
 		//删除服务负载量
 		server.Maintained = true
+		server.Silent = false
 		err := discover.Register(server)
 		if err != nil {
 			logger.Error(err)
@@ -161,6 +162,7 @@ func (s *ServerMahjong) ServerMaintain(req *protos.InnerMaintainReq) {
 	} else if reqState == 2 && server.Maintained { //解除维护
 		//设置服务负载量
 		server.Maintained = false
+		server.Silent = false
 		err := discover.Register(server)
 		if err != nil {
 			logger.Error(err)

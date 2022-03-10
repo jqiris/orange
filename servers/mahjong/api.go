@@ -86,13 +86,13 @@ func (s *ServerMahjong) recordConn(server *treaty.Server, isIncr bool) {
 
 func (s *ServerMahjong) OnConnect(c socketio.Conn) error {
 	s.recordConn(s.Server, true)
-	logger.Infof("Connect:%v,nowConnNum:%v", c.Context(), s.totalConn.Load())
+	logger.Infof("Connect:%v,serverId:%v,nowConnNum:%v", c.Context(), s.Server.ServerId, s.totalConn.Load())
 	return nil
 }
 
 func (s *ServerMahjong) OnDisconnect(c socketio.Conn, reason string) {
 	s.recordConn(s.Server, false)
-	logger.Warnf("Disconnect:%v,reason:%v,nowConnNum:%v", c.Context(), reason, s.totalConn.Load())
+	logger.Warnf("Disconnect:%v,serverId:%v,reason:%v,nowConnNum:%v", c.Context(), s.Server.ServerId, reason, s.totalConn.Load())
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return

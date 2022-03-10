@@ -3,6 +3,7 @@ package account
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/jqiris/kungfu/v2/discover"
 	"path"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +46,7 @@ func (s *ServerAccount) GetVersion(c *gin.Context) {
 // GetServerinfo 返回服务信息
 func (s *ServerAccount) GetServerinfo(c *gin.Context) {
 	//获取大厅服务器地址
-	server := s.Rpc.Find(constant.HallServer, c.ClientIP())
+	server := discover.GetServerByType(constant.HallServer, c.ClientIP())
 	resp := map[string]any{
 		"version": viper.GetString("primary.version"),
 		"hall":    fmt.Sprintf("%v:%v", server.ServerIp, server.ClientPort),
@@ -58,7 +59,7 @@ func (s *ServerAccount) GetServerinfo(c *gin.Context) {
 func (s *ServerAccount) Guest(c *gin.Context) {
 	account := "guest_" + c.Query("account")
 	sign := utils.Md5(account + c.ClientIP() + viper.GetString("primary.account_key"))
-	server := s.Rpc.Find(constant.HallServer, c.ClientIP())
+	server := discover.GetServerByType(constant.HallServer, c.ClientIP())
 	resp := map[string]any{
 		"errcode":  0,
 		"errmsg":   "ok",
