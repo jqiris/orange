@@ -634,6 +634,7 @@ cc.Class({
     connectGameServer: function(data) {
         this.dissoveData = null;
         cc.vv.net.ip = data.ip + ":" + data.port;
+        cc.vv.net.path = data.serverid;
         console.log(cc.vv.net.ip);
         var self = this;
 

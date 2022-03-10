@@ -131,34 +131,43 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		h.Error(c, "system error")
 		return
 	}
+	var roomId, serverId string
+	userId, name := data.UserID, data.Name
+	needCreate := true
 	if len(data.RoomID) > 0 {
 		room, err := database.GetMjRoomById(data.RoomID)
-		if err != nil && database.ErrRecordNotFound(err) {
-			if err = database.UpdateUser(data.UserID, map[string]any{"room_id": ""}); err != nil {
+		if err != nil {
+			if database.ErrRecordNotFound(err) {
+				if err = database.UpdateUser(data.UserID, map[string]any{"room_id": ""}); err != nil {
+					logger.Error(err)
+				}
+			} else {
 				logger.Error(err)
+				h.Error(c, err.Error())
+				return
 			}
 		} else {
-			logger.Error(err, room)
-			h.Error(c, "user is playing in room now.", -1)
+			needCreate = false
+			roomId, serverId = room.RoomID, room.ServerID
+		}
+	}
+	if needCreate {
+		reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))
+		reqCreate := &protos.InnerCreateRoomReq{
+			UserId: userId,
+			Gems:   int64(data.Gems),
+			Conf:   conf,
+			Sign:   reqCreateSign,
+		}
+		respCreate := mahjong.CreatePrivateRoom(h.Rpc, reqCreate)
+		if respCreate.Errcode > constant.StatusOk {
+			h.Error(c, respCreate.Errmsg, int(respCreate.Errcode))
 			return
 		}
+		roomId = respCreate.GetCreateRoom().RoomId
+		serverId = respCreate.GetCreateRoom().ServerId
+	}
 
-	}
-	userId, name := data.UserID, data.Name
-	reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))
-	reqCreate := &protos.InnerCreateRoomReq{
-		UserId: userId,
-		Gems:   int64(data.Gems),
-		Conf:   conf,
-		Sign:   reqCreateSign,
-	}
-	respCreate := mahjong.CreatePrivateRoom(h.Rpc, reqCreate)
-	if respCreate.Errcode > constant.StatusOk {
-		h.Error(c, respCreate.Errmsg, int(respCreate.Errcode))
-		return
-	}
-	roomId := respCreate.GetCreateRoom().RoomId
-	serverId := respCreate.GetCreateRoom().ServerId
 	server := discover.GetServerById(serverId)
 	if server == nil {
 		h.Error(c, constant.ErrNotFoundMahjongServer)
@@ -183,11 +192,12 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 	token := respEnter.GetEnterRoom().Token
 	nowTime := time.Now().UnixMilli()
 	resp := map[string]any{
-		"roomid": roomId,
-		"ip":     server.ServerIp,
-		"port":   server.ClientPort,
-		"token":  token,
-		"time":   nowTime,
+		"roomid":   roomId,
+		"ip":       server.ServerIp,
+		"port":     server.ClientPort,
+		"token":    token,
+		"time":     nowTime,
+		"serverid": server.ServerId,
 	}
 	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
 	h.Success(c, resp)
@@ -243,11 +253,12 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 	token := respEnter.GetEnterRoom().Token
 	nowTime := time.Now().UnixMilli()
 	resp := map[string]any{
-		"roomid": roomId,
-		"ip":     server.ServerIp,
-		"port":   server.ClientPort,
-		"token":  token,
-		"time":   nowTime,
+		"roomid":   roomId,
+		"ip":       server.ServerIp,
+		"port":     server.ClientPort,
+		"token":    token,
+		"time":     nowTime,
+		"serverid": server.ServerId,
 	}
 	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
 	h.Success(c, resp)

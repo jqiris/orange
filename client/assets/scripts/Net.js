@@ -6,6 +6,7 @@ var Global = cc.Class({
     extends: cc.Component,
     statics: {
         ip: "",
+        path: "",
         sio: null,
         isPinging: false,
         fnDisconnect: null,
@@ -36,7 +37,8 @@ var Global = cc.Class({
             var opts = {
                 'reconnection': false,
                 'force new connection': true,
-                'transports': ['websocket', 'polling']
+                'transports': ['websocket', 'polling'],
+                'path': "/" + self.path + "/"
             }
             this.sio = window.io.connect(this.ip, opts);
             this.sio.on('reconnect', function() {
