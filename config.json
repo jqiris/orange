@@ -48,8 +48,24 @@
                 "client_port": 9001,
                 "is_launch": true
             },
-            "db_3001": {
-                "server_id": "db_3001",
+            "mahjong_3001": {
+                "server_id": "mahjong_3001",
+                "server_type": "mahjong",
+                "server_name": "mahjong",
+                "server_ip": "127.0.0.1",
+                "client_port": 8588,
+                "is_launch": true
+            },
+            "mahjong_3002": {
+                "server_id": "mahjong_3002",
+                "server_type": "mahjong",
+                "server_name": "mahjong",
+                "server_ip": "127.0.0.1",
+                "client_port": 8589,
+                "is_launch": true
+            },
+            "db_4001": {
+                "server_id": "db_4001",
                 "server_type": "db",
                 "server_name": "db",
                 "server_ip": "127.0.0.1",
@@ -58,22 +74,6 @@
                 "serial": true,
                 "launch_weight": -1,
                 "shut_weight": 2
-            },
-            "mahjong_4001": {
-                "server_id": "mahjong_4001",
-                "server_type": "mahjong",
-                "server_name": "mahjong",
-                "server_ip": "127.0.0.1",
-                "client_port": 8588,
-                "is_launch": true
-            },
-            "mahjong_4002": {
-                "server_id": "mahjong_4002",
-                "server_type": "mahjong",
-                "server_name": "mahjong",
-                "server_ip": "127.0.0.1",
-                "client_port": 8589,
-                "is_launch": true
             }
         },
         "connector": {
