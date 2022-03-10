@@ -107,6 +107,12 @@
         "database": "orange",
         "showSql": true
     },
-    "version": "20161227",
-    "image_path": "./assets/images"
+    "primary":{
+        "version": "20161227",
+        "image_path": "./assets/images",
+        "account_key": "^&*#$%()@",
+        "room_key": "~!@#$(*&^%$&",
+        "token_key": "!@#$%^&",
+        "maintain_key": "*#$%()@^&"
+    }
 }

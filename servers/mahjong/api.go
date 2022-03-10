@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/jqiris/kungfu/v2/discover"
 	"github.com/jqiris/kungfu/v2/treaty"
+	"github.com/spf13/viper"
 	"time"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/utils"
-	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/protos"
 )
 
@@ -66,14 +66,18 @@ func (s *ServerMahjong) recordConn(server *treaty.Server, isIncr bool) {
 	if isIncr { //增加
 		s.totalConn.Inc()
 		//增加服务器负载
-		err := discover.IncrServerLoad(server)
+		server.Load = s.totalConn.Load()
+		server.Silent = true
+		err := discover.Register(server)
 		if err != nil {
 			logger.Error(err)
 		}
 	} else { //减少
 		s.totalConn.Dec()
 		//减小服务器负载
-		err := discover.DecrServerLoad(server)
+		server.Load = s.totalConn.Load()
+		server.Silent = true
+		err := discover.Register(server)
 		if err != nil {
 			logger.Error(err)
 		}
@@ -321,7 +325,7 @@ func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 	roomId := data.Roomid
 	rtime := data.Time
 	sign := data.Sign
-	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, rtime, constant.RoomPriKey))
+	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, rtime, viper.GetString("primary.room_key")))
 	if md5 != sign {
 		c.Emit("login_result", Msg{Errcode: 2, Errmsg: "login failed invalid sign"})
 		return

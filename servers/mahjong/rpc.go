@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jqiris/kungfu/v2/discover"
 	"github.com/jqiris/kungfu/v2/logger"
+	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/rpc"
@@ -75,7 +76,7 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 		resp.Errmsg = "Invalid parameters"
 		return resp
 	}
-	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, gems, constant.RoomPriKey))
+	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, gems, viper.GetString("primary.room_key")))
 	if md5 != sign {
 		resp.Errmsg = "sign check failed"
 		return resp
@@ -111,7 +112,7 @@ func (s *ServerMahjong) EnterRoom(req *protos.InnerEnterRoomReq) *protos.InnerMs
 		resp.Errmsg = "Invalid parameters"
 		return resp
 	}
-	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
+	md5 := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, viper.GetString("primary.room_key")))
 	if md5 != sign {
 		resp.Errmsg = "sign check failed"
 		return resp

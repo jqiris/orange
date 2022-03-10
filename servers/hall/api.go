@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/orange/servers/mahjong"
+	"github.com/spf13/viper"
 	"strings"
 	"time"
 
@@ -152,7 +153,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		}
 	}
 	if needCreate {
-		reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, constant.RoomPriKey))
+		reqCreateSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, conf, data.Gems, viper.GetString("primary.room_key")))
 		reqCreate := &protos.InnerCreateRoomReq{
 			UserId: userId,
 			Gems:   int64(data.Gems),
@@ -173,7 +174,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		h.Error(c, constant.ErrNotFoundMahjongServer)
 		return
 	}
-	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
+	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, viper.GetString("primary.room_key")))
 	reqEnter := &protos.InnerEnterRoomReq{
 		UserId: userId,
 		Name:   name,
@@ -199,7 +200,7 @@ func (h *ServerHall) CreatePrivateRoom(c *gin.Context) {
 		"time":     nowTime,
 		"serverid": server.ServerId,
 	}
-	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
+	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, viper.GetString("primary.room_key")))
 	h.Success(c, resp)
 }
 
@@ -234,7 +235,7 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 		h.Error(c, constant.ErrNotFoundMahjongServer)
 		return
 	}
-	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, constant.RoomPriKey))
+	reqEnterSign := utils.Md5(fmt.Sprintf("%v%v%v%v", userId, name, roomId, viper.GetString("primary.room_key")))
 	reqEnter := &protos.InnerEnterRoomReq{
 		UserId: userId,
 		Name:   name,
@@ -260,7 +261,7 @@ func (h *ServerHall) EnterPrivateRoom(c *gin.Context) {
 		"time":     nowTime,
 		"serverid": server.ServerId,
 	}
-	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, constant.RoomPriKey))
+	resp["sign"] = utils.Md5(fmt.Sprintf("%v%v%v%v", roomId, token, nowTime, viper.GetString("primary.room_key")))
 	h.Success(c, resp)
 }
 
@@ -360,7 +361,7 @@ func (h *ServerHall) GetMessage(c *gin.Context) {
 
 func (h *ServerHall) Maintain(c *gin.Context) {
 	serverId, reqState, sign := c.PostForm("serverId"), utils.StringToInt32(c.PostForm("reqState")), c.PostForm("sign")
-	md5 := utils.Md5(fmt.Sprintf("%v-%v-%v", serverId, reqState, constant.MaintainKey))
+	md5 := utils.Md5(fmt.Sprintf("%v-%v-%v", serverId, reqState, viper.GetString("primary.maintain_key")))
 	if md5 != sign {
 		logger.Errorf("maintain sign is wrong, ip:%v", c.ClientIP())
 		h.Success(c, nil)

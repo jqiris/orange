@@ -1,14 +1,12 @@
 package tools
 
 import (
-	"constraints"
 	"encoding/base64"
 	"encoding/json"
-
 	"github.com/jqiris/kungfu/v2/logger"
 )
 
-func IndexOf[T constraints.Ordered](arr []T, val T) int {
+func IndexOf[T comparable](arr []T, val T) int {
 	for k, v := range arr {
 		if v == val {
 			return k
@@ -17,7 +15,7 @@ func IndexOf[T constraints.Ordered](arr []T, val T) int {
 	return -1
 }
 
-func SliceDel[T constraints.Ordered](arr []T, index, num int) []T {
+func SliceDel[T comparable](arr []T, index, num int) []T {
 	arrLen := len(arr)
 	if index < 0 || index >= arrLen {
 		return arr
@@ -29,7 +27,7 @@ func SliceDel[T constraints.Ordered](arr []T, index, num int) []T {
 	return append(arr[:index], arr[index+num:]...)
 }
 
-func SlicePop[T constraints.Ordered](arr []T) (bool, []T, T) {
+func SlicePop[T comparable](arr []T) (bool, []T, T) {
 	arrLen := len(arr)
 	if arrLen == 0 {
 		return false, arr, *new(T)

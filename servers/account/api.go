@@ -2,6 +2,7 @@ package account
 
 import (
 	"encoding/base64"
+	"fmt"
 	"path"
 
 	"github.com/gin-gonic/gin"
@@ -36,16 +37,18 @@ func (s *ServerAccount) Register(c *gin.Context) {
 // GetVersion 返回版本号
 func (s *ServerAccount) GetVersion(c *gin.Context) {
 	resp := map[string]any{
-		"version": viper.GetString("version"),
+		"version": viper.GetString("primary.version"),
 	}
 	c.JSON(200, resp)
 }
 
 // GetServerinfo 返回服务信息
 func (s *ServerAccount) GetServerinfo(c *gin.Context) {
+	//获取大厅服务器地址
+	server := s.Rpc.Find(constant.HallServer, c.ClientIP())
 	resp := map[string]any{
-		"version": viper.GetString("version"),
-		"hall":    constant.HallAddr,
+		"version": viper.GetString("primary.version"),
+		"hall":    fmt.Sprintf("%v:%v", server.ServerIp, server.ClientPort),
 		"appweb":  "http://fir.im/2f17",
 	}
 	c.JSON(200, resp)
@@ -54,12 +57,13 @@ func (s *ServerAccount) GetServerinfo(c *gin.Context) {
 // Guest 游客账号
 func (s *ServerAccount) Guest(c *gin.Context) {
 	account := "guest_" + c.Query("account")
-	sign := utils.Md5(account + c.ClientIP() + constant.AccountPriKey)
+	sign := utils.Md5(account + c.ClientIP() + viper.GetString("primary.account_key"))
+	server := s.Rpc.Find(constant.HallServer, c.ClientIP())
 	resp := map[string]any{
 		"errcode":  0,
 		"errmsg":   "ok",
 		"account":  account,
-		"halladdr": constant.HallAddr,
+		"halladdr": fmt.Sprintf("%v:%v", server.ServerIp, server.ClientPort),
 		"sign":     sign,
 	}
 	c.JSON(200, resp)
@@ -77,7 +81,7 @@ func (s *ServerAccount) Auth(c *gin.Context) {
 		c.JSON(200, Msg{Errcode: 1, ErrMsg: "invalid account"})
 		return
 	}
-	sign := utils.Md5(account + c.ClientIP() + constant.AccountPriKey)
+	sign := utils.Md5(account + c.ClientIP() + viper.GetString("primary.account_key"))
 	resp := map[string]any{
 		"errcode": 0,
 		"errmsg":  "ok",
@@ -108,6 +112,6 @@ func (s *ServerAccount) BaseInfo(c *gin.Context) {
 
 func (s *ServerAccount) Image(c *gin.Context) {
 	imageName := c.Query("url")
-	filePath := path.Join(viper.GetString("image_path"), imageName)
+	filePath := path.Join(viper.GetString("primary.image_path"), imageName)
 	c.File(filePath)
 }

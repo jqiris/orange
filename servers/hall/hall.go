@@ -8,6 +8,7 @@ import (
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
+	"github.com/jqiris/orange/protos"
 )
 
 type ServerHall struct {
@@ -26,6 +27,8 @@ func ServerHallCreator(s *treaty.Server) (rpc.ServerEntity, error) {
 	//reg plugin
 	plug := plugin.NewServerHttp(app)
 	server.AddPlugin(plug)
+	//reg inner handlers
+	server.Register(int32(protos.InnerMsgId_InnerMsgMaintain), server.ServerMaintain)
 	return server, nil
 }
 

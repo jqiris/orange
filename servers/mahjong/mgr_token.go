@@ -2,10 +2,10 @@ package mahjong
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"time"
 
 	"github.com/jqiris/kungfu/v2/utils"
-	"github.com/jqiris/orange/constant"
 )
 
 type TokenData struct {
@@ -31,7 +31,7 @@ func (m *TokenMgr) createToken(userId, lifeTime int64) string {
 		m.delToken(token)
 	}
 	nowTime := time.Now().Unix()
-	token := utils.Md5(fmt.Sprintf("%v%v%v", userId, constant.TokenKey, nowTime))
+	token := utils.Md5(fmt.Sprintf("%v%v%v", userId, viper.GetString("primary.token_key"), nowTime))
 	m.tokens[token] = TokenData{
 		UserId:   userId,
 		Time:     nowTime,
