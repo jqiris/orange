@@ -451,19 +451,19 @@ type MjSeat struct {
 	Ip               string                `protobuf:"bytes,12,opt,name=ip,proto3" json:"ip,omitempty"`
 	Online           bool                  `protobuf:"varint,13,opt,name=online,proto3" json:"online,omitempty"`
 	Game             *MjGameData           `protobuf:"bytes,14,opt,name=game,proto3" json:"game,omitempty"`
-	Holds            []int32               `protobuf:"varint,15,rep,packed,name=holds,proto3" json:"holds,omitempty"`
-	Folds            []int32               `protobuf:"varint,16,rep,packed,name=folds,proto3" json:"folds,omitempty"`
-	Angangs          []int32               `protobuf:"varint,17,rep,packed,name=angangs,proto3" json:"angangs,omitempty"`
-	Diang            []int32               `protobuf:"varint,18,rep,packed,name=diang,proto3" json:"diang,omitempty"`
-	Wangangs         []int32               `protobuf:"varint,19,rep,packed,name=wangangs,proto3" json:"wangangs,omitempty"`
-	Pengs            []int32               `protobuf:"varint,20,rep,packed,name=pengs,proto3" json:"pengs,omitempty"`
+	Holds            []int32               `protobuf:"varint,15,rep,packed,name=holds,proto3" json:"holds"`
+	Folds            []int32               `protobuf:"varint,16,rep,packed,name=folds,proto3" json:"folds"`
+	Angangs          []int32               `protobuf:"varint,17,rep,packed,name=angangs,proto3" json:"angangs"`
+	Diang            []int32               `protobuf:"varint,18,rep,packed,name=diang,proto3" json:"diang"`
+	Wangangs         []int32               `protobuf:"varint,19,rep,packed,name=wangangs,proto3" json:"wangangs"`
+	Pengs            []int32               `protobuf:"varint,20,rep,packed,name=pengs,proto3" json:"pengs"`
 	Que              int32                 `protobuf:"varint,21,opt,name=que,proto3" json:"que,omitempty"`
-	Huanpais         []int32               `protobuf:"varint,22,rep,packed,name=huanpais,proto3" json:"huanpais,omitempty"`
+	Huanpais         []int32               `protobuf:"varint,22,rep,packed,name=huanpais,proto3" json:"huanpais"`
 	CountMap         map[int32]int32       `protobuf:"bytes,23,rep,name=countMap,proto3" json:"countMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	TingMap          map[int32]*MjTingData `protobuf:"bytes,24,rep,name=tingMap,proto3" json:"tingMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	Pattern          string                `protobuf:"bytes,25,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	CanGang          bool                  `protobuf:"varint,26,opt,name=canGang,proto3" json:"canGang,omitempty"`
-	GangPai          []int32               `protobuf:"varint,27,rep,packed,name=gangPai,proto3" json:"gangPai,omitempty"`
+	GangPai          []int32               `protobuf:"varint,27,rep,packed,name=gangPai,proto3" json:"gangPai"`
 	CanPeng          bool                  `protobuf:"varint,28,opt,name=canPeng,proto3" json:"canPeng,omitempty"`
 	CanHu            bool                  `protobuf:"varint,29,opt,name=canHu,proto3" json:"canHu,omitempty"`
 	CanChuPai        bool                  `protobuf:"varint,30,opt,name=canChuPai,proto3" json:"canChuPai,omitempty"`
@@ -479,11 +479,11 @@ type MjSeat struct {
 	IsTianHu         bool                  `protobuf:"varint,40,opt,name=isTianHu,proto3" json:"isTianHu,omitempty"`
 	IsDiHu           bool                  `protobuf:"varint,41,opt,name=isDiHu,proto3" json:"isDiHu,omitempty"`
 	Qingyise         bool                  `protobuf:"varint,42,opt,name=qingyise,proto3" json:"qingyise,omitempty"`
-	Actions          []*MjActionData       `protobuf:"bytes,43,rep,name=actions,proto3" json:"actions,omitempty"`
+	Actions          []*MjActionData       `protobuf:"bytes,43,rep,name=actions,proto3" json:"actions"`
 	Fan              int32                 `protobuf:"varint,44,opt,name=fan,proto3" json:"fan,omitempty"`
-	LastFangGangSeat int32                 `protobuf:"varint,45,opt,name=lastFangGangSeat,proto3" json:"lastFangGangSeat,omitempty"`
+	LastFangGangSeat int32                 `protobuf:"varint,45,opt,name=lastFangGangSeat,proto3" json:"lastFangGangSeat"`
 	Numofgen         int32                 `protobuf:"varint,46,opt,name=numofgen,proto3" json:"numofgen,omitempty"`
-	Diangangs        []int32               `protobuf:"varint,47,rep,packed,name=diangangs,proto3" json:"diangangs,omitempty"`
+	Diangangs        []int32               `protobuf:"varint,47,rep,packed,name=diangangs,proto3" json:"diangangs"`
 }
 
 func (x *MjSeat) Reset() {

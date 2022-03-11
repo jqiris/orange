@@ -1,5 +1,4 @@
-
-var URL = "http://127.0.0.1:9000";
+var URL = "http://62.234.156.207:9000";
 
 exports.master_url = null;
 exports.url = null;
@@ -64,7 +63,7 @@ function sendRequest(path, data, handler, extraUrl) {
         sendRequest(path, data, handler, extraUrl);
     };
 
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = function() {
         console.log("onreadystatechange");
         clearTimeout(timer);
         if (xhr.readyState === 4 && (xhr.status >= 200 && xhr.status < 300)) {
@@ -88,9 +87,8 @@ function sendRequest(path, data, handler, extraUrl) {
             }
 
             handler = null;
-        }
-        else if (xhr.readyState === 4) {
-            if(xhr.hasRetried){
+        } else if (xhr.readyState === 4) {
+            if (xhr.hasRetried) {
                 return;
             }
 
@@ -98,16 +96,14 @@ function sendRequest(path, data, handler, extraUrl) {
             setTimeout(function() {
                 retryFunc();
             }, 5000);
-        }
-        else {
+        } else {
             console.log('other readystate:' + xhr.readyState + ', status:' + xhr.status);
         }
     };
 
     try {
         xhr.send();
-    }
-    catch (e) {
+    } catch (e) {
         //setTimeout(retryFunc, 200);
         retryFunc();
     }
