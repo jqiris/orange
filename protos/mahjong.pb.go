@@ -441,7 +441,7 @@ type MjSeat struct {
 	Score            int32                 `protobuf:"varint,2,opt,name=score,proto3" json:"score,omitempty"`
 	Name             string                `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Ready            bool                  `protobuf:"varint,4,opt,name=ready,proto3" json:"ready,omitempty"`
-	Seatindex        int32                 `protobuf:"varint,5,opt,name=seatindex,proto3" json:"seatindex,omitempty"`
+	Seatindex        int32                 `protobuf:"varint,5,opt,name=seatindex,proto3" json:"seatindex"`
 	NumZiMo          int32                 `protobuf:"varint,6,opt,name=numZiMo,proto3" json:"numZiMo,omitempty"`
 	NumJiePao        int32                 `protobuf:"varint,7,opt,name=numJiePao,proto3" json:"numJiePao,omitempty"`
 	NumDianPao       int32                 `protobuf:"varint,8,opt,name=numDianPao,proto3" json:"numDianPao,omitempty"`
