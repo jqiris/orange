@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/gin-gonic/gin v1.7.7
-	github.com/jqiris/kungfu/v2 v2.0.2
+	github.com/jqiris/kungfu/v2 v2.0.4
 	github.com/spf13/viper v1.10.1
 	google.golang.org/protobuf v1.27.1
 	gorm.io/driver/mysql v1.3.2
