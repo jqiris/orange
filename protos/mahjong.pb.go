@@ -457,7 +457,7 @@ type MjSeat struct {
 	Diang            []int32               `protobuf:"varint,18,rep,packed,name=diang,proto3" json:"diang"`
 	Wangangs         []int32               `protobuf:"varint,19,rep,packed,name=wangangs,proto3" json:"wangangs"`
 	Pengs            []int32               `protobuf:"varint,20,rep,packed,name=pengs,proto3" json:"pengs"`
-	Que              int32                 `protobuf:"varint,21,opt,name=que,proto3" json:"que,omitempty"`
+	Que              int32                 `protobuf:"varint,21,opt,name=que,proto3" json:"que"`
 	Huanpais         []int32               `protobuf:"varint,22,rep,packed,name=huanpais,proto3" json:"huanpais"`
 	CountMap         map[int32]int32       `protobuf:"bytes,23,rep,name=countMap,proto3" json:"countMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	TingMap          map[int32]*MjTingData `protobuf:"bytes,24,rep,name=tingMap,proto3" json:"tingMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
