@@ -6,10 +6,10 @@ import (
 	"github.com/jqiris/orange/protos"
 )
 
-func (s *ServerHall) ServerMaintain(req *protos.InnerMaintainReq) {
+func (h *ServerHall) ServerMaintain(req *protos.InnerMaintainReq) {
 	logger.Warnf("ServerMaintain notice:%+v", req)
 	serverId, reqState := req.ServerId, req.ReqState
-	server := s.Server
+	server := h.Server
 	if serverId != server.ServerId {
 		logger.Errorf("maintain server not current server,current:%v,req:%v", server.ServerId, serverId)
 		return
