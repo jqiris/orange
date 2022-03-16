@@ -526,7 +526,8 @@ cc.Class({
 
     doGuo: function(seatIndex, pai) {
         var seatData = this.seats[seatIndex];
-        var folds = seatData.folds || [];
+        seatData.folds = seatData.folds || [];
+        var folds = seatData.folds;
         folds.push(pai);
         this.dispatchEvent('guo_notify', seatData);
     },

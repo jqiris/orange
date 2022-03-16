@@ -25,6 +25,7 @@ message MjDissolveData{
 message MjTingData{
     int32 fan = 1;
     string pattern = 2;
+    int32 pai = 3;
 }
 
 message MjActionData{
@@ -93,6 +94,7 @@ message MjSeat{
     int32 lastFangGangSeat = 45;
     int32 numofgen = 46;
     repeated int32 diangangs = 47;
+    repeated MjHuData huinfo = 48;
 }
 
 message MjGameData{
@@ -130,4 +132,21 @@ message MjRoom{
     repeated MjSeat seats = 7;
     MjRoomConf conf = 8;
     MjDissolveData dr = 9;
+}
+
+message MjHuData{
+    bool ishupai = 1;
+    int32 pai = 2;
+    string action = 3;
+    bool isGangHu = 4;
+    bool isQiangGangHu = 5;
+    bool iszimo = 6;
+    int32 target = 7;
+    int32 fan = 8;
+    string pattern = 9;
+    bool isHaiDiHu = 10;
+    bool isTianHu = 11;
+    bool isDiHu = 12;
+    int32 numofgen = 13;
+    int32 index = 14;
 }

@@ -8,12 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/database"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
 	"github.com/jqiris/orange/tools"
+
+	"github.com/jqiris/kungfu/v2/logger"
 )
 
 type XzddMj struct {
@@ -259,7 +260,7 @@ func (m *XzddMj) SetReady(userId int64) {
 			"numofmj":       numOfMJ,
 			"button":        game.Button,
 			"turn":          game.Turn,
-			"ChuPai":        game.ChuPai,
+			"chuPai":        game.ChuPai,
 			"huanpaimethod": game.HuanpaiMethod,
 		}
 		var seats []*protos.MjSeat
@@ -872,7 +873,6 @@ func (m *XzddMj) Peng(userId int64) {
 	//广播通知玩家出牌方
 	seatData.CanChuPai = true
 	userMgr.broadcastInRoom("game_chupai_push", seatData.Userid, seatData.Userid, true)
-	logger.Infof("Peng end,userId:%v", userId)
 }
 
 func (m *XzddMj) moveToNextUser(game *protos.MjGameData, nextSeat int32) {
