@@ -1,10 +1,11 @@
 package mahjong
 
 import (
-	"go.uber.org/atomic"
 	"net/http"
 	"sync"
 	"time"
+
+	"go.uber.org/atomic"
 
 	"github.com/googollee/go-socket.io/engineio"
 	"github.com/googollee/go-socket.io/engineio/transport"
@@ -15,6 +16,7 @@ import (
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/jqiris/orange/constant"
+	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/protos"
 )
 
@@ -35,8 +37,8 @@ func init() {
 type GameMahjong interface {
 	SetReady(userId int64)
 	HasBegan(roomId string) bool
-	DissolveRequest(roomId string, userId int64) *protos.MjRoom
-	DissolveAgree(roomId string, userId int64, agree bool) *protos.MjRoom
+	DissolveRequest(roomId string, userId int64) *model.MjRoom
+	DissolveAgree(roomId string, userId int64, agree bool) *model.MjRoom
 	DoDissolve(roomId string)
 	HuanSanZhang(userId int64, p1, p2, p3 int32)
 	DingQue(userId int64, que int32)

@@ -3,16 +3,17 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/jqiris/kungfu/v2/discover"
 	"github.com/jqiris/kungfu/v2/treaty"
 	"github.com/spf13/viper"
-	"time"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/jqiris/kungfu/v2/plugin"
 	"github.com/jqiris/kungfu/v2/utils"
-	"github.com/jqiris/orange/protos"
+	"github.com/jqiris/orange/model"
 )
 
 type Msg struct {
@@ -351,15 +352,15 @@ func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 	}
 	seatIndex := roomMgr.getUserSeat(userId)
 	roomInfo.Seats[seatIndex].Ip = c.RemoteAddr().String()
-	var userData *protos.MjSeat
-	var seats []*protos.MjSeat
+	var userData *model.MjSeat
+	var seats []*model.MjSeat
 	for i := 0; i < len(roomInfo.Seats); i++ {
 		rs := roomInfo.Seats[i]
 		online := false
 		if rs.Userid > 0 {
 			online = userMgr.isOnline(rs.Userid)
 		}
-		seat := &protos.MjSeat{
+		seat := &model.MjSeat{
 			Userid:    rs.Userid,
 			Score:     rs.Score,
 			Name:      rs.Name,

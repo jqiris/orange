@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/tools"
-
-	"github.com/jqiris/orange/protos"
 )
 
 func TestStructToJson(t *testing.T) {
-	data := &protos.UserLocation{
+	data := &model.UserLocation{
 		RoomId:    "",
 		SeatIndex: 0,
 	}

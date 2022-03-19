@@ -9,7 +9,6 @@ import (
 	"github.com/jqiris/orange/constant"
 	"github.com/jqiris/orange/database"
 	"github.com/jqiris/orange/model"
-	"github.com/jqiris/orange/protos"
 	"github.com/jqiris/orange/tools"
 
 	"math"
@@ -19,8 +18,8 @@ import (
 )
 
 type XlchMj struct {
-	Games            map[string]*protos.MjGameData
-	GameSeatsOfUsers map[int64]*protos.MjSeat
+	Games            map[string]*model.MjGameData
+	GameSeatsOfUsers map[int64]*model.MjSeat
 	DissolvingList   []string
 	lockGame         sync.RWMutex
 	lockSeat         sync.RWMutex
@@ -28,12 +27,12 @@ type XlchMj struct {
 
 func NewXlchMj() *XlchMj {
 	return &XlchMj{
-		Games:            make(map[string]*protos.MjGameData),
-		GameSeatsOfUsers: make(map[int64]*protos.MjSeat),
+		Games:            make(map[string]*model.MjGameData),
+		GameSeatsOfUsers: make(map[int64]*model.MjSeat),
 		DissolvingList:   make([]string, 0),
 	}
 }
-func (m *XlchMj) getGame(roomId string) *protos.MjGameData {
+func (m *XlchMj) getGame(roomId string) *model.MjGameData {
 	m.lockGame.RLock()
 	defer m.lockGame.RUnlock()
 	if v, ok := m.Games[roomId]; ok {
@@ -41,7 +40,7 @@ func (m *XlchMj) getGame(roomId string) *protos.MjGameData {
 	}
 	return nil
 }
-func (m *XlchMj) saveGame(roomId string, data *protos.MjGameData) {
+func (m *XlchMj) saveGame(roomId string, data *model.MjGameData) {
 	m.lockGame.Lock()
 	defer m.lockGame.Unlock()
 	m.Games[roomId] = data
@@ -52,7 +51,7 @@ func (m *XlchMj) delGame(roomId string) {
 	delete(m.Games, roomId)
 }
 
-func (m *XlchMj) getSeat(userId int64) *protos.MjSeat {
+func (m *XlchMj) getSeat(userId int64) *model.MjSeat {
 	m.lockSeat.RLock()
 	defer m.lockSeat.RUnlock()
 	if v, ok := m.GameSeatsOfUsers[userId]; ok {
@@ -60,7 +59,7 @@ func (m *XlchMj) getSeat(userId int64) *protos.MjSeat {
 	}
 	return nil
 }
-func (m *XlchMj) saveSeat(userId int64, data *protos.MjSeat) {
+func (m *XlchMj) saveSeat(userId int64, data *model.MjSeat) {
 	m.lockSeat.Lock()
 	defer m.lockSeat.Unlock()
 	m.GameSeatsOfUsers[userId] = data
@@ -90,7 +89,7 @@ func (m *XlchMj) getMJType(id int32) int32 {
 	return -1
 }
 
-func (m *XlchMj) shuffle(game *protos.MjGameData) {
+func (m *XlchMj) shuffle(game *model.MjGameData) {
 	mahjongs := game.Mahjongs
 	index := 0
 	for i := 0; i < 9; i++ {
@@ -119,7 +118,7 @@ func (m *XlchMj) shuffle(game *protos.MjGameData) {
 	}
 }
 
-func (m *XlchMj) deal(game *protos.MjGameData) {
+func (m *XlchMj) deal(game *model.MjGameData) {
 	game.CurrentIndex = 0
 	//每人13张 一共 13*4 ＝ 52张 庄家多一张 53张
 	seatIndex := game.Button
@@ -135,7 +134,7 @@ func (m *XlchMj) deal(game *protos.MjGameData) {
 	game.Turn = game.Button
 }
 
-func (m *XlchMj) mopai(game *protos.MjGameData, seatIndex int32) int32 {
+func (m *XlchMj) mopai(game *model.MjGameData, seatIndex int32) int32 {
 	if int(game.CurrentIndex) >= len(game.Mahjongs) {
 		return -1
 	}
@@ -148,7 +147,7 @@ func (m *XlchMj) mopai(game *protos.MjGameData, seatIndex int32) int32 {
 }
 
 //是否需要查大叫(有两家以上未胡，且有人没有下叫)
-func (m *XlchMj) needChaDaJiao(game *protos.MjGameData) bool {
+func (m *XlchMj) needChaDaJiao(game *model.MjGameData) bool {
 	numOfHued := 0
 	numOfTinged := 0
 	numOfUntinged := 0
@@ -174,7 +173,7 @@ func (m *XlchMj) needChaDaJiao(game *protos.MjGameData) bool {
 	return true
 }
 
-func (m *XlchMj) chaJiao(game *protos.MjGameData) {
+func (m *XlchMj) chaJiao(game *model.MjGameData) {
 	arr := m.findUnTingedPlayers(game)
 	if len(arr) == 0 {
 		return
@@ -183,7 +182,7 @@ func (m *XlchMj) chaJiao(game *protos.MjGameData) {
 		//如果听牌了，则未叫牌的人要给钱
 		if m.isTinged(ts) {
 			cur := m.findMaxFanTingPai(ts)
-			ts.Huinfo = append(ts.Huinfo, &protos.MjHuData{
+			ts.Huinfo = append(ts.Huinfo, &model.MjHuData{
 				Ishupai:  true,
 				Pai:      cur.Pai,
 				Action:   "chadajiao",
@@ -193,7 +192,7 @@ func (m *XlchMj) chaJiao(game *protos.MjGameData) {
 			})
 			for _, j := range arr {
 				st := game.GameSeats[j]
-				st.Huinfo = append(st.Huinfo, &protos.MjHuData{
+				st.Huinfo = append(st.Huinfo, &model.MjHuData{
 					Action: "beichadajiao",
 					Target: int32(i),
 					Index:  int32(len(ts.Huinfo) - 1),
@@ -203,15 +202,15 @@ func (m *XlchMj) chaJiao(game *protos.MjGameData) {
 	}
 }
 
-func (m *XlchMj) isTinged(seatData *protos.MjSeat) bool {
+func (m *XlchMj) isTinged(seatData *model.MjSeat) bool {
 	return len(seatData.TingMap) > 0
 }
 
-func (m *XlchMj) isMenQing(gameSeatData *protos.MjSeat) bool {
+func (m *XlchMj) isMenQing(gameSeatData *model.MjSeat) bool {
 	return len(gameSeatData.Pengs)+len(gameSeatData.Wangangs)+len(gameSeatData.Diangangs) == 0
 }
 
-func (m *XlchMj) isZhongZhang(gameSeatData *protos.MjSeat) bool {
+func (m *XlchMj) isZhongZhang(gameSeatData *model.MjSeat) bool {
 	fn := func(arr []int32) bool {
 		for i := 0; i < len(arr); i++ {
 			var pai = arr[i]
@@ -240,7 +239,7 @@ func (m *XlchMj) isZhongZhang(gameSeatData *protos.MjSeat) bool {
 	return true
 }
 
-func (m *XlchMj) isJiangDui(gameSeatData *protos.MjSeat) bool {
+func (m *XlchMj) isJiangDui(gameSeatData *model.MjSeat) bool {
 	fn := func(arr []int32) bool {
 		for i := 0; i < len(arr); i++ {
 			var pai = arr[i]
@@ -269,7 +268,7 @@ func (m *XlchMj) isJiangDui(gameSeatData *protos.MjSeat) bool {
 	return true
 }
 
-func (m *XlchMj) isQingYiSe(gameSeatData *protos.MjSeat) bool {
+func (m *XlchMj) isQingYiSe(gameSeatData *model.MjSeat) bool {
 	typ := m.getMJType(gameSeatData.Holds[0])
 	//检查手上的牌
 	if m.isSameType(typ, gameSeatData.Holds) == false {
@@ -304,7 +303,7 @@ func (m *XlchMj) isSameType(typ int32, arr []int32) bool {
 	return true
 }
 
-func (m *XlchMj) moveToNextUser(game *protos.MjGameData, nextSeat int32) {
+func (m *XlchMj) moveToNextUser(game *model.MjGameData, nextSeat int32) {
 	game.Fangpaoshumu = 0
 	//找到下一个没有和牌的玩家
 	if nextSeat == -1 {
@@ -316,7 +315,7 @@ func (m *XlchMj) moveToNextUser(game *protos.MjGameData, nextSeat int32) {
 	}
 }
 
-func (m *XlchMj) findUnTingedPlayers(game *protos.MjGameData) []int32 {
+func (m *XlchMj) findUnTingedPlayers(game *model.MjGameData) []int32 {
 	var arr []int32
 	for i, ts := range game.GameSeats {
 		//如果没有胡，且没有听牌
@@ -327,9 +326,9 @@ func (m *XlchMj) findUnTingedPlayers(game *protos.MjGameData) []int32 {
 	return arr
 }
 
-func (m *XlchMj) findMaxFanTingPai(ts *protos.MjSeat) *protos.MjTingData {
+func (m *XlchMj) findMaxFanTingPai(ts *model.MjSeat) *model.MjTingData {
 	//找出最大番
-	var cur *protos.MjTingData
+	var cur *model.MjTingData
 	for k, tpai := range ts.TingMap {
 		if cur == nil || tpai.Fan > cur.Fan {
 			cur = tpai
@@ -339,7 +338,7 @@ func (m *XlchMj) findMaxFanTingPai(ts *protos.MjSeat) *protos.MjTingData {
 	return cur
 }
 
-func (m *XlchMj) getNumOfGen(seatData *protos.MjSeat) int32 {
+func (m *XlchMj) getNumOfGen(seatData *model.MjSeat) int32 {
 	numOfGangs := int32(len(seatData.Diangangs) + len(seatData.Wangangs) + len(seatData.Angangs))
 	for _, pai := range seatData.Pengs {
 		if seatData.CountMap[pai] == 1 {
@@ -354,14 +353,14 @@ func (m *XlchMj) getNumOfGen(seatData *protos.MjSeat) int32 {
 	return numOfGangs
 }
 
-func (m *XlchMj) hasOperations(seatData *protos.MjSeat) bool {
+func (m *XlchMj) hasOperations(seatData *model.MjSeat) bool {
 	if seatData.CanGang || seatData.CanPeng || seatData.CanHu {
 		return true
 	}
 	return false
 }
 
-func (m *XlchMj) sendOperations(game *protos.MjGameData, seatData *protos.MjSeat, pai int32) {
+func (m *XlchMj) sendOperations(game *model.MjGameData, seatData *model.MjSeat, pai int32) {
 	if m.hasOperations(seatData) {
 		if pai == -1 {
 			pai = seatData.Holds[len(seatData.Holds)-1]
@@ -381,7 +380,7 @@ func (m *XlchMj) sendOperations(game *protos.MjGameData, seatData *protos.MjSeat
 	}
 }
 
-func (m *XlchMj) calculateResult(game *protos.MjGameData, roomInfo *protos.MjRoom) {
+func (m *XlchMj) calculateResult(game *model.MjGameData, roomInfo *model.MjRoom) {
 	isNeedChaDaJiao := m.needChaDaJiao(game)
 	if isNeedChaDaJiao {
 		m.chaJiao(game)
@@ -592,7 +591,7 @@ func (m *XlchMj) calculateResult(game *protos.MjGameData, roomInfo *protos.MjRoo
 	}
 }
 
-func (m *XlchMj) computeFanScore(game *protos.MjGameData, fan int32) int32 {
+func (m *XlchMj) computeFanScore(game *model.MjGameData, fan int32) int32 {
 	if fan > game.Conf.MaxFan {
 		fan = game.Conf.MaxFan
 	}
@@ -605,14 +604,14 @@ func (m *XlchMj) begin(roomId string) {
 		return
 	}
 	seats := roomInfo.Seats
-	game := &protos.MjGameData{
+	game := &model.MjGameData{
 		Conf:          roomInfo.Conf,
 		Uuid:          roomInfo.Uuid,
 		GameIndex:     roomInfo.NumOfGames,
 		Button:        roomInfo.NextButton,
 		Mahjongs:      make([]int32, 108),
 		CurrentIndex:  0,
-		GameSeats:     make([]*protos.MjSeat, 4),
+		GameSeats:     make([]*model.MjSeat, 4),
 		NumOfQue:      0,
 		Turn:          0,
 		ChuPai:        -1,
@@ -626,7 +625,7 @@ func (m *XlchMj) begin(roomId string) {
 	roomInfo.NumOfGames++
 
 	for i := 0; i < 4; i++ {
-		data := &protos.MjSeat{}
+		data := &model.MjSeat{}
 		data.Game = game
 		data.Seatindex = int32(i)
 		data.Userid = seats[i].Userid
@@ -639,7 +638,7 @@ func (m *XlchMj) begin(roomId string) {
 		data.Que = -1
 		data.Huanpais = make([]int32, 0)
 		data.CountMap = make(map[int32]int32)
-		data.TingMap = make(map[int32]*protos.MjTingData)
+		data.TingMap = make(map[int32]*model.MjTingData)
 		data.Pattern = ""
 		data.CanGang = false
 		data.GangPai = make([]int32, 0)
@@ -650,10 +649,10 @@ func (m *XlchMj) begin(roomId string) {
 		data.Hued = false
 		data.Iszimo = false
 		data.IsGangHu = false
-		data.Actions = make([]*protos.MjActionData, 0)
+		data.Actions = make([]*model.MjActionData, 0)
 		data.Fan = 0
 		data.Score = 0
-		data.Huinfo = make([]*protos.MjHuData, 0)
+		data.Huinfo = make([]*model.MjHuData, 0)
 		data.LastFangGangSeat = 0
 		//统计信息
 		data.NumZiMo = 0
@@ -697,7 +696,7 @@ func (m *XlchMj) begin(roomId string) {
 	}
 }
 
-func (m *XlchMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool) {
+func (m *XlchMj) doGameOver(game *model.MjGameData, userId int64, args ...bool) {
 	forceEnd := false
 	if len(args) > 0 {
 		forceEnd = args[0]
@@ -835,8 +834,8 @@ func (m *XlchMj) doGameOver(game *protos.MjGameData, userId int64, args ...bool)
 	}
 }
 
-func (m *XlchMj) checkCanTingPai(game *protos.MjGameData, seatData *protos.MjSeat) {
-	seatData.TingMap = make(map[int32]*protos.MjTingData)
+func (m *XlchMj) checkCanTingPai(game *model.MjGameData, seatData *model.MjSeat) {
+	seatData.TingMap = make(map[int32]*model.MjTingData)
 	//检查手上的牌是不是已打缺，如果未打缺，则不进行判定
 	for _, pai := range seatData.Holds {
 		if m.getMJType(pai) == seatData.Que {
@@ -866,7 +865,7 @@ func (m *XlchMj) checkCanTingPai(game *protos.MjGameData, seatData *protos.MjSea
 		if pairCount == 6 {
 			//七对只能和一张，就是手上那张单牌
 			//七对的番数＝ 2番+N个4个牌（即龙七对）
-			seatData.TingMap[danPai] = &protos.MjTingData{
+			seatData.TingMap[danPai] = &model.MjTingData{
 				Fan:     2,
 				Pattern: "7pairs",
 			}
@@ -898,7 +897,7 @@ func (m *XlchMj) checkCanTingPai(game *protos.MjGameData, seatData *protos.MjSea
 	if (pairCount == 2 && singleCount == 0) || (pairCount == 0 && singleCount == 1) {
 		for _, p := range arr {
 			if seatData.TingMap[p] == nil {
-				seatData.TingMap[p] = &protos.MjTingData{
+				seatData.TingMap[p] = &model.MjTingData{
 					Fan:     1,
 					Pattern: "duidui",
 				}
@@ -918,7 +917,7 @@ func (m *XlchMj) checkCanTingPai(game *protos.MjGameData, seatData *protos.MjSea
 		checkTingPai(seatData, 18, 27)
 	}
 }
-func (m *XlchMj) storeGame(game *protos.MjGameData) error {
+func (m *XlchMj) storeGame(game *model.MjGameData) error {
 	return database.CreateMjAction(&model.MahjongAction{
 		RoomUUID:   game.Uuid,
 		GameType:   game.Conf.Type,
@@ -928,7 +927,7 @@ func (m *XlchMj) storeGame(game *protos.MjGameData) error {
 	})
 }
 
-func (m *XlchMj) storeHistory(roomInfo *protos.MjRoom) {
+func (m *XlchMj) storeHistory(roomInfo *model.MjRoom) {
 	seats := roomInfo.Seats
 	var history = map[string]any{
 		"uuid": roomInfo.Uuid,
@@ -1004,11 +1003,11 @@ func (m *XlchMj) SetReady(userId int64) {
 			"turn":    game.Turn,
 			"chuPai":  game.ChuPai,
 		}
-		var seats []*protos.MjSeat
-		var seatData *protos.MjSeat
+		var seats []*model.MjSeat
+		var seatData *model.MjSeat
 		for i := 0; i < 4; i++ {
 			sd := game.GameSeats[i]
-			st := &protos.MjSeat{
+			st := &model.MjSeat{
 				Userid:    sd.Userid,
 				Folds:     sd.Folds,
 				Angangs:   sd.Angangs,
@@ -1048,7 +1047,7 @@ func (m *XlchMj) HasBegan(roomId string) bool {
 	return false
 }
 
-func (m *XlchMj) DissolveRequest(roomId string, userId int64) *protos.MjRoom {
+func (m *XlchMj) DissolveRequest(roomId string, userId int64) *model.MjRoom {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -1060,7 +1059,7 @@ func (m *XlchMj) DissolveRequest(roomId string, userId int64) *protos.MjRoom {
 	if seatIndex == -1 {
 		return nil
 	}
-	dr := &protos.MjDissolveData{
+	dr := &model.MjDissolveData{
 		EndTime: time.Now().UnixMilli() + 30000,
 		States:  []bool{false, false, false, false},
 	}
@@ -1070,7 +1069,7 @@ func (m *XlchMj) DissolveRequest(roomId string, userId int64) *protos.MjRoom {
 	return roomInfo
 }
 
-func (m *XlchMj) DissolveAgree(roomId string, userId int64, agree bool) *protos.MjRoom {
+func (m *XlchMj) DissolveAgree(roomId string, userId int64, agree bool) *model.MjRoom {
 	roomInfo := roomMgr.getRoom(roomId)
 	if roomInfo == nil {
 		return nil
@@ -1171,7 +1170,7 @@ func (m *XlchMj) HuanSanZhang(userId int64, p1, p2, p3 int32) {
 	}
 
 	//换牌函数
-	var fn = func(s1 *protos.MjSeat, huanjin []int32) {
+	var fn = func(s1 *model.MjSeat, huanjin []int32) {
 		for i := 0; i < len(huanjin); i++ {
 			var p = huanjin[i]
 			s1.Holds = append(s1.Holds, p)
@@ -1246,7 +1245,7 @@ func (m *XlchMj) DingQue(userId int64, que int32) {
 		userMgr.broadcastInRoom("game_dingque_notify_push", seatData.Userid, seatData.Userid, true)
 	}
 }
-func (m *XlchMj) constructGameBaseInfo(game *protos.MjGameData) {
+func (m *XlchMj) constructGameBaseInfo(game *model.MjGameData) {
 	var baseInfo = map[string]any{
 		"type":     game.Conf.Type,
 		"button":   game.Button,
@@ -1261,7 +1260,7 @@ func (m *XlchMj) constructGameBaseInfo(game *protos.MjGameData) {
 	bs, _ := json.Marshal(baseInfo)
 	game.BaseInfoJson = string(bs)
 }
-func (m *XlchMj) doDingQue(game *protos.MjGameData, seatData *protos.MjSeat) {
+func (m *XlchMj) doDingQue(game *model.MjGameData, seatData *model.MjSeat) {
 	m.constructGameBaseInfo(game)
 	arr := []int32{1, 1, 1, 1}
 	for i, gs := range game.GameSeats {
@@ -1303,7 +1302,7 @@ func (m *XlchMj) doDingQue(game *protos.MjGameData, seatData *protos.MjSeat) {
 }
 
 //检查是否可以暗杠
-func (m *XlchMj) checkCanAnGang(game *protos.MjGameData, seatData *protos.MjSeat) {
+func (m *XlchMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
 	if len(game.Mahjongs) <= int(game.CurrentIndex) {
 		return
@@ -1318,7 +1317,7 @@ func (m *XlchMj) checkCanAnGang(game *protos.MjGameData, seatData *protos.MjSeat
 }
 
 //检查是否可以弯杠(自己摸起来的时候)
-func (m *XlchMj) checkCanWanGang(game *protos.MjGameData, seatData *protos.MjSeat) {
+func (m *XlchMj) checkCanWanGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
 	if len(game.Mahjongs) <= int(game.CurrentIndex) {
 		return
@@ -1331,7 +1330,7 @@ func (m *XlchMj) checkCanWanGang(game *protos.MjGameData, seatData *protos.MjSea
 	}
 }
 
-func (m *XlchMj) checkCanHu(game *protos.MjGameData, seatData *protos.MjSeat, targetPai int32) {
+func (m *XlchMj) checkCanHu(game *model.MjGameData, seatData *model.MjSeat, targetPai int32) {
 	game.LastHuPaiSeat = -1
 	if m.getMJType(targetPai) == seatData.Que {
 		return
@@ -1344,7 +1343,7 @@ func (m *XlchMj) checkCanHu(game *protos.MjGameData, seatData *protos.MjSeat, ta
 	}
 }
 
-func (m *XlchMj) checkCanDianGang(game *protos.MjGameData, seatData *protos.MjSeat, targetPai int32) {
+func (m *XlchMj) checkCanDianGang(game *model.MjGameData, seatData *model.MjSeat, targetPai int32) {
 	//检查玩家手上的牌
 	//如果没有牌了，则不能再杠
 	if len(game.Mahjongs) <= int(game.CurrentIndex) {
@@ -1360,7 +1359,7 @@ func (m *XlchMj) checkCanDianGang(game *protos.MjGameData, seatData *protos.MjSe
 		return
 	}
 }
-func (m *XlchMj) checkCanPeng(game *protos.MjGameData, seatData *protos.MjSeat, targetPai int32) {
+func (m *XlchMj) checkCanPeng(game *model.MjGameData, seatData *model.MjSeat, targetPai int32) {
 	if m.getMJType(targetPai) == seatData.Que {
 		return
 	}
@@ -1530,7 +1529,7 @@ func (m *XlchMj) Peng(userId int64) {
 	userMgr.broadcastInRoom("game_chupai_push", seatData.Userid, seatData.Userid, true)
 }
 
-func (m *XlchMj) doUserMoPai(game *protos.MjGameData) {
+func (m *XlchMj) doUserMoPai(game *model.MjGameData) {
 	game.ChuPai = -1
 	turnSeat := game.GameSeats[game.Turn]
 	turnSeat.LastFangGangSeat = -1
@@ -1569,8 +1568,8 @@ func (m *XlchMj) doUserMoPai(game *protos.MjGameData) {
 	m.sendOperations(game, turnSeat, game.ChuPai)
 }
 
-func (m *XlchMj) clearAllOptions(game *protos.MjGameData, seatData *protos.MjSeat) {
-	fnClear := func(sd *protos.MjSeat) {
+func (m *XlchMj) clearAllOptions(game *model.MjGameData, seatData *model.MjSeat) {
+	fnClear := func(sd *model.MjSeat) {
 		sd.CanPeng = false
 		sd.CanGang = false
 		sd.GangPai = make([]int32, 0)
@@ -1587,7 +1586,7 @@ func (m *XlchMj) clearAllOptions(game *protos.MjGameData, seatData *protos.MjSea
 	}
 }
 
-func (m *XlchMj) recordGameAction(game *protos.MjGameData, si, action, pai int32) {
+func (m *XlchMj) recordGameAction(game *model.MjGameData, si, action, pai int32) {
 	game.ActionList = append(game.ActionList, si, action)
 	if pai > -1 {
 		game.ActionList = append(game.ActionList, pai)
@@ -1666,12 +1665,12 @@ func (m *XlchMj) Gang(userId int64, pai int32) {
 	m.doGang(game, turnSeat, seatData, gangtype, numOfCnt, pai)
 }
 
-func (m *XlchMj) recordUserAction(game *protos.MjGameData, seatData *protos.MjSeat, typ string, args ...any) *protos.MjActionData {
+func (m *XlchMj) recordUserAction(game *model.MjGameData, seatData *model.MjSeat, typ string, args ...any) *model.MjActionData {
 	var target any
 	if len(args) > 0 {
 		target = args[0]
 	}
-	d := &protos.MjActionData{Type: typ, Targets: []int32{}}
+	d := &model.MjActionData{Type: typ, Targets: []int32{}}
 	if target != nil {
 		switch v := target.(type) {
 		case int32:
@@ -1694,7 +1693,7 @@ func (m *XlchMj) recordUserAction(game *protos.MjGameData, seatData *protos.MjSe
 	return d
 }
 
-func (m *XlchMj) doGang(game *protos.MjGameData, turnSeat, seatData *protos.MjSeat, gangtype string, numOfCnt, pai int32) {
+func (m *XlchMj) doGang(game *model.MjGameData, turnSeat, seatData *model.MjSeat, gangtype string, numOfCnt, pai int32) {
 	seatIndex := seatData.Seatindex
 	gameTurn := turnSeat.Seatindex
 
@@ -1759,7 +1758,7 @@ func (m *XlchMj) doGang(game *protos.MjGameData, turnSeat, seatData *protos.MjSe
 	//只能放在这里。因为过手就会清除杠牌标记
 	seatData.LastFangGangSeat = gameTurn
 }
-func (m *XlchMj) checkCanQiangGang(game *protos.MjGameData, turnSeat *protos.MjSeat, seatData *protos.MjSeat, pai int32) bool {
+func (m *XlchMj) checkCanQiangGang(game *model.MjGameData, turnSeat *model.MjSeat, seatData *model.MjSeat, pai int32) bool {
 	hasActions := false
 	for i := 0; i < len(game.GameSeats); i++ {
 		//杠牌者不检查
@@ -1775,7 +1774,7 @@ func (m *XlchMj) checkCanQiangGang(game *protos.MjGameData, turnSeat *protos.MjS
 		}
 	}
 	if hasActions {
-		game.QiangGangContext = &protos.MjQiangGangData{
+		game.QiangGangContext = &model.MjQiangGangData{
 			TurnSeat: turnSeat,
 			SeatData: seatData,
 			Pai:      pai,
@@ -1808,7 +1807,7 @@ func (m *XlchMj) Hu(userId int64) {
 	var isZimo = false
 
 	var turnSeat = game.GameSeats[game.Turn]
-	huData := &protos.MjHuData{
+	huData := &model.MjHuData{
 		Ishupai:       true,
 		Pai:           -1,
 		Action:        "",
@@ -1845,7 +1844,7 @@ func (m *XlchMj) Hu(userId int64) {
 			gangSeat.CountMap[hupai]--
 			userMgr.sendMsg(gangSeat.Userid, "game_holds_push", gangSeat.Holds)
 		}
-		gangSeat.Huinfo = append(gangSeat.Huinfo, &protos.MjHuData{
+		gangSeat.Huinfo = append(gangSeat.Huinfo, &model.MjHuData{
 			Action: "beiqianggang",
 			Target: seatData.Seatindex,
 			Index:  int32(len(seatData.Huinfo) - 1),
@@ -1899,7 +1898,7 @@ func (m *XlchMj) Hu(userId int64) {
 					t.State = "nop"
 					t.PayTimes = 0
 
-					var nac = &protos.MjActionData{
+					var nac = &model.MjActionData{
 						Type:  "maozhuanyu",
 						Owner: turnSeat,
 						Ref:   t,
@@ -1917,7 +1916,7 @@ func (m *XlchMj) Hu(userId int64) {
 		} else {
 			at = "fangpao"
 		}
-		fs.Huinfo = append(fs.Huinfo, &protos.MjHuData{
+		fs.Huinfo = append(fs.Huinfo, &model.MjHuData{
 			Action: at,
 			Target: seatData.Seatindex,
 			Index:  int32(len(seatData.Huinfo) - 1),

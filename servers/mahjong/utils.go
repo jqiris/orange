@@ -1,8 +1,8 @@
 package mahjong
 
-import "github.com/jqiris/orange/protos"
+import "github.com/jqiris/orange/model"
 
-func checkTingPai(seatData *protos.MjSeat, begin, end int32) {
+func checkTingPai(seatData *model.MjSeat, begin, end int32) {
 	for i := begin; i < end; i++ {
 		//如果这牌已经在和了，就不用检查了
 		if seatData.TingMap[i] != nil {
@@ -17,7 +17,7 @@ func checkTingPai(seatData *protos.MjSeat, begin, end int32) {
 		var ret = checkCanHu(seatData)
 		if ret {
 			//平胡 0番
-			seatData.TingMap[i] = &protos.MjTingData{
+			seatData.TingMap[i] = &model.MjTingData{
 				Pattern: "normal",
 				Fan:     0,
 			}
@@ -29,7 +29,7 @@ func checkTingPai(seatData *protos.MjSeat, begin, end int32) {
 	}
 }
 
-func checkCanHu(seatData *protos.MjSeat) bool {
+func checkCanHu(seatData *model.MjSeat) bool {
 	for k, c := range seatData.CountMap {
 		if c < 2 {
 			continue
@@ -53,7 +53,7 @@ func checkCanHu(seatData *protos.MjSeat) bool {
 	return false
 }
 
-func checkSingle(seatData *protos.MjSeat) bool {
+func checkSingle(seatData *model.MjSeat) bool {
 	holds := seatData.Holds
 	var selected int32 = -1
 	var c int32 = 0
@@ -94,7 +94,7 @@ func checkSingle(seatData *protos.MjSeat) bool {
 	return matchSingle(seatData, selected)
 }
 
-func matchSingle(seatData *protos.MjSeat, selected int32) bool {
+func matchSingle(seatData *model.MjSeat, selected int32) bool {
 	//分开匹配 A-2,A-1,A
 	matched := true
 	v := selected % 9
