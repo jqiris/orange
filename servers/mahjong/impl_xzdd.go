@@ -3,7 +3,6 @@ package mahjong
 import (
 	"encoding/base64"
 	"encoding/json"
-	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -12,6 +11,8 @@ import (
 	"github.com/jqiris/orange/database"
 	"github.com/jqiris/orange/model"
 	"github.com/jqiris/orange/tools"
+	"github.com/jqiris/saki/card"
+	"github.com/jqiris/saki/wall"
 
 	"github.com/jqiris/kungfu/v2/logger"
 )
@@ -80,13 +81,13 @@ func (m *XzddMj) begin(roomId string) {
 		return
 	}
 	seats := roomInfo.Seats
+	w := wall.NewWall()
+	w.SetTiles(card.MahjongCards108)
 	game := &model.MjGameData{
 		Conf:          roomInfo.Conf,
 		Uuid:          roomInfo.Uuid,
 		GameIndex:     roomInfo.NumOfGames,
 		Button:        roomInfo.NextButton,
-		Mahjongs:      make([]int, 108),
-		CurrentIndex:  0,
 		GameSeats:     make([]*model.MjSeat, 4),
 		NumOfQue:      0,
 		Turn:          0,
@@ -98,6 +99,7 @@ func (m *XzddMj) begin(roomId string) {
 		ActionList:    []int{},
 		HupaiList:     []int{},
 		ChupaiCnt:     0,
+		Wall:          w,
 	}
 	roomInfo.NumOfGames++
 
@@ -141,10 +143,10 @@ func (m *XzddMj) begin(roomId string) {
 		m.saveSeat(data.Userid, data)
 	}
 	m.saveGame(roomId, game)
-	m.shuffle(game)
+	game.Wall.Shuffle()
 	m.deal(game)
 
-	numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+	numOfMJ := game.Wall.RemainLength()
 	huansanzhang := roomInfo.Conf.Hsz
 
 	for i := 0; i < len(seats); i++ {
@@ -173,7 +175,6 @@ func (m *XzddMj) begin(roomId string) {
 }
 
 func (m *XzddMj) deal(game *model.MjGameData) {
-	game.CurrentIndex = 0
 	//每人13张 一共 13*4 ＝ 52张 庄家多一张 53张
 	seatIndex := game.Button
 	for i := 0; i < 52; i++ {
@@ -189,44 +190,14 @@ func (m *XzddMj) deal(game *model.MjGameData) {
 }
 
 func (m *XzddMj) mopai(game *model.MjGameData, seatIndex int) int {
-	if int(game.CurrentIndex) >= len(game.Mahjongs) {
+	if game.Wall.IsAllDrawn() {
 		return -1
 	}
 	data := game.GameSeats[seatIndex]
-	pai := game.Mahjongs[game.CurrentIndex]
+	pai := game.Wall.ForwardDraw()
 	data.Holds = append(data.Holds, pai)
 	data.CountMap[pai]++
-	game.CurrentIndex++
 	return pai
-}
-
-func (m *XzddMj) shuffle(game *model.MjGameData) {
-	mahjongs := game.Mahjongs
-	index := 0
-	for i := 0; i < 9; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	for i := 9; i < 18; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	for i := 18; i < 27; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	mjLen := len(mahjongs)
-	for i := 0; i < mjLen; i++ {
-		lastIndex := mjLen - i - 1
-		randIndex := int(math.Floor(float64(rand.Intn(100)*lastIndex) / 100))
-		mahjongs[randIndex], mahjongs[lastIndex] = mahjongs[lastIndex], mahjongs[randIndex]
-	}
 }
 
 func (m *XzddMj) SetReady(userId int64) {
@@ -253,7 +224,7 @@ func (m *XzddMj) SetReady(userId int64) {
 			go m.begin(roomId)
 		}
 	} else {
-		numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+		numOfMJ := game.Wall.RemainLength()
 		data := map[string]any{
 			"state":         game.State,
 			"numofmj":       numOfMJ,
@@ -511,7 +482,7 @@ func (m *XzddMj) constructGameBaseInfo(game *model.MjGameData) {
 		"type":     game.Conf.Type,
 		"button":   game.Button,
 		"index":    game.GameIndex,
-		"mahjongs": game.Mahjongs,
+		"mahjongs": game.Wall.GetTiles(),
 	}
 	seats := make([][]int, 4)
 	for i := 0; i < 4; i++ {
@@ -670,7 +641,7 @@ func (m *XzddMj) ChuPai(userId int64, pai int) {
 func (m *XzddMj) checkCanDianGang(game *model.MjGameData, seatData *model.MjSeat, targetPai int) {
 	//检查玩家手上的牌
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 	if m.getMJType(targetPai) == seatData.Que {
@@ -1058,7 +1029,7 @@ func (m *XzddMj) doUserMoPai(game *model.MjGameData) {
 		go m.doGameOver(game, turnSeat.Userid)
 		return
 	} else {
-		numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+		numOfMJ := game.Wall.RemainLength()
 		userMgr.broadcastInRoom("mj_count_push", numOfMJ, turnSeat.Userid, true)
 	}
 
@@ -1707,7 +1678,7 @@ func (m *XzddMj) recordUserAction(game *model.MjGameData, seatData *model.MjSeat
 //检查是否可以暗杠
 func (m *XzddMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 
@@ -1722,7 +1693,7 @@ func (m *XzddMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) 
 //检查是否可以弯杠(自己摸起来的时候)
 func (m *XzddMj) checkCanWanGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 	for _, pai := range seatData.Pengs {
@@ -1912,7 +1883,7 @@ func (m *XzddMj) Hu(userId int64) {
 	seatData.Pattern = ti.Pattern
 	seatData.Iszimo = isZimo
 	//如果是最后一张牌，则认为是海底胡
-	seatData.IsHaiDiHu = int(game.CurrentIndex) == len(game.Mahjongs)
+	seatData.IsHaiDiHu = game.Wall.IsAllDrawn()
 	game.HupaiList = append(game.HupaiList, seatData.Seatindex)
 
 	if game.Conf.Tiandihu {

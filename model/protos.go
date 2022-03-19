@@ -108,8 +108,6 @@ type MjGameData struct {
 	Uuid             string           `protobuf:"bytes,2,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	GameIndex        int              `protobuf:"varint,3,opt,name=gameIndex,proto3" json:"gameIndex,omitempty"`
 	Button           int              `protobuf:"varint,4,opt,name=button,proto3" json:"button,omitempty"`
-	Mahjongs         []int            `protobuf:"varint,5,rep,packed,name=mahjongs,proto3" json:"mahjongs,omitempty"`
-	CurrentIndex     int              `protobuf:"varint,6,opt,name=currentIndex,proto3" json:"currentIndex,omitempty"`
 	GameSeats        []*MjSeat        `protobuf:"bytes,7,rep,name=gameSeats,proto3" json:"gameSeats,omitempty"`
 	NumOfQue         int              `protobuf:"varint,8,opt,name=numOfQue,proto3" json:"numOfQue,omitempty"`
 	Turn             int              `protobuf:"varint,9,opt,name=turn,proto3" json:"turn,omitempty"`

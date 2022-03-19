@@ -13,7 +13,6 @@ import (
 	"github.com/jqiris/saki/card"
 	"github.com/jqiris/saki/wall"
 
-	"math"
 	"sync"
 
 	"github.com/jqiris/kungfu/v2/logger"
@@ -91,35 +90,6 @@ func (m *XlchMj) getMJType(id int) int {
 	return -1
 }
 
-func (m *XlchMj) shuffle(game *model.MjGameData) {
-	mahjongs := game.Mahjongs
-	index := 0
-	for i := 0; i < 9; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	for i := 9; i < 18; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	for i := 18; i < 27; i++ {
-		for c := 0; c < 4; c++ {
-			mahjongs[index] = int(i)
-			index++
-		}
-	}
-	mjLen := len(mahjongs)
-	for i := 0; i < mjLen; i++ {
-		lastIndex := mjLen - i - 1
-		randIndex := int(math.Floor(float64(rand.Intn(100)*lastIndex) / 100))
-		mahjongs[randIndex], mahjongs[lastIndex] = mahjongs[lastIndex], mahjongs[randIndex]
-	}
-}
-
 func (m *XlchMj) deal(game *model.MjGameData) {
 	//每人13张 一共 13*4 ＝ 52张 庄家多一张 53张
 	seatIndex := game.Button
@@ -143,7 +113,6 @@ func (m *XlchMj) mopai(game *model.MjGameData, seatIndex int) int {
 	pai := game.Wall.ForwardDraw()
 	data.Holds = append(data.Holds, pai)
 	data.CountMap[pai]++
-	game.CurrentIndex++
 	return pai
 }
 
@@ -612,8 +581,6 @@ func (m *XlchMj) begin(roomId string) {
 		Uuid:          roomInfo.Uuid,
 		GameIndex:     roomInfo.NumOfGames,
 		Button:        roomInfo.NextButton,
-		Mahjongs:      make([]int, 108),
-		CurrentIndex:  0,
 		GameSeats:     make([]*model.MjSeat, 4),
 		NumOfQue:      0,
 		Turn:          0,
@@ -669,11 +636,10 @@ func (m *XlchMj) begin(roomId string) {
 		m.saveSeat(data.Userid, data)
 	}
 	m.saveGame(roomId, game)
-	// m.shuffle(game)
 	game.Wall.Shuffle()
 	m.deal(game)
 
-	numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+	numOfMJ := game.Wall.RemainLength()
 	huansanzhang := roomInfo.Conf.Hsz
 
 	for i := 0; i < len(seats); i++ {
@@ -1000,7 +966,7 @@ func (m *XlchMj) SetReady(userId int64) {
 			go m.begin(roomId)
 		}
 	} else {
-		numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+		numOfMJ := game.Wall.RemainLength()
 		data := map[string]any{
 			"state":   game.State,
 			"numofmj": numOfMJ,
@@ -1255,7 +1221,7 @@ func (m *XlchMj) constructGameBaseInfo(game *model.MjGameData) {
 		"type":     game.Conf.Type,
 		"button":   game.Button,
 		"index":    game.GameIndex,
-		"mahjongs": game.Mahjongs,
+		"mahjongs": game.Wall.GetTiles(),
 	}
 	seats := make([][]int, 4)
 	for i := 0; i < 4; i++ {
@@ -1309,7 +1275,7 @@ func (m *XlchMj) doDingQue(game *model.MjGameData, seatData *model.MjSeat) {
 //检查是否可以暗杠
 func (m *XlchMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 
@@ -1324,7 +1290,7 @@ func (m *XlchMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) 
 //检查是否可以弯杠(自己摸起来的时候)
 func (m *XlchMj) checkCanWanGang(game *model.MjGameData, seatData *model.MjSeat) {
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 	for _, pai := range seatData.Pengs {
@@ -1351,7 +1317,7 @@ func (m *XlchMj) checkCanHu(game *model.MjGameData, seatData *model.MjSeat, targ
 func (m *XlchMj) checkCanDianGang(game *model.MjGameData, seatData *model.MjSeat, targetPai int) {
 	//检查玩家手上的牌
 	//如果没有牌了，则不能再杠
-	if len(game.Mahjongs) <= int(game.CurrentIndex) {
+	if game.Wall.IsAllDrawn() {
 		return
 	}
 	if m.getMJType(targetPai) == seatData.Que {
@@ -1545,7 +1511,7 @@ func (m *XlchMj) doUserMoPai(game *model.MjGameData) {
 		go m.doGameOver(game, turnSeat.Userid)
 		return
 	} else {
-		numOfMJ := len(game.Mahjongs) - int(game.CurrentIndex)
+		numOfMJ := game.Wall.RemainLength()
 		userMgr.broadcastInRoom("mj_count_push", numOfMJ, turnSeat.Userid, true)
 	}
 
@@ -1946,7 +1912,7 @@ func (m *XlchMj) Hu(userId int64) {
 	huData.Pattern = ti.Pattern
 	huData.Iszimo = isZimo
 	//如果是最后一张牌，则认为是海底胡
-	huData.IsHaiDiHu = int(game.CurrentIndex) == len(game.Mahjongs)
+	huData.IsHaiDiHu = game.Wall.IsAllDrawn()
 
 	if game.Conf.Tiandihu {
 		if game.ChupaiCnt == 0 && game.Button == seatData.Seatindex && game.ChuPai == -1 {
