@@ -3,11 +3,12 @@ package hall
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/jqiris/kungfu/v2/rpc"
 	"github.com/jqiris/orange/servers/mahjong"
 	"github.com/spf13/viper"
-	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jqiris/kungfu/v2/discover"
@@ -310,7 +311,7 @@ func (h *ServerHall) GetDetailOfGame(c *gin.Context) {
 		h.Error(c, "unknown error")
 		return
 	}
-	gameType, uuid, index := c.Query("game_type"), c.Query("uuid"), utils.StringToInt32(c.Query("index"))
+	gameType, uuid, index := c.Query("game_type"), c.Query("uuid"), utils.StringToInt(c.Query("index"))
 	if len(gameType) == 0 || len(uuid) == 0 || index < 0 {
 		h.Error(c, "parameters don't match api requirements", -1)
 		return
@@ -360,7 +361,7 @@ func (h *ServerHall) GetMessage(c *gin.Context) {
 }
 
 func (h *ServerHall) Maintain(c *gin.Context) {
-	serverId, reqState, sign := c.PostForm("serverId"), utils.StringToInt32(c.PostForm("reqState")), c.PostForm("sign")
+	serverId, reqState, sign := c.PostForm("serverId"), utils.StringToInt(c.PostForm("reqState")), c.PostForm("sign")
 	md5 := utils.Md5(fmt.Sprintf("%v-%v-%v", serverId, reqState, viper.GetString("primary.maintain_key")))
 	if md5 != sign {
 		logger.Errorf("maintain sign is wrong, ip:%v", c.ClientIP())
@@ -378,7 +379,7 @@ func (h *ServerHall) Maintain(c *gin.Context) {
 	h.Success(c, nil)
 }
 
-func (h *ServerHall) serverMaintain(serverId string, reqState int32) error {
+func (h *ServerHall) serverMaintain(serverId string, reqState int) error {
 	//广播通知服务器进行维护
 	server := discover.GetServerById(serverId, false) //不过滤维护状态
 	if server == nil {
@@ -387,7 +388,7 @@ func (h *ServerHall) serverMaintain(serverId string, reqState int32) error {
 	req := rpc.NewReqBuilder(server)
 	err := h.Rpc.Publish(req.SetMsgId(int32(protos.InnerMsgId_InnerMsgMaintain)).SetReq(&protos.InnerMaintainReq{
 		ServerId: serverId,
-		ReqState: reqState,
+		ReqState: int32(reqState),
 	}).Build())
 	if err != nil {
 		return err

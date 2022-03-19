@@ -82,7 +82,7 @@ func UpdateMjRoom(roomId string, data map[string]any) error {
 	return db.Model(&model.MahjongRoom{}).Where("room_id=?", roomId).Updates(data).Error
 }
 
-func UpdateMjSeatInfo(roomId string, seatIndex int32, userId int64, icon, name string) error {
+func UpdateMjSeatInfo(roomId string, seatIndex int, userId int64, icon, name string) error {
 	colUserId := fmt.Sprintf("user_id%d", seatIndex)
 	colIcon := fmt.Sprintf("user_icon%d", seatIndex)
 	colUserName := fmt.Sprintf("user_name%d", seatIndex)
@@ -109,11 +109,11 @@ func CreateMjAction(data *model.MahjongAction) error {
 	return db.Create(data).Error
 }
 
-func UpdateMjAction(uuid string, index int32, data map[string]any) error {
+func UpdateMjAction(uuid string, index int, data map[string]any) error {
 	return db.Model(&model.MahjongAction{}).Where("room_uuid=? and game_index=?", uuid, index).Updates(data).Error
 }
 
-func CostGems(userId int64, cost int32) error {
+func CostGems(userId int64, cost int) error {
 	sql := "UPDATE user_members SET gems = gems -? where user_id = ?"
 	return db.Exec(sql, cost, userId).Error
 }
@@ -127,7 +127,7 @@ func GetMjActionArchive(gameType, uuid string) ([]*model.MahjongAction, error) {
 	return res, nil
 }
 
-func GetMjActionArchiveDetail(gameType, uuid string, index int32) (*model.MahjongAction, error) {
+func GetMjActionArchiveDetail(gameType, uuid string, index int) (*model.MahjongAction, error) {
 	res := &model.MahjongAction{}
 	t := TableMjActionArchive(gameType)
 	err := db.Table(t).Where("room_uuid = ? and game_index = ?", uuid, index).First(res).Error

@@ -3,6 +3,7 @@ package mahjong
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/jqiris/kungfu/v2/discover"
 	"github.com/jqiris/kungfu/v2/logger"
 	"github.com/spf13/viper"
@@ -71,7 +72,7 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 		logger.Errorf("服务器在维护状态,无法创建房间,serverId:%v,req:%+v", s.Server.ServerId, req)
 		return resp
 	}
-	userId, gems, sign, conf := int64(req.UserId), int32(req.Gems), req.Sign, req.Conf
+	userId, gems, sign, conf := int64(req.UserId), int(req.Gems), req.Sign, req.Conf
 	if userId < 1 || len(sign) < 1 || len(conf) < 1 {
 		resp.Errmsg = "Invalid parameters"
 		return resp
@@ -87,7 +88,7 @@ func (s *ServerMahjong) CreateRoom(req *protos.InnerCreateRoomReq) *protos.Inner
 		resp.Errmsg = err.Error()
 		return resp
 	}
-	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int32(s.Server.ClientPort)
+	serverId, ip, port := s.Server.ServerId, s.Server.ServerIp, int(s.Server.ClientPort)
 	errcode, roomId := roomMgr.createRoom(userId, cfg, gems, serverId, ip, port)
 	if errcode != 0 || len(roomId) < 1 {
 		resp.Errmsg = "create failed"

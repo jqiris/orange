@@ -365,7 +365,7 @@ func (s *ServerMahjong) Login(c socketio.Conn, msg string) {
 			Score:     rs.Score,
 			Name:      rs.Name,
 			Ready:     rs.Ready,
-			Seatindex: int32(i),
+			Seatindex: int(i),
 			Ip:        rs.Ip,
 			Online:    online,
 		}
@@ -417,7 +417,7 @@ func (s *ServerMahjong) Huanpai(c socketio.Conn, msg string) {
 	if ctx == nil {
 		return
 	}
-	data := make(map[string]int32)
+	data := make(map[string]int)
 	err := json.Unmarshal([]byte(msg), &data)
 	if err != nil {
 		logger.Error(err)
@@ -432,7 +432,7 @@ func (s *ServerMahjong) Huanpai(c socketio.Conn, msg string) {
 }
 
 // Dingque 定缺
-func (s *ServerMahjong) Dingque(c socketio.Conn, que int32) {
+func (s *ServerMahjong) Dingque(c socketio.Conn, que int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -441,7 +441,7 @@ func (s *ServerMahjong) Dingque(c socketio.Conn, que int32) {
 }
 
 // Chupai 出牌
-func (s *ServerMahjong) Chupai(c socketio.Conn, pai int32) {
+func (s *ServerMahjong) Chupai(c socketio.Conn, pai int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return
@@ -459,7 +459,7 @@ func (s *ServerMahjong) Peng(c socketio.Conn) {
 }
 
 // Gang 杠
-func (s *ServerMahjong) Gang(c socketio.Conn, pai int32) {
+func (s *ServerMahjong) Gang(c socketio.Conn, pai int) {
 	ctx := s.GetSocketCtx(c)
 	if ctx == nil {
 		return

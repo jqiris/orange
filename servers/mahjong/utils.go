@@ -2,7 +2,7 @@ package mahjong
 
 import "github.com/jqiris/orange/model"
 
-func checkTingPai(seatData *model.MjSeat, begin, end int32) {
+func checkTingPai(seatData *model.MjSeat, begin, end int) {
 	for i := begin; i < end; i++ {
 		//如果这牌已经在和了，就不用检查了
 		if seatData.TingMap[i] != nil {
@@ -55,8 +55,8 @@ func checkCanHu(seatData *model.MjSeat) bool {
 
 func checkSingle(seatData *model.MjSeat) bool {
 	holds := seatData.Holds
-	var selected int32 = -1
-	var c int32 = 0
+	var selected int = -1
+	var c int = 0
 	for _, pai := range holds {
 		c = seatData.CountMap[pai]
 		if c != 0 {
@@ -94,7 +94,7 @@ func checkSingle(seatData *model.MjSeat) bool {
 	return matchSingle(seatData, selected)
 }
 
-func matchSingle(seatData *model.MjSeat, selected int32) bool {
+func matchSingle(seatData *model.MjSeat, selected int) bool {
 	//分开匹配 A-2,A-1,A
 	matched := true
 	v := selected % 9
@@ -102,7 +102,7 @@ func matchSingle(seatData *model.MjSeat, selected int32) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t int32 = selected - 2 + int32(i)
+			var t int = selected - 2 + int(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false
@@ -131,7 +131,7 @@ func matchSingle(seatData *model.MjSeat, selected int32) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t int32 = selected - 1 + int32(i)
+			var t int = selected - 1 + int(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false
@@ -160,7 +160,7 @@ func matchSingle(seatData *model.MjSeat, selected int32) bool {
 		matched = false
 	} else {
 		for i := 0; i < 3; i++ {
-			var t int32 = selected + int32(i)
+			var t int = selected + int(i)
 			var cc = seatData.CountMap[t]
 			if cc == 0 {
 				matched = false

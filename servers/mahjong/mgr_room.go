@@ -15,17 +15,17 @@ import (
 )
 
 var (
-	DiFen     = []int32{1, 2, 5}
-	MaxFan    = []int32{3, 4, 5}
-	JuShu     = []int32{2, 8}
-	JuShuCost = []int32{2, 3}
+	DiFen     = []int{1, 2, 5}
+	MaxFan    = []int{3, 4, 5}
+	JuShu     = []int{2, 8}
+	JuShuCost = []int{2, 3}
 )
 
 type RoomMgr struct {
 	UserLocation  map[int64]*model.UserLocation //用户位置信息
 	Rooms         map[string]*model.MjRoom      //房间map
 	CreatingRooms map[string]bool               //创建标记
-	TotalRooms    int32                         //房间总数
+	TotalRooms    int                           //房间总数
 	lockLocation  sync.RWMutex
 	lockRoom      sync.RWMutex
 	lockCreating  sync.RWMutex
@@ -99,14 +99,14 @@ func (m *RoomMgr) delLocation(userId int64) {
 	delete(m.UserLocation, userId)
 }
 
-func (m *RoomMgr) getUserSeat(userId int64) int32 {
+func (m *RoomMgr) getUserSeat(userId int64) int {
 	if v := m.getLocation(userId); v != nil {
 		return v.SeatIndex
 	}
 	return -1
 }
 
-func (m *RoomMgr) createRoom(userId int64, conf model.GameConf, gems int32, serverId, serverIp string, port int32) (errcode int32, roomId string) {
+func (m *RoomMgr) createRoom(userId int64, conf model.GameConf, gems int, serverId, serverIp string, port int) (errcode int, roomId string) {
 	errcode = 1
 	if len(conf.Type) < 1 {
 		return
@@ -133,7 +133,7 @@ func (m *RoomMgr) createRoom(userId int64, conf model.GameConf, gems int32, serv
 	return
 }
 
-func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip string, port int32) (int32, string) {
+func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip string, port int) (int, string) {
 	roomId := m.generateRoomId()
 	room := m.getRoom(roomId)
 	if room != nil || m.getCreatingRoom(roomId) {
@@ -173,7 +173,7 @@ func (m *RoomMgr) fnCreate(userId int64, conf model.GameConf, serverId, ip strin
 					Score:       0,
 					Name:        "",
 					Ready:       false,
-					Seatindex:   int32(i),
+					Seatindex:   int(i),
 					NumZiMo:     0,
 					NumJiePao:   0,
 					NumDianPao:  0,
@@ -221,8 +221,8 @@ func (m *RoomMgr) getUserRoom(userId int64) string {
 	return ""
 }
 
-func (m *RoomMgr) enterRoom(roomId string, userId int64, userName string) int32 {
-	fnTakeSeat := func(room *model.MjRoom) int32 {
+func (m *RoomMgr) enterRoom(roomId string, userId int64, userName string) int {
+	fnTakeSeat := func(room *model.MjRoom) int {
 		if m.getUserRoom(userId) == roomId {
 			return 0 //已存在
 		}
@@ -233,9 +233,9 @@ func (m *RoomMgr) enterRoom(roomId string, userId int64, userName string) int32 
 				seat.Name = userName
 				m.saveLocation(userId, &model.UserLocation{
 					RoomId:    roomId,
-					SeatIndex: int32(i),
+					SeatIndex: int(i),
 				})
-				err := database.UpdateMjSeatInfo(roomId, int32(i), seat.Userid, "", seat.Name)
+				err := database.UpdateMjSeatInfo(roomId, int(i), seat.Userid, "", seat.Name)
 				if err != nil {
 					logger.Error(err)
 				}
@@ -299,7 +299,7 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.MahjongRoom) (*model.MjRoom,
 			s.Name = dbdata.UserName3
 		}
 		s.Ready = false
-		s.Seatindex = int32(i)
+		s.Seatindex = int(i)
 		s.NumZiMo = 0
 		s.NumJiePao = 0
 		s.NumDianPao = 0
@@ -309,7 +309,7 @@ func (m *RoomMgr) constructRoomFromDb(dbdata *model.MahjongRoom) (*model.MjRoom,
 		if s.Userid > 0 {
 			m.saveLocation(s.Userid, &model.UserLocation{
 				RoomId:    roomId,
-				SeatIndex: int32(i),
+				SeatIndex: int(i),
 			})
 		}
 		roomInfo.Seats[i] = s
@@ -336,7 +336,7 @@ func (m *RoomMgr) setReady(userId int64, value bool) {
 	s.Ready = value
 }
 
-func (m *RoomMgr) getTotallRooms() int32 {
+func (m *RoomMgr) getTotallRooms() int {
 	return m.TotalRooms
 }
 

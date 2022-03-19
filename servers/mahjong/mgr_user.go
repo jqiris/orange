@@ -1,15 +1,16 @@
 package mahjong
 
 import (
-	"github.com/jqiris/kungfu/v2/logger"
 	"sync"
+
+	"github.com/jqiris/kungfu/v2/logger"
 
 	socketio "github.com/googollee/go-socket.io"
 )
 
 type UserMgr struct {
 	userList   sync.Map
-	userOnline int32
+	userOnline int
 }
 
 func NewUserMgr() *UserMgr {

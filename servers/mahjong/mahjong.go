@@ -40,11 +40,11 @@ type GameMahjong interface {
 	DissolveRequest(roomId string, userId int64) *model.MjRoom
 	DissolveAgree(roomId string, userId int64, agree bool) *model.MjRoom
 	DoDissolve(roomId string)
-	HuanSanZhang(userId int64, p1, p2, p3 int32)
-	DingQue(userId int64, que int32)
-	ChuPai(userId int64, pai int32)
+	HuanSanZhang(userId int64, p1, p2, p3 int)
+	DingQue(userId int64, que int)
+	ChuPai(userId int64, pai int)
 	Peng(userId int64)
-	Gang(userId int64, pai int32)
+	Gang(userId int64, pai int)
 	Hu(userId int64)
 	Guo(userId int64)
 }
