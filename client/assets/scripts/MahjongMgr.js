@@ -1,4 +1,4 @@
-var mahjongSprites = [];
+var mahjongSprites = {};
 
 cc.Class({
     extends: cc.Component,
@@ -57,31 +57,32 @@ cc.Class({
         this._pres = ["M_", "R_", "B_", "L_"];
         this._foldPres = ["B_", "R_", "B_", "L_"];
         cc.vv.mahjongmgr = this;
-        //筒
-        for (var i = 1; i < 10; ++i) {
-            mahjongSprites.push("dot_" + i);
-        }
-
-        //条
-        for (var i = 1; i < 10; ++i) {
-            mahjongSprites.push("bamboo_" + i);
-        }
 
         //万
         for (var i = 1; i < 10; ++i) {
-            mahjongSprites.push("character_" + i);
+            mahjongSprites[i] = "character_" + i
+        }
+        //条
+        for (var i = 1; i < 10; ++i) {
+            mahjongSprites[i + 10] = "bamboo_" + i
+        }
+        //筒
+        for (var i = 1; i < 10; ++i) {
+            mahjongSprites[i + 20] = "dot_" + i
         }
 
-        //中、发、白
-        mahjongSprites.push("red");
-        mahjongSprites.push("green");
-        mahjongSprites.push("white");
 
         //东西南北风
-        mahjongSprites.push("wind_east");
-        mahjongSprites.push("wind_west");
-        mahjongSprites.push("wind_south");
-        mahjongSprites.push("wind_north");
+        mahjongSprites[31] = "wind_east";
+        mahjongSprites[32] = "wind_north";
+        mahjongSprites[33] = "wind_south";
+        mahjongSprites[34] = "wind_west";
+
+        //中、发、白
+        mahjongSprites[41] = "green";
+        mahjongSprites[42] = "red";
+        mahjongSprites[43] = "white";
+
     },
 
     getMahjongSpriteByID: function(id) {
@@ -89,11 +90,11 @@ cc.Class({
     },
 
     getMahjongType: function(id) {
-        if (id >= 1 && id <= 9) {
+        if (id >= 21 && id <= 29) {
             return 0;
         } else if (id >= 11 && id <= 19) {
             return 1;
-        } else if (id >= 21 && id < 29) {
+        } else if (id >= 1 && id <= 9) {
             return 2;
         }
     },
@@ -114,11 +115,11 @@ cc.Class({
 
     getAudioURLByMJID: function(id) {
         var realId = 0;
-        if (id >= 1 && id <= 9) {
+        if (id >= 21 && id <= 29) {
             realId = id + 21;
         } else if (id >= 11 && id <= 19) {
             realId = id - 8;
-        } else if (id >= 21 && id <= 29) {
+        } else if (id >= 1 && id <= 9) {
             realId = id - 7;
         }
         return "nv/" + realId + ".mp3";
