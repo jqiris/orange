@@ -76,20 +76,6 @@ func (m *XlchMj) String() string {
 	return "四川麻将血流成河"
 }
 
-func (m *XlchMj) getMJType(id int) int {
-	if id >= 0 && id < 9 {
-		//筒
-		return 0
-	} else if id >= 9 && id < 18 {
-		//条
-		return 1
-	} else if id >= 18 && id < 27 {
-		//万
-		return 2
-	}
-	return -1
-}
-
 func (m *XlchMj) deal(game *model.MjGameData) {
 	//每人13张 一共 13*4 ＝ 52张 庄家多一张 53张
 	seatIndex := game.Button
@@ -111,8 +97,7 @@ func (m *XlchMj) mopai(game *model.MjGameData, seatIndex int) int {
 	}
 	data := game.GameSeats[seatIndex]
 	pai := game.Wall.ForwardDraw()
-	data.Holds = append(data.Holds, pai)
-	data.CountMap[pai]++
+	data.Holds.AddTile(pai, 1)
 	return pai
 }
 
@@ -203,7 +188,7 @@ func (m *XlchMj) isZhongZhang(gameSeatData *model.MjSeat) bool {
 	if fn(gameSeatData.Wangangs) == false {
 		return false
 	}
-	if fn(gameSeatData.Holds) == false {
+	if fn(gameSeatData.Holds.GetList()) == false {
 		return false
 	}
 	return true
@@ -232,16 +217,16 @@ func (m *XlchMj) isJiangDui(gameSeatData *model.MjSeat) bool {
 	if fn(gameSeatData.Wangangs) == false {
 		return false
 	}
-	if fn(gameSeatData.Holds) == false {
+	if fn(gameSeatData.Holds.GetList()) == false {
 		return false
 	}
 	return true
 }
 
 func (m *XlchMj) isQingYiSe(gameSeatData *model.MjSeat) bool {
-	typ := m.getMJType(gameSeatData.Holds[0])
+	typ := gameSeatData.Holds.GetIndexType(0)
 	//检查手上的牌
-	if m.isSameType(typ, gameSeatData.Holds) == false {
+	if m.isSameType(typ, gameSeatData.Holds.GetList()) == false {
 		return false
 	}
 	//检查杠下的牌
@@ -264,7 +249,7 @@ func (m *XlchMj) isQingYiSe(gameSeatData *model.MjSeat) bool {
 
 func (m *XlchMj) isSameType(typ int, arr []int) bool {
 	for _, pai := range arr {
-		t := m.getMJType(pai)
+		t := card.GetMjType(pai)
 		if typ != -1 && typ != t {
 			return false
 		}
@@ -311,15 +296,12 @@ func (m *XlchMj) findMaxFanTingPai(ts *model.MjSeat) *model.MjTingData {
 func (m *XlchMj) getNumOfGen(seatData *model.MjSeat) int {
 	numOfGangs := int(len(seatData.Diangangs) + len(seatData.Wangangs) + len(seatData.Angangs))
 	for _, pai := range seatData.Pengs {
-		if seatData.CountMap[pai] == 1 {
+		if seatData.Holds.GetTileCnt(pai) == 1 {
 			numOfGangs++
 		}
 	}
-	for _, num := range seatData.CountMap {
-		if num == 4 {
-			numOfGangs++
-		}
-	}
+	gangs := seatData.Holds.GetNumTiles(4)
+	numOfGangs += len(gangs)
 	return numOfGangs
 }
 
@@ -333,7 +315,7 @@ func (m *XlchMj) hasOperations(seatData *model.MjSeat) bool {
 func (m *XlchMj) sendOperations(game *model.MjGameData, seatData *model.MjSeat, pai int) {
 	if m.hasOperations(seatData) {
 		if pai == -1 {
-			pai = seatData.Holds[len(seatData.Holds)-1]
+			pai = seatData.Holds.Peek()
 		}
 		data := map[string]any{
 			"pai":     pai,
@@ -409,7 +391,8 @@ func (m *XlchMj) calculateResult(game *model.MjGameData, roomInfo *model.MjRoom)
 			}
 
 			//金钩胡
-			if len(sd.Holds) == 1 || len(sd.Holds) == 2 {
+			listNum := sd.Holds.GetListNum()
+			if listNum == 1 || listNum == 2 {
 				sd.IsJinGouHu = true
 			}
 			sd.NumAnGang = int(len(sd.Angangs))
@@ -424,8 +407,7 @@ func (m *XlchMj) calculateResult(game *model.MjGameData, roomInfo *model.MjRoom)
 				//基础番(平胡0番，对对胡1番、七对2番) + 清一色2番 + 杠+1番
 				//杠上花+1番，杠上炮+1番 抢杠胡+1番，金钩胡+1番，海底胡+1番
 				fan := info.Fan
-				sd.Holds = append(sd.Holds, info.Pai)
-				sd.CountMap[info.Pai]++
+				sd.Holds.AddTile(info.Pai, 1)
 				if sd.Qingyise {
 					fan += 2
 				}
@@ -522,8 +504,7 @@ func (m *XlchMj) calculateResult(game *model.MjGameData, roomInfo *model.MjRoom)
 				}
 
 				//撤除胡的那张牌
-				_, sd.Holds, _ = tools.SlicePop(sd.Holds)
-				sd.CountMap[info.Pai]--
+				sd.Holds.Pop()
 				if fan > game.Conf.MaxFan {
 					fan = game.Conf.MaxFan
 				}
@@ -600,15 +581,14 @@ func (m *XlchMj) begin(roomId string) {
 		data.Game = game
 		data.Seatindex = int(i)
 		data.Userid = seats[i].Userid
-		data.Holds = make([]int, 0)
-		data.Folds = make([]int, 0)
+		data.Holds = card.NewCMap()
+		data.Folds = card.NewCMap()
 		data.Angangs = make([]int, 0)
 		data.Wangangs = make([]int, 0)
 		data.Diangangs = make([]int, 0)
 		data.Pengs = make([]int, 0)
 		data.Que = -1
 		data.Huanpais = make([]int, 0)
-		data.CountMap = make(map[int]int)
 		data.TingMap = make(map[int]*model.MjTingData)
 		data.Pattern = ""
 		data.CanGang = false
@@ -636,6 +616,7 @@ func (m *XlchMj) begin(roomId string) {
 		m.saveSeat(data.Userid, data)
 	}
 	m.saveGame(roomId, game)
+	// m.shuffle(game)
 	game.Wall.Shuffle()
 	m.deal(game)
 
@@ -644,7 +625,7 @@ func (m *XlchMj) begin(roomId string) {
 
 	for i := 0; i < len(seats); i++ {
 		st := seats[i]
-		holds := game.GameSeats[i].Holds
+		holds := game.GameSeats[i].Holds.GetList()
 		logger.Infof("holds:%+v", holds)
 		//通知玩家手牌
 		userMgr.sendMsg(st.Userid, "game_holds_push", holds)
@@ -808,17 +789,17 @@ func (m *XlchMj) doGameOver(game *model.MjGameData, userId int64, args ...bool) 
 func (m *XlchMj) checkCanTingPai(game *model.MjGameData, seatData *model.MjSeat) {
 	seatData.TingMap = make(map[int]*model.MjTingData)
 	//检查手上的牌是不是已打缺，如果未打缺，则不进行判定
-	for _, pai := range seatData.Holds {
-		if m.getMJType(pai) == seatData.Que {
+	for _, pai := range seatData.Holds.GetUnique() {
+		if card.IsSameType(pai, seatData.Que) {
 			return
 		}
 	}
 	//检查是否是七对 前提是没有碰，也没有杠 ，即手上拥有13张牌
-	if len(seatData.Holds) == 13 {
+	if seatData.Holds.GetListNum() == 13 {
 		//有5对牌
 		var danPai int = -1
 		pairCount := 0
-		for k, c := range seatData.CountMap {
+		for k, c := range seatData.Holds.GetTileMap() {
 			if c == 2 || c == 3 {
 				pairCount++
 			} else if c == 4 {
@@ -850,7 +831,7 @@ func (m *XlchMj) checkCanTingPai(game *model.MjGameData, seatData *model.MjSeat)
 	pairCount := 0
 	colCount := 0
 	var arr []int
-	for k, c := range seatData.CountMap {
+	for k, c := range seatData.Holds.GetTileMap() {
 		if c == 1 {
 			singleCount++
 			arr = append(arr, k)
@@ -1088,34 +1069,17 @@ func (m *XlchMj) HuanSanZhang(userId int64, p1, p2, p3 int) {
 		logger.Error("player has done this action")
 		return
 	}
-	if seatData.CountMap[p1] == 0 {
+	tileMaps := seatData.Holds.GetTileMap()
+	if tileMaps[p1] == 0 || tileMaps[p2] == 0 || tileMaps[p3] == 0 {
 		return
 	}
-	seatData.CountMap[p1]--
-
-	if seatData.CountMap[p2] == 0 {
-		seatData.CountMap[p1]++
-		return
-	}
-	seatData.CountMap[p2]--
-
-	if seatData.CountMap[p3] == 0 {
-		seatData.CountMap[p1]++
-		seatData.CountMap[p2]++
-		return
-	}
-
-	seatData.CountMap[p1]++
-	seatData.CountMap[p2]++
 
 	seatData.Huanpais = []int{p1, p2, p3}
 
 	for _, p := range seatData.Huanpais {
-		idx := tools.IndexOf(seatData.Holds, p)
-		seatData.Holds = tools.SliceDel(seatData.Holds, idx, 1)
-		seatData.CountMap[p]--
+		seatData.Holds.DelTile(p, 1)
 	}
-	userMgr.sendMsg(seatData.Userid, "game_holds_push", seatData.Holds)
+	userMgr.sendMsg(seatData.Userid, "game_holds_push", seatData.Holds.GetList())
 
 	for _, sd := range game.GameSeats {
 		if sd == seatData {
@@ -1144,8 +1108,7 @@ func (m *XlchMj) HuanSanZhang(userId int64, p1, p2, p3 int) {
 	var fn = func(s1 *model.MjSeat, huanjin []int) {
 		for i := 0; i < len(huanjin); i++ {
 			var p = huanjin[i]
-			s1.Holds = append(s1.Holds, p)
-			s1.CountMap[p]++
+			s1.Holds.AddTile(p, 1)
 		}
 	}
 
@@ -1183,12 +1146,12 @@ func (m *XlchMj) HuanSanZhang(userId int64, p1, p2, p3 int) {
 
 	game.State = "dingque"
 	for _, gs := range s {
-		Userid := gs.Userid
-		userMgr.sendMsg(Userid, "game_huanpai_over_push", rd)
+		userid := gs.Userid
+		userMgr.sendMsg(userid, "game_huanpai_over_push", rd)
 
-		userMgr.sendMsg(Userid, "game_holds_push", gs.Holds)
+		userMgr.sendMsg(userid, "game_holds_push", gs.Holds.GetList())
 		//通知准备定缺
-		userMgr.sendMsg(Userid, "game_dingque_push")
+		userMgr.sendMsg(userid, "game_dingque_push")
 	}
 }
 
@@ -1225,7 +1188,7 @@ func (m *XlchMj) constructGameBaseInfo(game *model.MjGameData) {
 	}
 	seats := make([][]int, 4)
 	for i := 0; i < 4; i++ {
-		seats[i] = game.GameSeats[i].Holds
+		seats[i] = game.GameSeats[i].Holds.GetList()
 	}
 	baseInfo["game_seats"] = seats
 	bs, _ := json.Marshal(baseInfo)
@@ -1243,17 +1206,13 @@ func (m *XlchMj) doDingQue(game *model.MjGameData, seatData *model.MjSeat) {
 	//进行听牌检查
 	for _, gs := range game.GameSeats {
 		var duoyu int = -1
-		if len(gs.Holds) == 14 {
-			isPop := false
-			isPop, gs.Holds, duoyu = tools.SlicePop(gs.Holds)
-			if isPop {
-				gs.CountMap[duoyu] -= 1
-			}
+		listNum := gs.Holds.GetListNum()
+		if listNum == 14 {
+			duoyu = gs.Holds.Pop()
 		}
 		m.checkCanTingPai(game, gs)
 		if duoyu >= 0 {
-			gs.Holds = append(gs.Holds, duoyu)
-			gs.CountMap[duoyu]++
+			gs.Holds.AddTile(duoyu, 1)
 		}
 	}
 
@@ -1266,7 +1225,7 @@ func (m *XlchMj) doDingQue(game *model.MjGameData, seatData *model.MjSeat) {
 	//直杠
 	m.checkCanAnGang(game, turnSeat)
 	//检查胡 用最后一张来检查
-	m.checkCanHu(game, turnSeat, turnSeat.Holds[len(turnSeat.Holds)-1])
+	m.checkCanHu(game, turnSeat, turnSeat.Holds.Peek())
 	//通知前端
 	m.sendOperations(game, turnSeat, game.ChuPai)
 	// logger.Infof("doDingQue,seat:%+v,turn:%+v", game.GameSeats[game.Turn], game.Turn)
@@ -1279,8 +1238,8 @@ func (m *XlchMj) checkCanAnGang(game *model.MjGameData, seatData *model.MjSeat) 
 		return
 	}
 
-	for pai, c := range seatData.CountMap {
-		if m.getMJType(pai) != seatData.Que && c == 4 {
+	for pai, c := range seatData.Holds.GetTileMap() {
+		if card.GetMjType(pai) != seatData.Que && c == 4 {
 			seatData.CanGang = true
 			seatData.GangPai = append(seatData.GangPai, pai)
 		}
@@ -1294,7 +1253,7 @@ func (m *XlchMj) checkCanWanGang(game *model.MjGameData, seatData *model.MjSeat)
 		return
 	}
 	for _, pai := range seatData.Pengs {
-		if seatData.CountMap[pai] == 1 {
+		if seatData.Holds.GetTileCnt(pai) == 1 {
 			seatData.CanGang = true
 			seatData.GangPai = append(seatData.GangPai, pai)
 		}
@@ -1303,7 +1262,7 @@ func (m *XlchMj) checkCanWanGang(game *model.MjGameData, seatData *model.MjSeat)
 
 func (m *XlchMj) checkCanHu(game *model.MjGameData, seatData *model.MjSeat, targetPai int) {
 	game.LastHuPaiSeat = -1
-	if m.getMJType(targetPai) == seatData.Que {
+	if card.GetMjType(targetPai) == seatData.Que {
 		return
 	}
 	seatData.CanHu = false
@@ -1320,10 +1279,10 @@ func (m *XlchMj) checkCanDianGang(game *model.MjGameData, seatData *model.MjSeat
 	if game.Wall.IsAllDrawn() {
 		return
 	}
-	if m.getMJType(targetPai) == seatData.Que {
+	if card.GetMjType(targetPai) == seatData.Que {
 		return
 	}
-	count := seatData.CountMap[targetPai]
+	count := seatData.Holds.GetTileCnt(targetPai)
 	if count >= 3 {
 		seatData.CanGang = true
 		seatData.GangPai = append(seatData.GangPai, targetPai)
@@ -1331,11 +1290,10 @@ func (m *XlchMj) checkCanDianGang(game *model.MjGameData, seatData *model.MjSeat
 	}
 }
 func (m *XlchMj) checkCanPeng(game *model.MjGameData, seatData *model.MjSeat, targetPai int) {
-	if m.getMJType(targetPai) == seatData.Que {
+	if card.GetMjType(targetPai) == seatData.Que {
 		return
 	}
-	count := seatData.CountMap[targetPai]
-	if count >= 2 {
+	if seatData.Holds.GetTileCnt(targetPai) >= 2 {
 		seatData.CanPeng = true
 	}
 }
@@ -1362,21 +1320,20 @@ func (m *XlchMj) ChuPai(userId int64, pai int) {
 	}
 	//如果是胡了的人，则只能打最后一张牌
 	if seatData.Hued {
-		if len(seatData.Holds) == 0 || seatData.Holds[len(seatData.Holds)-1] != pai {
+		if seatData.Holds.Peek() != pai {
 			logger.Error("only deal last one when hued.")
 			return
 		}
 	}
-	index := tools.IndexOf(seatData.Holds, pai)
-	if index == -1 {
+	cnt := seatData.Holds.GetTileCnt(pai)
+	if cnt == 0 {
 		logger.Errorf("can't find the mj,holds:%+v,pai:%+v", seatData.Holds, pai)
 		return
 	}
 	seatData.CanChuPai = false
 	game.ChupaiCnt++
 	seatData.GuoHuFan = -1
-	seatData.Holds = tools.SliceDel(seatData.Holds, index, 1)
-	seatData.CountMap[pai]--
+	seatData.Holds.DelTile(pai, 1)
 	game.ChuPai = pai
 	m.recordGameAction(game, game.Turn, constant.ActionChupai, pai)
 	m.checkCanTingPai(game, seatData)
@@ -1416,7 +1373,7 @@ func (m *XlchMj) ChuPai(userId int64, pai int) {
 	if !hasActions {
 		time.AfterFunc(500*time.Millisecond, func() {
 			userMgr.broadcastInRoom("guo_notify_push", map[string]any{"userId": seatData.Userid, "pai": game.ChuPai}, seatData.Userid, true)
-			seatData.Folds = append(seatData.Folds, game.ChuPai)
+			seatData.Folds.AddTile(game.ChuPai, 1)
 			game.ChuPai = -1
 			m.moveToNextUser(game, -1)
 			m.doUserMoPai(game)
@@ -1468,7 +1425,7 @@ func (m *XlchMj) Peng(userId int64) {
 
 	//验证手上的牌的数目
 	pai := game.ChuPai
-	c := seatData.CountMap[pai]
+	c := seatData.Holds.GetTileCnt(pai)
 	if c < 2 {
 		logger.Infof("pai:%v,count:%v", pai, c)
 		logger.Info(seatData.Holds)
@@ -1479,14 +1436,9 @@ func (m *XlchMj) Peng(userId int64) {
 	//进行碰牌处理
 	//扣掉手上的牌
 	//从此人牌中扣除
-	for i := 0; i < 2; i++ {
-		var index = tools.IndexOf(seatData.Holds, pai)
-		if index == -1 {
-			logger.Info("can't find mj.")
-			return
-		}
-		seatData.Holds = tools.SliceDel(seatData.Holds, index, 1)
-		seatData.CountMap[pai]--
+	if !seatData.Holds.DelTile(pai, 2) {
+		logger.Info("can't find mj.")
+		return
 	}
 	seatData.Pengs = append(seatData.Pengs, pai)
 	game.ChuPai = -1
@@ -1525,7 +1477,7 @@ func (m *XlchMj) doUserMoPai(game *model.MjGameData) {
 		m.checkCanAnGang(game, turnSeat)
 	}
 	//如果未胡牌，或者摸起来的牌可以杠，才检查弯杠
-	if !turnSeat.Hued || turnSeat.Holds[len(turnSeat.Holds)-1] == pai {
+	if !turnSeat.Hued || turnSeat.Holds.Peek() == pai {
 		m.checkCanWanGang(game, turnSeat)
 	}
 	//检查看是否可以和
@@ -1579,7 +1531,7 @@ func (m *XlchMj) Gang(userId int64, pai int) {
 		return
 	}
 
-	numOfCnt := seatData.CountMap[pai]
+	numOfCnt := seatData.Holds.GetTileCnt(pai)
 
 	//胡了的，只能直杠
 	if numOfCnt != 1 && seatData.Hued {
@@ -1676,22 +1628,16 @@ func (m *XlchMj) doGang(game *model.MjGameData, turnSeat, seatData *model.MjSeat
 		}
 
 		//如果最后一张牌不是杠的牌，则认为是转手杠
-		if seatData.Holds[len(seatData.Holds)-1] != pai {
+		if seatData.Holds.Peek() != pai {
 			isZhuanShouGang = true
 		}
 	}
 	//进行碰牌处理
 	//扣掉手上的牌
 	//从此人牌中扣除
-	for i := 0; i < int(numOfCnt); i++ {
-		index := tools.IndexOf(seatData.Holds, pai)
-		if index == -1 {
-			logger.Info(seatData.Holds)
-			logger.Info("can't find mj.")
-			return
-		}
-		seatData.Holds = tools.SliceDel(seatData.Holds, index, 1)
-		seatData.CountMap[pai]--
+	if !seatData.Holds.DelTile(pai, numOfCnt) {
+		logger.Info("can't find mj.")
+		return
 	}
 
 	m.recordGameAction(game, seatData.Seatindex, constant.ActionGang, pai)
@@ -1809,11 +1755,8 @@ func (m *XlchMj) Hu(userId int64) {
 		m.recordGameAction(game, seatIndex, constant.ActionHu, hupai)
 		game.QiangGangContext.IsValid = false
 
-		idx := tools.IndexOf(gangSeat.Holds, hupai)
-		if idx != -1 {
-			gangSeat.Holds = tools.SliceDel(gangSeat.Holds, idx, 1)
-			gangSeat.CountMap[hupai]--
-			userMgr.sendMsg(gangSeat.Userid, "game_holds_push", gangSeat.Holds)
+		if gangSeat.Holds.DelTile(hupai, 1) {
+			userMgr.sendMsg(gangSeat.Userid, "game_holds_push", gangSeat.Holds.GetList())
 		}
 		gangSeat.Huinfo = append(gangSeat.Huinfo, &model.MjHuData{
 			Action: "beiqianggang",
@@ -1821,16 +1764,9 @@ func (m *XlchMj) Hu(userId int64) {
 			Index:  int(len(seatData.Huinfo) - 1),
 		})
 	} else if game.ChuPai == -1 {
-		isPop := false
-		isPop, seatData.Holds, hupai = tools.SlicePop(seatData.Holds)
-		notify = -1
-		if isPop {
-			notify = hupai
-			seatData.CountMap[hupai]--
-			huData.Pai = hupai
-		} else {
-			huData.Pai = -1
-		}
+		hupai = seatData.Holds.Pop()
+		notify = hupai
+		huData.Pai = hupai
 		if huData.IsGangHu {
 			if turnSeat.LastFangGangSeat == seatIndex {
 				huData.Action = "ganghua"
@@ -1997,7 +1933,7 @@ func (m *XlchMj) Guo(userId int64) {
 	if game.ChuPai >= 0 {
 		uid := game.GameSeats[game.Turn].Userid
 		userMgr.broadcastInRoom("guo_notify_push", map[string]any{"Userid": uid, "pai": game.ChuPai}, seatData.Userid, true)
-		seatData.Folds = append(seatData.Folds, game.ChuPai)
+		seatData.Folds.AddTile(game.ChuPai, 1)
 		game.ChuPai = -1
 	}
 	qiangGangContext := game.QiangGangContext

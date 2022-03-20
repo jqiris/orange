@@ -1,6 +1,9 @@
 package model
 
-import "github.com/jqiris/saki/wall"
+import (
+	"github.com/jqiris/saki/card"
+	"github.com/jqiris/saki/wall"
+)
 
 type UserLocation struct {
 	RoomType  string `protobuf:"bytes,1,opt,name=roomType,proto3" json:"roomType,omitempty"`
@@ -67,15 +70,14 @@ type MjSeat struct {
 	Ip               string              `protobuf:"bytes,12,opt,name=ip,proto3" json:"ip,omitempty"`
 	Online           bool                `protobuf:"varint,13,opt,name=online,proto3" json:"online,omitempty"`
 	Game             *MjGameData         `protobuf:"bytes,14,opt,name=game,proto3" json:"game,omitempty"`
-	Holds            []int               `protobuf:"varint,15,rep,packed,name=holds,proto3" json:"holds"`
-	Folds            []int               `protobuf:"varint,16,rep,packed,name=folds,proto3" json:"folds"`
+	Holds            *card.CMap          `protobuf:"varint,15,rep,packed,name=holds,proto3" json:"holds"`
+	Folds            *card.CMap          `protobuf:"varint,16,rep,packed,name=folds,proto3" json:"folds"`
 	Angangs          []int               `protobuf:"varint,17,rep,packed,name=angangs,proto3" json:"angangs"`
 	Diang            []int               `protobuf:"varint,18,rep,packed,name=diang,proto3" json:"diang"`
 	Wangangs         []int               `protobuf:"varint,19,rep,packed,name=wangangs,proto3" json:"wangangs"`
 	Pengs            []int               `protobuf:"varint,20,rep,packed,name=pengs,proto3" json:"pengs"`
 	Que              int                 `protobuf:"varint,21,opt,name=que,proto3" json:"que"`
 	Huanpais         []int               `protobuf:"varint,22,rep,packed,name=huanpais,proto3" json:"huanpais"`
-	CountMap         map[int]int         `protobuf:"bytes,23,rep,name=countMap,proto3" json:"countMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	TingMap          map[int]*MjTingData `protobuf:"bytes,24,rep,name=tingMap,proto3" json:"tingMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	Pattern          string              `protobuf:"bytes,25,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	CanGang          bool                `protobuf:"varint,26,opt,name=canGang,proto3" json:"canGang,omitempty"`
